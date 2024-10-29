@@ -30,5 +30,21 @@
     "description": "erzer",
     "profileImage": "/uploads/objects/1730066756603-495996145.PNG",
     "status": "utilisateur"
+  },
+  {
+    "login": "julie",
+    "password": "123456",
+    "email": "julie@gmail.com",
+    "description": "",
+    "profileImage": "/uploads/user-photo/profile/1730211004170-phoot.PNG",
+    "status": "utilisateur"
+  },
+  {
+    "login": "glio",
+    "password": "123456",
+    "email": "glio@free.fr",
+    "description": "",
+    "profileImage": "/uploads/user-photo/profile/1730211035641-finance all hands juin.PNG",
+    "status": "redacteur"
   }
 ]
