@@ -1,0 +1,34 @@
+[
+  {
+    "login": "admin",
+    "password": "password1",
+    "email": "monsieur@example.com",
+    "description": "je suis l'admin de ce site",
+    "profileImage": "/uploads/objects/1730067298076-121711802.png",
+    "status": "administrateur"
+  },
+  {
+    "login": "redacteur",
+    "password": "password2",
+    "email": "user2@example.com",
+    "description": "Je suis le deuxième utilisateur.",
+    "profileImage": "",
+    "status": "redacteur"
+  },
+  {
+    "login": "Kenshin",
+    "password": "1234",
+    "email": "kenshin@gmail.com",
+    "description": "Je suis kenshin le vagabon.",
+    "profileImage": "/uploads/objects/1730155120336-561516700.png",
+    "status": "administrateur"
+  },
+  {
+    "login": "genie",
+    "password": "1234",
+    "email": "genie@free.fr",
+    "description": "erzer",
+    "profileImage": "/uploads/objects/1730066756603-495996145.PNG",
+    "status": "utilisateur"
+  }
+]

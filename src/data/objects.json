@@ -1,0 +1,128 @@
+[
+  {
+    "id": "1729997122506",
+    "nom": "qsdqsf",
+    "type": "qfqsfq",
+    "utilisateur": "qsfqsfq",
+    "status": "disponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/f8c6589149ed2cb2169b0a119.png",
+        "description": [
+          "bat"
+        ]
+      },
+      {
+        "url": "/uploads/objects/f8c6589149ed2cb2169b0a11a.jpg",
+        "description": [
+          "chat"
+        ]
+      }
+    ]
+  },
+  {
+    "nom": "fxghdf",
+    "type": "sgfhdfgh",
+    "utilisateur": "admin",
+    "status": "disponible",
+    "photos": [],
+    "id": "1730039014182"
+  },
+  {
+    "nom": "retezt",
+    "type": "zetzetze",
+    "utilisateur": "Kenshin",
+    "status": "disponible",
+    "photos": [],
+    "id": "1730064091929"
+  },
+  {
+    "nom": "trucmuch",
+    "type": "truc",
+    "utilisateur": "Kenshin",
+    "status": "disponible",
+    "photos": [],
+    "id": "1730064602287"
+  },
+  {
+    "nom": "machin",
+    "type": "obj",
+    "utilisateur": "Kenshin",
+    "status": "disponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/1730064834663-407665356.jpg",
+        "description": [
+          "chat"
+        ]
+      }
+    ],
+    "id": "1730064851191"
+  },
+  {
+    "nom": "best",
+    "type": "rgerg",
+    "utilisateur": "Kenshin",
+    "status": "disponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/1730064885663-665635956.png",
+        "description": [
+          "chat gris"
+        ]
+      }
+    ],
+    "id": "1730064898689"
+  },
+  {
+    "nom": "nain",
+    "type": "etre",
+    "utilisateur": "Kenshin",
+    "status": "indisponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/1730065388367-35791242.png",
+        "description": [
+          "bat"
+        ]
+      },
+      {
+        "url": "/uploads/objects/1730065400018-685600622.jpg",
+        "description": [
+          "chat"
+        ]
+      }
+    ],
+    "id": "1730065408424"
+  },
+  {
+    "nom": "coffre",
+    "type": "coffre",
+    "utilisateur": "Kenshin",
+    "status": "indisponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/1730067747996-818075609.png",
+        "description": [
+          "batman"
+        ]
+      }
+    ],
+    "id": "1730067756379"
+  },
+  {
+    "nom": "bureau",
+    "type": "meuble",
+    "utilisateur": "Kenshin",
+    "status": "disponible",
+    "photos": [
+      {
+        "url": "/uploads/objects/1730071558436-756957745.png",
+        "description": [
+          "stark"
+        ]
+      }
+    ],
+    "id": "1730071566194"
+  }
+]

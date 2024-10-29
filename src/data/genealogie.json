@@ -1,0 +1,101 @@
+[
+  {
+    "id": "1",
+    "nom": "Dupont",
+    "prenom": "Jean",
+    "genre": "homme",
+    "description": "Grand-père paternel",
+    "mere": null,
+    "pere": null,
+    "ordreNaissance": 1,
+    "dateNaissance": "1940-05-15"
+  },
+  {
+    "id": "2",
+    "nom": "Martin",
+    "prenom": "Marie",
+    "genre": "femme",
+    "description": "Grand-mère paternelle",
+    "mere": null,
+    "pere": null,
+    "ordreNaissance": 2,
+    "dateNaissance": "1942-08-23"
+  },
+  {
+    "id": "3",
+    "nom": "Dubois",
+    "prenom": "Pierre",
+    "genre": "homme",
+    "description": "Grand-père maternel",
+    "mere": null,
+    "pere": null,
+    "ordreNaissance": 1,
+    "dateNaissance": "1938-12-10"
+  },
+  {
+    "id": "4",
+    "nom": "Leroy",
+    "prenom": "Jeanne",
+    "genre": "femme",
+    "description": "Grand-mère maternelle",
+    "mere": null,
+    "pere": null,
+    "ordreNaissance": 3,
+    "dateNaissance": "1941-03-30"
+  },
+  {
+    "id": "5",
+    "nom": "Dupont",
+    "prenom": "Michel",
+    "genre": "homme",
+    "description": "Père",
+    "mere": "2",
+    "pere": "1",
+    "ordreNaissance": 1,
+    "dateNaissance": "1965-07-20"
+  },
+  {
+    "id": "6",
+    "nom": "Dubois",
+    "prenom": "Sophie",
+    "genre": "femme",
+    "description": "Mère",
+    "mere": "4",
+    "pere": "3",
+    "ordreNaissance": 2,
+    "dateNaissance": "1968-09-12"
+  },
+  {
+    "id": "7",
+    "nom": "Dupont",
+    "prenom": "Thomas",
+    "genre": "homme",
+    "description": "Enfant",
+    "mere": "6",
+    "pere": "5",
+    "ordreNaissance": 1,
+    "dateNaissance": "1990-04-25"
+  },
+  {
+    "id": "8",
+    "nom": "Dupont",
+    "prenom": "Julie",
+    "genre": "femme",
+    "description": "Enfant",
+    "mere": "6",
+    "pere": "5",
+    "ordreNaissance": 2,
+    "dateNaissance": "1992-11-08"
+  },
+  {
+    "id": "9",
+    "nom": "Dupont",
+    "prenom": "Lucas",
+    "genre": "homme",
+    "description": "Enfant",
+    "mere": "6",
+    "pere": "5",
+    "ordreNaissance": 3,
+    "dateNaissance": "1995-02-14"
+  }
+] 
