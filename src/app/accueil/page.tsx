@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type User = {
   login: string;
@@ -133,26 +133,27 @@ export default function Accueil() {
                   </div>
                 </div>
               </Link>
-
-              <Link
-                href="/genealogie"
-                className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                aria-label="Accéder à l'arbre généalogique"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-green-500 flex items-center justify-center">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-medium text-gray-900">Généalogie</h2>
-                    <p className="mt-1 text-sm text-gray-500">Visualiser l'arbre généalogique</p>
-                  </div>
-                </div>
-              </Link>
             </>
           )}
+
+          {/* Généalogie - accessible à tous */}
+          <Link
+            href="/genealogie"
+            className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            aria-label="Accéder à l'arbre généalogique"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-green-500 flex items-center justify-center">
+                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-medium text-gray-900">Généalogie</h2>
+                <p className="mt-1 text-sm text-gray-500">Visualiser l&apos;arbre généalogique</p>
+              </div>
+            </div>
+          </Link>
 
           {/* Modifier mon profil - accessible à tous */}
           <Link
@@ -162,8 +163,18 @@ export default function Accueil() {
           >
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-pink-500 flex items-center justify-center">
-                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <svg
+                  className="h-6 w-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
               </div>
               <div>

@@ -1,9 +1,9 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
-import ImageUploader from '../../../components/ImageUploader';
+import ImageUploader from '../../../../components/ImageUploader';
 
 type Object = {
   id: string;
@@ -14,8 +14,10 @@ type Object = {
   photos: { url: string; description: string[] }[];
 };
 
-export default function CreateObject() {
+export default function EditObject() {
+  const { id } = useParams();
   const router = useRouter();
+  const [object, setObject] = useState<Object | null>(null);
   const [formData, setFormData] = useState<Omit<Object, 'id'>>({
     nom: '',
     type: '',
@@ -24,6 +26,29 @@ export default function CreateObject() {
     photos: []
   });
   const [tempDescription, setTempDescription] = useState('');
+
+  useEffect(() => {
+    const fetchObject = async () => {
+      try {
+        const response = await fetch(`/api/objects/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setObject(data);
+          setFormData({
+            nom: data.nom,
+            type: data.type,
+            utilisateur: data.utilisateur,
+            status: data.status,
+            photos: data.photos || []
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération de l&apos;objet:', error);
+      }
+    };
+
+    fetchObject();
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -45,7 +70,7 @@ export default function CreateObject() {
     if (tempDescription.trim()) {
       setFormData(prev => ({
         ...prev,
-        photos: prev.photos.map((photo, index) =>
+        photos: prev.photos.map((photo, index) => 
           index === photoIndex
             ? { ...photo, description: [...photo.description, tempDescription.trim()] }
             : photo
@@ -58,25 +83,34 @@ export default function CreateObject() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/objects/create', {
-        method: 'POST',
+      const response = await fetch(`/api/objects/${id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, id }),
       });
 
       if (response.ok) {
-        router.push('/objects');
+        router.push(`/objects/${id}`);
       } else {
         const error = await response.json();
-        alert(`Erreur lors de la création : ${error.message}`);
+        alert(`Erreur lors de la mise à jour : ${error.message}`);
       }
     } catch (error) {
-      console.error('Erreur lors de la création:', error);
-      alert('Erreur lors de la création de l&apos;objet');
+      console.error('Erreur lors de la mise à jour:', error);
+      alert('Erreur lors de la mise à jour de l&apos;objet');
     }
   };
+
+  if (!object) {
+    return (
+      <div role="alert" className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="sr-only">Chargement...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -86,15 +120,15 @@ export default function CreateObject() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Créer un nouvel objet
+                Modifier l&apos;objet : {object.nom}
               </h1>
               <p className="mt-1 text-sm text-gray-500">
-                Ajoutez un nouvel objet à la collection
+                Modifiez les informations de l&apos;objet
               </p>
             </div>
             <div className="flex space-x-4">
               <Link
-                href="/objects"
+                href={`/objects/${id}`}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Annuler
@@ -145,21 +179,6 @@ export default function CreateObject() {
                 </div>
 
                 <div>
-                  <label htmlFor="utilisateur" className="block text-sm font-medium text-gray-700">
-                    Utilisateur
-                  </label>
-                  <input
-                    type="text"
-                    id="utilisateur"
-                    name="utilisateur"
-                    value={formData.utilisateur}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
                   <label htmlFor="status" className="block text-sm font-medium text-gray-700">
                     Statut
                   </label>
@@ -184,7 +203,7 @@ export default function CreateObject() {
               </h2>
               <div className="space-y-6">
                 <ImageUploader onUpload={handleImageUpload} type="object" />
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {formData.photos.map((photo, photoIndex) => (
                     <div key={photoIndex} className="bg-gray-50 rounded-lg p-4">
@@ -228,7 +247,7 @@ export default function CreateObject() {
                 type="submit"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Créer l&apos;objet
+                Enregistrer les modifications
               </button>
             </div>
           </form>
@@ -236,4 +255,4 @@ export default function CreateObject() {
       </main>
     </div>
   );
-}
+} 

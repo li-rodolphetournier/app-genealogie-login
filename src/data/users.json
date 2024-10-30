@@ -1,7 +1,7 @@
 [
   {
     "login": "admin",
-    "password": "password1",
+    "password": "OctobreHalloween2024",
     "email": "monsieur@example.com",
     "description": "je suis l'admin de ce site",
     "profileImage": "/uploads/objects/1730067298076-121711802.png",
@@ -9,7 +9,7 @@
   },
   {
     "login": "redacteur",
-    "password": "password2",
+    "password": "OctobreHalloween2024",
     "email": "user2@example.com",
     "description": "Je suis le deuxième utilisateur.",
     "profileImage": "",
@@ -24,8 +24,8 @@
     "status": "administrateur"
   },
   {
-    "login": "genie",
-    "password": "1234",
+    "login": "utilisateur",
+    "password": "OctobreHalloween2024",
     "email": "genie@free.fr",
     "description": "erzer",
     "profileImage": "/uploads/objects/1730066756603-495996145.PNG",
