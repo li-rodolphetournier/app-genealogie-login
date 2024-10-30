@@ -3,24 +3,51 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 type User = {
   login: string;
   status: string;
 };
 
+type Message = {
+  id: string;
+  title: string;
+  content: string;
+  images: string[];
+  date: string;
+  userName: string;
+};
+
 export default function Accueil() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [lastMessage, setLastMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     const currentUser = localStorage.getItem('currentUser');
     if (currentUser) {
       setUser(JSON.parse(currentUser));
+      fetchLastMessage();
     } else {
       router.push('/');
     }
   }, [router]);
+
+  const fetchLastMessage = async () => {
+    try {
+      const response = await fetch('/api/messages');
+      if (response.ok) {
+        const messages = await response.json();
+        if (messages.length > 0) {
+          // Prendre le dernier message
+          setLastMessage(messages[messages.length - 1]);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du message:', error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -183,7 +210,82 @@ export default function Accueil() {
               </div>
             </div>
           </Link>
+
+          {/* Administration des messages - accessible aux administrateurs */}
+          {user.status === 'administrateur' && (
+            <Link
+              href="/messages"
+              className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              aria-label="Accéder à l'administration des messages"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-orange-500 flex items-center justify-center">
+                  <svg
+                    className="h-6 w-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-medium text-gray-900">Administration des messages</h2>
+                  <p className="mt-1 text-sm text-gray-500">Gérer les messages et annonces</p>
+                </div>
+              </div>
+            </Link>
+          )}
         </div>
+
+        {/* Affichage du dernier message */}
+        {lastMessage && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Dernier message</h2>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {lastMessage.title}
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {new Date(lastMessage.date).toLocaleDateString('fr-FR')}
+                </span>
+              </div>
+
+              {lastMessage.images && lastMessage.images.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
+                  {lastMessage.images.map((image, index) => (
+                    image && (
+                      <div key={index} className="relative aspect-square">
+                        <Image
+                          src={image}
+                          alt={`Image ${index + 1} du message`}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
+
+              <div className="prose max-w-none">
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {lastMessage.content}
+                </p>
+              </div>
+
+              <div className="mt-4 text-sm text-gray-500">
+                Publié par {lastMessage.userName}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
     </div>
   );
