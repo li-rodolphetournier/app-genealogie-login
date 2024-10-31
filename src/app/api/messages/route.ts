@@ -95,4 +95,37 @@ export async function DELETE(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// PUT - Modifier un message
+export async function PUT(request: Request) {
+  try {
+    const updatedMessage = await request.json();
+    const messages = readMessages();
+    
+    const messageIndex = messages.findIndex((msg: any) => msg.id === updatedMessage.id);
+    if (messageIndex === -1) {
+      return NextResponse.json(
+        { error: 'Message non trouvé' },
+        { status: 404 }
+      );
+    }
+
+    // Mettre à jour le message
+    messages[messageIndex] = updatedMessage;
+    
+    // Sauvegarder dans le fichier
+    writeMessages(messages);
+    
+    return NextResponse.json(
+      { message: 'Message modifié avec succès', data: updatedMessage },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Erreur lors de la modification du message:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la modification du message' },
+      { status: 500 }
+    );
+  }
 } 
