@@ -25,7 +25,7 @@ export default function MessagesAdministration(): JSX.Element {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState({
     title: '',
@@ -52,7 +52,7 @@ export default function MessagesAdministration(): JSX.Element {
     try {
       const response = await fetch('/api/messages');
       if (response.ok) {
-        const data = (await response.json()) as Message[];
+        const data = await response.json() as Message[];
         const sortedMessages = [...data].sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -63,7 +63,7 @@ export default function MessagesAdministration(): JSX.Element {
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -84,31 +84,23 @@ export default function MessagesAdministration(): JSX.Element {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { filePath: string };
         setNewMessage(prev => ({
           ...prev,
           images: [...prev.images, data.filePath]
         }));
       } else {
-        alert('Erreur lors de l\'upload de l\'image');
+        throw new Error('Erreur lors de l\'upload');
       }
-    } catch (error) {
-      console.error('Erreur:', error);
+    } catch (err) {
+      console.error('Erreur:', err instanceof Error ? err.message : 'Erreur inconnue');
       alert('Erreur lors de l\'upload de l\'image');
     }
 
-    // Réinitialiser l'input file
     event.target.value = '';
   };
 
-  const removeImage = (indexToRemove: number) => {
-    setNewMessage(prev => ({
-      ...prev,
-      images: prev.images.filter((_, index) => index !== indexToRemove)
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!user) return;
     
@@ -137,16 +129,19 @@ export default function MessagesAdministration(): JSX.Element {
         setNewMessage({ title: '', content: '', images: [] });
         setEditingMessageId(null);
         await fetchMessages();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message);
       }
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde du message:', error);
-      alert('Erreur lors de la sauvegarde du message');
+    } catch (err) {
+      console.error('Erreur:', err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const removeImage = (indexToRemove: number) => {
+    setNewMessage(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
   };
 
   const handleEdit = (message: Message) => {

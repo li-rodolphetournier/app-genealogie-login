@@ -7,7 +7,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const { id } = req.query;
       const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-      let objectsData = JSON.parse(fs.readFileSync(objectsPath, 'utf8'));
+      const objectsData = JSON.parse(fs.readFileSync(objectsPath, 'utf8'));
 
       const objectIndex = objectsData.findIndex((obj: any) => obj.id === id);
 
