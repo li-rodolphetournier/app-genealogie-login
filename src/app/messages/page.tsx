@@ -21,11 +21,6 @@ interface Message {
   userName: string;
 }
 
-interface UploadResponse {
-  filePath: string;
-  message: string;
-}
-
 export default function MessagesAdministration(): JSX.Element {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
