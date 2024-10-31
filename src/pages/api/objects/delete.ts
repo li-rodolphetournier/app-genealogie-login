@@ -2,6 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+interface DbObject {
+  id: string;
+  // ... autres propriétés
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
     return res.status(405).json({ message: 'Method Not Allowed' });
@@ -16,9 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const dataFilePath = path.join(process.cwd(), 'src/data/objects.json');
     const jsonData = fs.readFileSync(dataFilePath, 'utf8');
-    let objects = JSON.parse(jsonData);
+    const objects = JSON.parse(jsonData);
 
-    const objectIndex = objects.findIndex((obj: any) => obj.id === id);
+    const objectIndex = objects.findIndex((obj: DbObject) => obj.id === id);
 
     if (objectIndex === -1) {
       return res.status(404).json({ message: 'Object not found' });

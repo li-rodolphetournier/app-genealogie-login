@@ -1,7 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import path from 'path';
+import formidable from 'formidable';
 
 export const config = {
   api: {
@@ -9,9 +7,17 @@ export const config = {
   },
 };
 
+interface FormFields {
+  // ... définir les types des champs
+}
+
+interface FormFiles {
+  // ... définir les types des fichiers
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const form = new IncomingForm();
+    const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
       if (err) {
         return res.status(500).json({ message: 'Erreur lors du traitement du formulaire' });

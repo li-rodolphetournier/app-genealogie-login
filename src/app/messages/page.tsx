@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 
-type User = {
+interface User {
   id: string;
   login: string;
   status: 'administrateur' | 'utilisateur';
-};
+}
 
-type Message = {
+interface Message {
   id: string;
   title: string;
   content: string;
@@ -19,9 +19,14 @@ type Message = {
   date: string;
   userId: string;
   userName: string;
-};
+}
 
-export default function MessagesAdministration() {
+interface UploadResponse {
+  filePath: string;
+  message: string;
+}
+
+export default function MessagesAdministration(): JSX.Element {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,34 +39,32 @@ export default function MessagesAdministration() {
   });
 
   useEffect(() => {
-    // Vérification de l'authentification
     const currentUser = localStorage.getItem('currentUser');
     if (!currentUser) {
-      router.push('/');
+      void router.push('/');
       return;
     }
-    const userData = JSON.parse(currentUser);
+    const userData = JSON.parse(currentUser) as User;
     if (userData.status !== 'administrateur') {
-      router.push('/accueil');
+      void router.push('/accueil');
       return;
     }
     setUser(userData);
-    fetchMessages();
+    void fetchMessages();
   }, [router]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (): Promise<void> => {
     try {
       const response = await fetch('/api/messages');
       if (response.ok) {
-        const data = await response.json();
-        // Trier les messages par date (plus récent en premier)
-        const sortedMessages = data.sort((a: Message, b: Message) => 
+        const data = (await response.json()) as Message[];
+        const sortedMessages = [...data].sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         setMessages(sortedMessages);
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des messages:', error);
+    } catch (err) {
+      console.error('Erreur lors du chargement des messages:', err instanceof Error ? err.message : 'Erreur inconnue');
     }
   };
 
@@ -331,29 +334,45 @@ export default function MessagesAdministration() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-6">Messages publiés</h2>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {messages.map((message) => (
-                <div key={message.id} className="border-b pb-4 last:border-b-0 relative">
+                <article 
+                  key={message.id} 
+                  className="border-b border-gray-200 pb-6 last:border-0"
+                  aria-labelledby={`message-title-${message.id}`}
+                >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium mb-1">{message.title}</h3>
-                      <div className="text-sm text-gray-500">
-                        {new Date(message.date).toLocaleDateString('fr-FR')}
-                      </div>
+                      <h3 
+                        id={`message-title-${message.id}`}
+                        className="text-lg font-medium text-gray-900 mb-1"
+                      >
+                        {message.title}
+                      </h3>
+                      <time 
+                        dateTime={message.date}
+                        className="text-sm text-gray-500"
+                      >
+                        {new Date(message.date).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </time>
                     </div>
                     
-                    {/* Boutons d'action déplacés */}
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => handleEdit(message)}
-                        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
-                        title="Modifier"
+                        className="inline-flex items-center p-2 border border-transparent rounded-md text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        aria-label={`Modifier le message "${message.title}"`}
                       >
                         <svg 
-                          className="w-5 h-5" 
+                          className="h-5 w-5" 
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path 
                             strokeLinecap="round" 
@@ -365,14 +384,15 @@ export default function MessagesAdministration() {
                       </button>
                       <button
                         onClick={() => handleDelete(message.id)}
-                        className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition-colors"
-                        title="Supprimer"
+                        className="inline-flex items-center p-2 border border-transparent rounded-md text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        aria-label={`Supprimer le message "${message.title}"`}
                       >
                         <svg 
-                          className="w-5 h-5" 
+                          className="h-5 w-5" 
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
+                          aria-hidden="true"
                         >
                           <path 
                             strokeLinecap="round" 
@@ -391,23 +411,31 @@ export default function MessagesAdministration() {
                         <div key={index} className="relative aspect-square">
                           <Image
                             src={image}
-                            alt={`Image ${index + 1} du message`}
+                            alt={`Image ${index + 1} du message "${message.title}"`}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover rounded"
+                            className="object-cover rounded-lg"
                           />
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="prose max-w-none whitespace-pre-wrap">
+
+                  <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
                     {message.content}
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Publié par {message.userName}
-                  </p>
-                </div>
+
+                  <footer className="mt-4 text-sm text-gray-500">
+                    Publié par <span className="font-medium">{message.userName}</span>
+                  </footer>
+                </article>
               ))}
+
+              {messages.length === 0 && (
+                <p className="text-center text-gray-500 py-8">
+                  Aucun message n&apos;a été publié pour le moment.
+                </p>
+              )}
             </div>
           </div>
         </div>

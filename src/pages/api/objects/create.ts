@@ -78,9 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fs.writeFileSync(dataFilePath, JSON.stringify(objects, null, 2));
 
       res.status(200).json({ message: 'Objet ajouté avec succès', object: newObject });
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de l\'objet:', error);
-      res.status(500).json({ message: `Erreur lors de l'ajout de l'objet: ${error instanceof Error ? error.message : 'Erreur inconnue'}` });
+    } catch (err) {
+      console.error('Erreur:', err);
+      res.status(500).json({ message: `Erreur lors de l'ajout de l'objet: ${err instanceof Error ? err.message : 'Erreur inconnue'}` });
     }
   });
 }
