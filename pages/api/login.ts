@@ -1,5 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
