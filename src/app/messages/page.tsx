@@ -190,7 +190,9 @@ export default function MessagesAdministration(): JSX.Element {
     setNewMessage({ title: '', content: '', images: [] });
   };
 
-  if (!user) return null;
+  if (!user) {
+    return <div className="min-h-screen bg-gray-50 p-4">Chargement...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

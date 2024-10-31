@@ -2,13 +2,20 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+interface UserData {
+  id: string;
+  login: string;
+  password?: string;
+  status: 'administrateur' | 'utilisateur';
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
-    const updatedUser = req.body;
+    const updatedUser: UserData = req.body;
     const dataFilePath = path.join(process.cwd(), 'src/data/users.json');
     
     let users = [];

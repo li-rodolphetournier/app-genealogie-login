@@ -4,7 +4,9 @@ import path from 'path';
 
 interface DbObject {
   id: string;
-  // ... autres propriétés
+  name: string;
+  description: string;
+  image?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -23,13 +25,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const jsonData = fs.readFileSync(dataFilePath, 'utf8');
     const objects = JSON.parse(jsonData);
 
-    const objectIndex = objects.findIndex((obj: DbObject) => obj.id === id);
+    const filteredObjects = objects.filter((obj: DbObject) => obj.id !== id);
 
-    if (objectIndex === -1) {
+    if (filteredObjects.length === objects.length) {
       return res.status(404).json({ message: 'Object not found' });
     }
 
-    const objectToDelete = objects[objectIndex];
+    const objectToDelete = objects.find((obj: DbObject) => obj.id === id);
 
     // Supprimer les fichiers d'image associés
     if (Array.isArray(objectToDelete.images)) {
@@ -42,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Supprimer l'objet du tableau
-    objects.splice(objectIndex, 1);
+    objects.splice(objects.indexOf(objectToDelete), 1);
 
     // Écrire le tableau mis à jour dans le fichier JSON
     fs.writeFileSync(dataFilePath, JSON.stringify(objects, null, 2));

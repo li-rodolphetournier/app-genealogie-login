@@ -79,8 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json({ message: 'Objet ajouté avec succès', object: newObject });
     } catch (err) {
-      console.error('Erreur:', err);
-      res.status(500).json({ message: `Erreur lors de l'ajout de l'objet: ${err instanceof Error ? err.message : 'Erreur inconnue'}` });
+      console.error('Erreur lors de la création:', err);
+      return res.status(500).json({ error: 'Erreur lors de la création de l\'objet' });
     }
   });
 }

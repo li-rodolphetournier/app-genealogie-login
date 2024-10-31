@@ -1,35 +1,39 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 
+interface UpdateUserFields {
+  userId: string;
+  login: string;
+  password?: string;
+}
+
+interface UpdateUserFiles {
+  avatar?: formidable.File;
+}
+
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-interface FormFields {
-  // ... définir les types des champs
-}
-
-interface FormFiles {
-  // ... définir les types des fichiers
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        return res.status(500).json({ message: 'Erreur lors du traitement du formulaire' });
-      }
+  if (req.method !== 'PUT') {
+    return res.status(405).json({ error: 'Méthode non autorisée' });
+  }
 
-      // Ici, vous devriez implémenter la logique pour mettre à jour l'utilisateur
-      // Par exemple, mettre à jour le fichier users.json
+  try {
+    const form = formidable({});
+    const [fields, files] = await form.parse(req) as [UpdateUserFields, UpdateUserFiles];
 
-      res.status(200).json({ message: 'Profil mis à jour avec succès' });
-    });
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).json({ message: `Method ${req.method} Not Allowed` });
+    // Utiliser fields et files ici
+    const { userId, login, password } = fields;
+    const avatar = files.avatar;
+
+    // ... reste du code ...
+
+  } catch (err) {
+    console.error('Erreur:', err);
+    return res.status(500).json({ error: 'Erreur lors de la mise à jour' });
   }
 }

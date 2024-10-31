@@ -10,8 +10,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const objects = JSON.parse(jsonData);
       
       res.status(200).json(objects);
-    } catch (error) {
-      res.status(500).json({ message: 'Erreur lors de la récupération des objets' });
+    } catch (err) {
+      console.error('Erreur lors de la lecture:', err);
+      return res.status(500).json({ error: 'Erreur lors de la lecture des objets' });
     }
   } else {
     res.setHeader('Allow', ['GET']);
