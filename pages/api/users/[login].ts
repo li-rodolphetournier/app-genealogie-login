@@ -2,34 +2,36 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+interface User {
+  id: string;
+  login: string;
+  password: string;
+  status: 'administrateur' | 'utilisateur';
+  email?: string;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { login } = req.query;
 
-  try {
-    const usersPath = path.join(process.cwd(), 'src/data/users.json');
-    const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+  if (req.method === 'GET') {
+    try {
+      const dataFilePath = path.join(process.cwd(), 'src/data/users.json');
+      const jsonData = fs.readFileSync(dataFilePath, 'utf8');
+      const users = JSON.parse(jsonData) as User[];
 
-    if (req.method === 'GET') {
-      const user = users.find((u: any) => u.login === login);
-      
-      if (user) {
-        res.status(200).json(user);
-      } else {
-        res.status(404).json({ message: 'Utilisateur non trouvé' });
+      const user = users.find((u: User) => u.login === login);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
       }
-    } else if (req.method === 'PUT') {
-      const updatedUsers = users.map((u: any) => 
-        u.login === login ? { ...u, ...req.body, login } : u
-      );
-      
-      fs.writeFileSync(usersPath, JSON.stringify(updatedUsers, null, 2));
-      res.status(200).json({ message: 'Utilisateur mis à jour avec succès' });
-    } else {
-      res.setHeader('Allow', ['GET', 'PUT']);
-      res.status(405).json({ message: `Method ${req.method} Not Allowed` });
+
+      return res.status(200).json(user);
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json({ message: 'Error retrieving user' });
     }
-  } catch (error) {
-    console.error('Erreur:', error);
-    res.status(500).json({ message: 'Erreur serveur' });
   }
+
+  res.setHeader('Allow', ['GET']);
+  return res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

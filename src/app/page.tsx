@@ -13,7 +13,7 @@ export default function Login() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasLogo, setHasLogo] = useState(true);
+  const [hasLogo, setHasLogo] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -26,7 +26,7 @@ export default function Login() {
         setHasLogo(false);
       }
     };
-    checkLogo();
+    void checkLogo();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +76,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo - uniquement si l'image existe */}
-        {hasLogo && (
+        {hasLogo ? (
           <div className="flex justify-center mb-8">
             <div className="relative w-32 h-32">
               <Image
@@ -91,7 +90,7 @@ export default function Login() {
               />
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Titre */}
         <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900 mb-2">

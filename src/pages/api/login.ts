@@ -7,7 +7,6 @@ interface User {
   login: string;
   password: string;
   status: 'administrateur' | 'utilisateur';
-  email?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,19 +15,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const credentials = req.body as { login: string; password: string };
+    const { login, password } = req.body as { login: string; password: string };
     const dataFilePath = path.join(process.cwd(), 'src/data/users.json');
     const jsonData = fs.readFileSync(dataFilePath, 'utf8');
     const users = JSON.parse(jsonData) as User[];
 
-    const user = users.find(u => u.login === credentials.login && u.password === credentials.password);
+    const user = users.find(u => u.login === login && u.password === password);
     
     if (!user) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }
 
     // Omettre le mot de passe de la réponse
-    const { password, ...userWithoutPassword } = user;
+    const { password: _, ...userWithoutPassword } = user;
     
     return res.status(200).json({ user: userWithoutPassword });
   } catch (error) {

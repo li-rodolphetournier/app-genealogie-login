@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,7 +17,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       users = JSON.parse(jsonData);
     }
 
-    const userIndex = users.findIndex((u: any) => u.email === updatedUser.email);
+    interface User {
+      id: string;
+      email: string;
+      login: string;
+      password?: string;
+      status: 'administrateur' | 'utilisateur';
+    }
+
+    const userIndex = users.findIndex((u: User) => u.email === updatedUser.email);
     if (userIndex !== -1) {
       users[userIndex] = updatedUser;
     } else {

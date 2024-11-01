@@ -2,6 +2,16 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+interface Person {
+  id: string;
+  name: string;
+  birthDate?: string;
+  deathDate?: string;
+  children?: Person[];
+  spouse?: string;
+  parents?: string[];
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -15,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const updatedPerson = req.body;
     
     // Mettre à jour la personne
-    persons = persons.map((person: any) => 
+    persons = persons.map((person: Person) => 
       person.id === updatedPerson.id ? updatedPerson : person
     );
 

@@ -2,41 +2,64 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    try {
-      console.log('Données reçues:', req.body);
-      const newUser = req.body;
-      const usersPath = path.join(process.cwd(), 'src/data/users.json');
-      console.log('Chemin du fichier users.json:', usersPath);
-      
-      let usersData;
-      try {
-        usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-        console.log('Données utilisateurs existantes:', usersData);
-      } catch (readError) {
-        console.error('Erreur lors de la lecture du fichier users.json:', readError);
-        return res.status(500).json({ message: 'Erreur lors de la lecture des données utilisateurs' });
-      }
+interface User {
+  id: string;
+  login: string;
+  password: string;
+  status: 'administrateur' | 'utilisateur';
+  email?: string;
+}
 
-      // Vérifier si le login existe déjà
-      if (usersData.some((user: any) => user.login === newUser.login)) {
-        return res.status(400).json({ message: 'Ce login est déjà utilisé' });
-      }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
 
-      // Ajouter le nouvel utilisateur à la liste
-      usersData.push(newUser);
+  try {
+    const { login, password: userPassword, status, email } = req.body as User;
 
-      // Écrire les données mises à jour dans le fichier
-      fs.writeFileSync(usersPath, JSON.stringify(usersData, null, 2));
-
-      res.status(201).json(newUser);
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'utilisateur:', error);
-      res.status(500).json({ message: 'Erreur serveur lors de la création de l\'utilisateur', error: error.message });
+    // Vérifier que les champs requis sont présents
+    if (!login || !userPassword || !status) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-  } else {
-    res.setHeader('Allow', ['POST']);
-    res.status(405).json({ message: `Method ${req.method} Not Allowed` });
+
+    const dataFilePath = path.join(process.cwd(), 'src/data/users.json');
+    let users: User[] = [];
+
+    // Lire le fichier existant
+    if (fs.existsSync(dataFilePath)) {
+      const jsonData = fs.readFileSync(dataFilePath, 'utf8');
+      users = JSON.parse(jsonData);
+    }
+
+    // Vérifier si l'utilisateur existe déjà
+    const userExists = users.some(user => user.login === login);
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Créer le nouvel utilisateur
+    const newUser: User = {
+      id: Date.now().toString(),
+      login,
+      password: userPassword,
+      status,
+      ...(email && { email }) // Ajouter email seulement s'il existe
+    };
+
+    // Ajouter l'utilisateur et sauvegarder
+    users.push(newUser);
+    fs.writeFileSync(dataFilePath, JSON.stringify(users, null, 2));
+
+    // Retourner l'utilisateur sans le mot de passe
+    const { password, ...userWithoutPassword } = newUser;
+    return res.status(201).json(userWithoutPassword);
+
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return res.status(500).json({ 
+      message: 'Error creating user',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }

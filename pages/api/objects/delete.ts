@@ -2,29 +2,49 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'DELETE') {
-    try {
-      const { id } = req.query;
-      const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-      let objectsData = JSON.parse(fs.readFileSync(objectsPath, 'utf8'));
+interface ObjectImage {
+  url: string;
+  description: string[];
+}
 
-      const objectIndex = objectsData.findIndex((obj: any) => obj.id === id);
+interface ObjectData {
+  id: string;
+  nom: string;
+  type: string;
+  description?: string;
+  status: 'publie' | 'brouillon';
+  utilisateur: string;
+  images?: string[];
+  photos?: ObjectImage[];
+}
 
-      if (objectIndex === -1) {
-        return res.status(404).json({ message: 'Object not found' });
-      }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'DELETE') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
 
-      objectsData.splice(objectIndex, 1);
-      fs.writeFileSync(objectsPath, JSON.stringify(objectsData, null, 2));
+  const { id } = req.query;
 
-      res.status(200).json({ message: 'Object deleted successfully' });
-    } catch (error) {
-      console.error('Erreur lors de la suppression de l\'objet:', error);
-      res.status(500).json({ message: 'Erreur serveur lors de la suppression de l\'objet' });
+  try {
+    const dataFilePath = path.join(process.cwd(), 'src/data/objects.json');
+    const jsonData = fs.readFileSync(dataFilePath, 'utf8');
+    const objects = JSON.parse(jsonData) as ObjectData[];
+
+    const objectIndex = objects.findIndex((obj: ObjectData) => obj.id === id);
+
+    if (objectIndex === -1) {
+      return res.status(404).json({ message: 'Object not found' });
     }
-  } else {
-    res.setHeader('Allow', ['DELETE']);
-    res.status(405).json({ message: `Method ${req.method} Not Allowed` });
+
+    // Supprimer l'objet du tableau
+    objects.splice(objectIndex, 1);
+
+    // Sauvegarder le tableau mis à jour
+    fs.writeFileSync(dataFilePath, JSON.stringify(objects, null, 2));
+
+    return res.status(200).json({ message: 'Object deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting object:', error);
+    return res.status(500).json({ message: 'Error deleting object' });
   }
 }
