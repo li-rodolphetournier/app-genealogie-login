@@ -137,14 +137,14 @@ export default function MessagesAdministration(): JSX.Element {
     }
   };
 
-  const removeImage = (indexToRemove: number) => {
+  const removeImage = (indexToRemove: number): void => {
     setNewMessage(prev => ({
       ...prev,
       images: prev.images.filter((_, index) => index !== indexToRemove)
     }));
   };
 
-  const handleEdit = (message: Message) => {
+  const handleEdit = (message: Message): void => {
     setEditingMessageId(message.id);
     setNewMessage({
       title: message.title,
@@ -154,7 +154,7 @@ export default function MessagesAdministration(): JSX.Element {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (messageId: string) => {
+  const handleDelete = async (messageId: string): Promise<void> => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
       return;
     }
@@ -175,7 +175,7 @@ export default function MessagesAdministration(): JSX.Element {
     }
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = (): void => {
     setEditingMessageId(null);
     setNewMessage({ title: '', content: '', images: [] });
   };

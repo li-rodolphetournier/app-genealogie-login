@@ -3,28 +3,27 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Accueil',
-  description: 'Page d\'accueil de l\'application',
-};
+interface LoginFormData {
+  login: string;
+  password: string;
+}
 
-export default function Login() {
+export default function Login(): JSX.Element {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [formData, setFormData] = useState({
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [hasLogo, setHasLogo] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<LoginFormData>({
     login: '',
     password: ''
   });
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasLogo, setHasLogo] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     // Vérifier si l'image existe
-    const checkLogo = async () => {
+    const checkLogo = async (): Promise<void> => {
       try {
         const response = await fetch('/uploads/login/armoirie.png', { method: 'HEAD' });
         setHasLogo(response.ok);
@@ -32,10 +31,10 @@ export default function Login() {
         setHasLogo(false);
       }
     };
-    checkLogo();
+    void checkLogo();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -44,7 +43,7 @@ export default function Login() {
     setError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -76,7 +75,7 @@ export default function Login() {
   };
 
   if (!mounted) {
-    return null;
+    return <div>Chargement...</div>;
   }
 
   return (

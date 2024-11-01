@@ -1,173 +1,188 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Layout from '../../../components/Layout';
-import Link from 'next/link';
+import { useEffect, useState, use, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
-type Object = {
+interface ObjectData {
   id: string;
   nom: string;
   type: string;
+  description: string;
+  status: 'publie' | 'brouillon' | 'disponible' | 'indisponible';
   utilisateur: string;
-  status: 'disponible' | 'indisponible';
-  photos: { url: string; description: string[] }[];
-};
+  images: string[];
+  photos?: Array<{ url: string; description: string[] }>;
+}
 
-const ObjectDetails = () => {
-  const { id } = useParams();
+interface User {
+  id: string;
+  login: string;
+  status: string;
+}
+
+interface PageProps {
+  params: Promise<{ objectId: string }>;
+}
+
+export default function ObjectDetail({ params }: PageProps): JSX.Element {
+  const objectId = use(params).objectId;
   const router = useRouter();
-  const [object, setObject] = useState<Object | null>(null);
-  const [userStatus, setUserStatus] = useState<string>('');
+  const [object, setObject] = useState<ObjectData | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchObject = useCallback(async (): Promise<void> => {
+    if (!objectId) return;
+
+    try {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser) {
+        throw new Error('Utilisateur non connecté');
+      }
+
+      const response = await fetch(`/api/objects/${objectId}`, {
+        headers: {
+          'x-user-data': currentUser
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la récupération de l\'objet');
+      }
+
+      const data = await response.json();
+      
+      const formattedData: ObjectData = {
+        ...data,
+        images: data.images || data.photos?.map((p: { url: string }) => p.url) || [],
+        status: data.status || 'disponible'
+      };
+
+      setObject(formattedData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      setError(errorMessage);
+      console.error('Erreur lors de la récupération des détails de l\'objet:', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [objectId]);
 
   useEffect(() => {
     const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      const { status } = JSON.parse(currentUser);
-      setUserStatus(status);
+    if (!currentUser) {
+      void router.push('/');
+      return;
     }
+    setUser(JSON.parse(currentUser));
+    void fetchObject();
+  }, [router, fetchObject]);
 
-    const fetchObject = async () => {
-      try {
-        const response = await fetch(`/api/objects/${id}`);
-        const data = await response.json();
-        if (response.ok) {
-          setObject(data);
-        } else {
-          console.error('Erreur lors de la récupération des détails de l&apos;objet:', data.message);
-        }
-      } catch (error) {
-        console.error('Erreur réseau lors de la récupération des détails de l&apos;objet:', error);
-      }
-    };
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
 
-    fetchObject();
-  }, [id]);
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+          <button
+            onClick={() => router.push('/objects')}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Retour à la liste des objets
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!object) {
     return (
-      <Layout>
-        <div role="alert" className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <span className="sr-only">Chargement...</span>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <p>Objet non trouvé</p>
+          <button
+            onClick={() => router.push('/objects')}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Retour à la liste des objets
+          </button>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* En-tête fixe */}
-      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow px-6 py-8">
+          <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900" id="objectTitle">
-                {object.nom}
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Détails de l&apos;objet
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{object.nom}</h1>
+              <p className="text-sm text-gray-500">Type: {object.type}</p>
             </div>
-            <div className="flex space-x-4">
-              {userStatus !== 'utilisateur' && (
-                <Link
-                  href={`/objects/edit/${id}`}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  aria-label={`Modifier ${object.nom}`}
-                >
-                  <svg 
-                    className="-ml-1 mr-2 h-5 w-5" 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    viewBox="0 0 20 20" 
-                    fill="currentColor" 
-                    aria-hidden="true"
-                  >
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                  Modifier
-                </Link>
-              )}
-              <Link
-                href="/objects"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Retour à la liste
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Contenu principal avec padding-top pour compenser l&apos;en-tête fixe */}
-      <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-full mx-auto">
-          {/* Informations principales */}
-          <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Informations générales
-            </h2>
-            <dl className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <dt className="text-sm font-medium text-gray-500">Type</dt>
-                <dd className="mt-1 text-lg text-gray-900">{object.type}</dd>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <dt className="text-sm font-medium text-gray-500">Utilisateur</dt>
-                <dd className="mt-1 text-lg text-gray-900">{object.utilisateur}</dd>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <dt className="text-sm font-medium text-gray-500">Statut</dt>
-                <dd className="mt-1">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    object.status === 'disponible' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {object.status}
-                  </span>
-                </dd>
-              </div>
-            </dl>
+            <button
+              onClick={() => router.push('/objects')}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Retour à la liste
+            </button>
           </div>
 
-          {/* Photos */}
-          {object.photos && object.photos.length > 0 && (
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
-                Photos
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {object.photos.map((photo, index) => (
-                  <div 
-                    key={index} 
-                    className="group relative bg-gray-100 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-                  >
-                    <div className="aspect-w-1 aspect-h-1">
-                      <img
-                        src={photo.url}
-                        alt={photo.description[0] || `Photo ${index + 1} de ${object.nom}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {photo.description && photo.description.length > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                        <ul className="text-sm space-y-1">
-                          {photo.description.map((desc, descIndex) => (
-                            <li key={descIndex}>{desc}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+          {object.description && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-2">Description</h2>
+              <p className="text-gray-700">{object.description}</p>
+            </div>
+          )}
+
+          {((object?.images && object.images.length > 0) || (object?.photos && object.photos.length > 0)) && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">Images</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {object.images?.map((image, index) => (
+                  <div key={index} className="relative aspect-square">
+                    <Image
+                      src={image}
+                      alt={`Image ${index + 1} de ${object.nom}`}
+                      fill
+                      className="object-cover rounded"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
+                ))}
+                {object.photos?.map((photo, index) => (
+                  <div key={`photo-${index}`} className="relative aspect-square">
+                    <Image
+                      src={photo.url}
+                      alt={`Image ${index + 1} de ${object.nom} - ${photo.description.join(', ')}`}
+                      fill
+                      className="object-cover rounded"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-500">
+              Créé par {object.utilisateur}
+            </p>
+            <p className="text-sm text-gray-500">
+              Statut: {object.status === 'publie' ? 'Publié' : 'Brouillon'}
+            </p>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
-};
-
-export default ObjectDetails;
+}

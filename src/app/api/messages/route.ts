@@ -4,37 +4,47 @@ import path from 'path';
 
 const messagesFile = path.join(process.cwd(), 'src/data/messages.json');
 
+interface Message {
+  id: string;
+  title: string;
+  content: string;
+  images: string[];
+  date: string;
+  userId: string;
+  userName: string;
+}
+
 // Fonction utilitaire pour lire les messages
-function readMessages() {
+function readMessages(): Message[] {
   try {
     if (!fs.existsSync(messagesFile)) {
-      fs.writeFileSync(messagesFile, '[]', 'utf-8');
+      fs.writeFileSync(messagesFile, JSON.stringify([], null, 2), 'utf-8');
       return [];
     }
     const data = fs.readFileSync(messagesFile, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
-    console.error('Erreur lors de la lecture des messages:', error);
+  } catch (err) {
+    console.error('Erreur lors de la lecture des messages:', err);
     return [];
   }
 }
 
 // Fonction utilitaire pour écrire les messages
-function writeMessages(messages: any[]) {
+function writeMessages(messages: Message[]): void {
   try {
     fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Erreur lors de l\'écriture des messages:', error);
-    throw error;
+  } catch (err) {
+    console.error('Erreur lors de l\'écriture des messages:', err);
+    throw err;
   }
 }
 
-// GET - Récupérer tous les messages
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
     const messages = readMessages();
     return NextResponse.json(messages);
-  } catch (error) {
+  } catch (err) {
+    console.error('Erreur lors de la lecture:', err);
     return NextResponse.json(
       { error: 'Erreur lors de la lecture des messages' },
       { status: 500 }
@@ -42,24 +52,19 @@ export async function GET() {
   }
 }
 
-// POST - Créer un nouveau message
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const newMessage = await request.json();
+    const newMessage = await request.json() as Message;
     const messages = readMessages();
-    
-    // Ajouter le nouveau message
     messages.push(newMessage);
-    
-    // Sauvegarder dans le fichier
     writeMessages(messages);
     
     return NextResponse.json(
       { message: 'Message enregistré avec succès', data: newMessage },
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Erreur lors de la création du message:', error);
+  } catch (err) {
+    console.error('Erreur lors de la création:', err);
     return NextResponse.json(
       { error: 'Erreur lors de la création du message' },
       { status: 500 }
@@ -67,8 +72,36 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE - Supprimer un message
-export async function DELETE(request: Request) {
+export async function PUT(request: Request): Promise<NextResponse> {
+  try {
+    const updatedMessage = await request.json() as Message;
+    const messages = readMessages();
+    const index = messages.findIndex(msg => msg.id === updatedMessage.id);
+    
+    if (index === -1) {
+      return NextResponse.json(
+        { error: 'Message non trouvé' },
+        { status: 404 }
+      );
+    }
+
+    messages[index] = updatedMessage;
+    writeMessages(messages);
+    
+    return NextResponse.json(
+      { message: 'Message modifié avec succès', data: updatedMessage },
+      { status: 200 }
+    );
+  } catch (err) {
+    console.error('Erreur lors de la modification:', err);
+    return NextResponse.json(
+      { error: 'Erreur lors de la modification du message' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -81,7 +114,14 @@ export async function DELETE(request: Request) {
     }
 
     const messages = readMessages();
-    const filteredMessages = messages.filter((message: any) => message.id !== id);
+    const filteredMessages = messages.filter(message => message.id !== id);
+
+    if (messages.length === filteredMessages.length) {
+      return NextResponse.json(
+        { error: 'Message non trouvé' },
+        { status: 404 }
+      );
+    }
 
     writeMessages(filteredMessages);
 
@@ -89,42 +129,10 @@ export async function DELETE(request: Request) {
       { message: 'Message supprimé avec succès' },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (err) {
+    console.error('Erreur lors de la suppression:', err);
     return NextResponse.json(
       { error: 'Erreur lors de la suppression du message' },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT - Modifier un message
-export async function PUT(request: Request) {
-  try {
-    const updatedMessage = await request.json();
-    const messages = readMessages();
-    
-    const messageIndex = messages.findIndex((msg: any) => msg.id === updatedMessage.id);
-    if (messageIndex === -1) {
-      return NextResponse.json(
-        { error: 'Message non trouvé' },
-        { status: 404 }
-      );
-    }
-
-    // Mettre à jour le message
-    messages[messageIndex] = updatedMessage;
-    
-    // Sauvegarder dans le fichier
-    writeMessages(messages);
-    
-    return NextResponse.json(
-      { message: 'Message modifié avec succès', data: updatedMessage },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Erreur lors de la modification du message:', error);
-    return NextResponse.json(
-      { error: 'Erreur lors de la modification du message' },
       { status: 500 }
     );
   }
