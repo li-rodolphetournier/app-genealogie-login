@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,7 +10,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       // Ici, nous supposons que vous avez un fichier JSON pour stocker les données utilisateur
       // Vous devrez adapter cela en fonction de votre système de stockage réel (base de données, etc.)
       const usersPath = path.join(process.cwd(), 'src/data/users.json');
-      let usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+      const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
 
       // Pour cet exemple, nous mettons à jour simplement le premier utilisateur
       // Dans une application réelle, vous devriez identifier l'utilisateur connecté

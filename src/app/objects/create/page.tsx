@@ -10,7 +10,7 @@ type Object = {
   nom: string;
   type: string;
   utilisateur: string;
-  status: 'disponible' | 'indisponible';
+  status: 'Publié' | 'brouillon';
   photos: { url: string; description: string[] }[];
 };
 
@@ -20,7 +20,7 @@ export default function CreateObject() {
     nom: '',
     type: '',
     utilisateur: '',
-    status: 'disponible',
+    status: 'Publié',
     photos: []
   });
   const [tempDescription, setTempDescription] = useState('');
@@ -164,14 +164,12 @@ export default function CreateObject() {
                     Statut
                   </label>
                   <select
-                    id="status"
                     name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="border rounded p-2"
+                    required
                   >
-                    <option value="disponible">Disponible</option>
-                    <option value="indisponible">Indisponible</option>
+                    <option value="brouillon">Brouillon</option>
+                    <option value="publie">Publié</option>
                   </select>
                 </div>
               </div>

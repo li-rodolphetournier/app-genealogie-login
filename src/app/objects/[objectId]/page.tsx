@@ -4,6 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ObjectData } from '@/types/objects';
 
 interface User {
   id: string;
@@ -11,22 +12,20 @@ interface User {
   status: 'administrateur' | 'utilisateur';
 }
 
-interface ObjectData {
-  id: string;
-  nom: string;
-  type: string;
-  description?: string;
-  status: 'publie' | 'brouillon' | 'indisponible';
-  utilisateur: string;
-  photos?: Array<{
-    url: string;
-    description: string[];
-  }>;
-}
-
 interface PageProps {
   params: Promise<{ objectId: string }>;
 }
+
+const getStatusStyle = (status: string): string => {
+  switch (status) {
+    case 'publie':
+      return 'text-white bg-green-500 px-3 py-1 rounded-full font-medium';
+    case 'brouillon':
+      return 'text-white bg-red-500 px-3 py-1 rounded-full font-medium';
+    default:
+      return 'text-gray-600';
+  }
+};
 
 export default function ObjectDetail({ params }: PageProps): JSX.Element {
   const { objectId } = use(params);
@@ -151,8 +150,8 @@ export default function ObjectDetail({ params }: PageProps): JSX.Element {
             <p className="text-sm text-gray-500">
               Créé par {object.utilisateur}
             </p>
-            <p className="text-sm text-gray-500">
-              Statut: {object.status === 'publie' ? 'Publié' : 'Brouillon'}
+            <p className={`text-sm font-medium ${getStatusStyle(object?.status || '')}`}>
+              Statut: {object?.status === 'publie' ? 'Publié' : 'Brouillon'}
             </p>
           </div>
         </div>

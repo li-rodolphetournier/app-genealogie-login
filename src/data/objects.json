@@ -3,7 +3,7 @@
     "nom": "biblot",
     "type": "ameublement",
     "utilisateur": "qsfqsfq",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [
       {
         "url": "/uploads/objects/f8c6589149ed2cb2169b0a119.png",
@@ -24,7 +24,7 @@
     "nom": "fxghdf",
     "type": "sgfhdfgh",
     "utilisateur": "admin",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [],
     "id": "1730039014182"
   },
@@ -32,7 +32,7 @@
     "nom": "retezt",
     "type": "zetzetze",
     "utilisateur": "Kenshin",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [],
     "id": "1730064091929"
   },
@@ -40,7 +40,7 @@
     "nom": "trucmuch",
     "type": "truc",
     "utilisateur": "Kenshin",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [],
     "id": "1730064602287"
   },
@@ -48,7 +48,7 @@
     "nom": "machin",
     "type": "obj",
     "utilisateur": "Kenshin",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [
       {
         "url": "/uploads/objects/1730064834663-407665356.jpg",
@@ -63,7 +63,7 @@
     "nom": "best",
     "type": "rgerg",
     "utilisateur": "Kenshin",
-    "status": "disponible",
+    "status": "brouillon",
     "photos": [
       {
         "url": "/uploads/objects/1730064885663-665635956.png",
@@ -84,7 +84,7 @@
     "nom": "nain",
     "type": "etre",
     "utilisateur": "Kenshin",
-    "status": "indisponible",
+    "status": "publie",
     "photos": [
       {
         "url": "/uploads/objects/1730065388367-35791242.png",
@@ -105,7 +105,7 @@
     "nom": "coffre",
     "type": "coffre",
     "utilisateur": "Kenshin",
-    "status": "indisponible",
+    "status": "brouillon",
     "photos": [
       {
         "url": "/uploads/objects/1730067747996-818075609.png",
@@ -120,7 +120,7 @@
     "nom": "bureau",
     "type": "meuble",
     "utilisateur": "Kenshin",
-    "status": "disponible",
+    "status": "publie",
     "photos": [
       {
         "url": "/uploads/objects/1730071558436-756957745.png",

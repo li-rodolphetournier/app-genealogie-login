@@ -2,23 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-
-type Object = {
-  id: string;
-  nom: string;
-  type: string;
-  utilisateur: string;
-  status: 'disponible' | 'indisponible';
-  photos: { url: string; description: string[] }[];
-};
+import { ObjectData } from '@/types/objects';
 
 type FilterType = 'tous' | 'nom' | 'type' | 'utilisateur' | 'status';
 type SortType = 'nom' | 'type' | 'utilisateur' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 export default function ObjectsList() {
-  const [objects, setObjects] = useState<Object[]>([]);
-  const [filteredObjects, setFilteredObjects] = useState<Object[]>([]);
+  const [objects, setObjects] = useState<ObjectData[]>([]);
+  const [filteredObjects, setFilteredObjects] = useState<ObjectData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterType, setFilterType] = useState<FilterType>('tous');
@@ -35,7 +27,22 @@ export default function ObjectsList() {
         if (response.ok) {
           const data = await response.json();
           setObjects(data);
-          setFilteredObjects(data);
+          
+          // Récupérer le statut de l'utilisateur
+          const currentUser = localStorage.getItem('currentUser');
+          let userStatus = 'utilisateur';
+          if (currentUser) {
+            const { status } = JSON.parse(currentUser);
+            userStatus = status;
+            setUserStatus(status);
+          }
+
+          // Filtrer les objets selon le statut de l'utilisateur
+          const filteredData = userStatus === 'utilisateur' 
+            ? data.filter(obj => obj.status === 'publie')
+            : data;
+
+          setFilteredObjects(filteredData);
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -48,34 +55,39 @@ export default function ObjectsList() {
   }, []);
 
   useEffect(() => {
-    const filtered = filterObjects();
-    const sorted = sortObjects(filtered);
-    setFilteredObjects(sorted);
-  }, [filterType, searchTerm, objects, sortType, sortDirection]);
+    let result = objects;
 
-  const filterObjects = () => {
-    if (!searchTerm.trim() || filterType === 'tous') {
-      return objects;
+    // Filtrer selon le statut utilisateur
+    if (userStatus === 'utilisateur') {
+      result = result.filter(obj => obj.status === 'publie');
     }
 
-    const searchTermLower = searchTerm.toLowerCase();
-    return objects.filter(object => {
-      switch (filterType) {
-        case 'nom':
-          return object.nom.toLowerCase().includes(searchTermLower);
-        case 'type':
-          return object.type.toLowerCase().includes(searchTermLower);
-        case 'utilisateur':
-          return object.utilisateur.toLowerCase().includes(searchTermLower);
-        case 'status':
-          return object.status.toLowerCase().includes(searchTermLower);
-        default:
-          return true;
-      }
-    });
-  };
+    // Appliquer les autres filtres
+    if (searchTerm && filterType !== 'tous') {
+      const searchTermLower = searchTerm.toLowerCase();
+      result = result.filter(object => {
+        switch (filterType) {
+          case 'nom':
+            return object.nom.toLowerCase().includes(searchTermLower);
+          case 'type':
+            return object.type.toLowerCase().includes(searchTermLower);
+          case 'utilisateur':
+            return object.utilisateur.toLowerCase().includes(searchTermLower);
+          case 'status':
+            return object.status.toLowerCase().includes(searchTermLower);
+          default:
+            return true;
+        }
+      });
+    }
 
-  const sortObjects = (objectsToSort: Object[]) => {
+    // Appliquer le tri
+    result = sortObjects(result);
+    
+    setFilteredObjects(result);
+  }, [filterType, searchTerm, objects, sortType, sortDirection, userStatus]);
+
+  const sortObjects = (objectsToSort: ObjectData[]) => {
     return [...objectsToSort].sort((a, b) => {
       let comparison = 0;
       switch (sortType) {
@@ -118,16 +130,7 @@ export default function ObjectsList() {
     }
   };
 
-  useEffect(() => {
-    // Récupérer le statut de l'utilisateur depuis le localStorage
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      const { status } = JSON.parse(currentUser);
-      setUserStatus(status);
-    }
-  }, []);
-
-  const renderActions = (object: Object) => {
+  const renderActions = (object: ObjectData) => {
     if (userStatus === 'utilisateur') {
       return (
         <Link
@@ -156,6 +159,28 @@ export default function ObjectsList() {
         </button>
       </div>
     );
+  };
+
+  const getStatusStyle = (status: string): string => {
+    switch (status) {
+      case 'publie':
+        return 'text-white bg-green-500 px-3 py-1 rounded-full font-medium';
+      case 'brouillon':
+        return 'text-white bg-red-500 px-3 py-1 rounded-full font-medium';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    switch (status) {
+      case 'publie':
+        return 'Publié';
+      case 'brouillon':
+        return 'Brouillon';
+      default:
+        return status;
+    }
   };
 
   if (isLoading) {
@@ -343,12 +368,12 @@ export default function ObjectsList() {
                       </p>
                       <div className="flex items-center justify-between">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${object.status === 'disponible'
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${object.status === 'publie'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                             }`}
                         >
-                          {object.status}
+                          {getStatusLabel(object.status)}
                         </span>
                         {renderActions(object)}
                       </div>
@@ -392,12 +417,9 @@ export default function ObjectsList() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${object.status === 'disponible'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(object.status)}`}
                         >
-                          {object.status}
+                          {getStatusLabel(object.status)}
                         </span>
                         {renderActions(object)}
                       </div>

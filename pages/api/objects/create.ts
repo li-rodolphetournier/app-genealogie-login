@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -7,7 +7,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const newObject = req.body;
       const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-      let objectsData = JSON.parse(fs.readFileSync(objectsPath, 'utf8'));
+      const objectsData = JSON.parse(fs.readFileSync(objectsPath, 'utf8'));
 
       // Générer un nouvel ID unique
       newObject.id = Date.now().toString();

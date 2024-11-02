@@ -74,6 +74,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         objects = [];
       }
 
+      if (newObject.status !== 'brouillon' && newObject.status !== 'publie') {
+        return res.status(400).json({ error: 'Le status doit être "brouillon" ou "publie"' });
+      }
+
       objects.push(newObject);
       fs.writeFileSync(dataFilePath, JSON.stringify(objects, null, 2));
 
