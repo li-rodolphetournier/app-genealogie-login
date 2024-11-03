@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ImageUploader from '../../../../components/ImageUploader';
+import Image from 'next/image';
 
 type User = {
   login: string;
@@ -23,6 +23,8 @@ export default function EditUser() {
     status: '',
     profileImage: undefined
   });
+  const [error, setError] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,13 +34,14 @@ export default function EditUser() {
           const data = await response.json();
           setUser(data);
           setFormData({
-            email: data.email,
-            description: data.description,
-            status: data.status,
+            email: data.email || '',
+            description: data.description || '',
+            status: data.status || '',
             profileImage: data.profileImage
           });
         }
       } catch (error) {
+        setError('Erreur lors de la récupération des données utilisateur');
         console.error('Erreur:', error);
       }
     };
@@ -46,22 +49,42 @@ export default function EditUser() {
     fetchUser();
   }, [login]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhotoFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
     try {
-      const response = await fetch(`/api/users/${login}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const formDataToSend = new FormData();
+      
+      // Ajouter tous les champs au FormData
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formDataToSend.append(key, value.toString());
+        }
       });
 
-      if (response.ok) {
-        router.push(`/users/${login}`);
+      // Ajouter la photo si elle a été sélectionnée
+      if (photoFile) {
+        formDataToSend.append('profileImage', photoFile);
       }
-    } catch (error) {
-      console.error('Erreur:', error);
+
+      const response = await fetch(`/api/users/${login}`, {
+        method: 'PUT',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour de l\'utilisateur');
+      }
+
+      router.push(`/users/${login}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
   };
 
@@ -70,8 +93,15 @@ export default function EditUser() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Modifier l&apos;utilisateur {login}</h1>
+      
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block mb-1">Email:</label>
@@ -109,33 +139,41 @@ export default function EditUser() {
             required
           >
             <option value="utilisateur">Utilisateur</option>
-            <option value="redacteur">Rédacteur</option>
             <option value="administrateur">Administrateur</option>
           </select>
         </div>
 
         <div>
           <label className="block mb-1">Photo de profil:</label>
-          <ImageUploader onUpload={(imageUrls) => setFormData({ ...formData, profileImage: imageUrls[0] })} type="user" />
           {formData.profileImage && (
-            <img
-              src={formData.profileImage}
-              alt="Preview"
-              className="mt-2 w-32 h-32 object-cover rounded"
-            />
+            <div className="mb-2">
+              <Image
+                src={formData.profileImage}
+                alt="Photo de profil actuelle"
+                width={128}
+                height={128}
+                className="rounded object-cover"
+              />
+            </div>
           )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            className="w-full"
+          />
         </div>
 
         <div className="flex justify-between mt-6">
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             Enregistrer les modifications
           </button>
           <Link
             href={`/users/${login}`}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             Annuler
           </Link>
