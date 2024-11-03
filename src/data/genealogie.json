@@ -115,5 +115,17 @@
     "dateDeces": null,
     "image": "/uploads/genealogie-photo/profile/1730211120392-phoot.PNG",
     "id": "1730210430890"
+  },
+  {
+    "id": "1730651080817",
+    "nom": "grosso",
+    "prenom": "willow",
+    "genre": "homme",
+    "description": "err",
+    "mere": "1730210430890",
+    "pere": "1730209919388",
+    "ordreNaissance": 1,
+    "dateNaissance": "2010-12-12",
+    "dateDeces": null
   }
 ]

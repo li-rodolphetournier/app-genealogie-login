@@ -165,6 +165,13 @@ export default function Genealogie() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!formData.nom && formData.pere) {
+      const pereNode = persons.find(p => p.id === formData.pere);
+      if (pereNode?.nom) {
+        formData.nom = pereNode.nom;
+      }
+    }
+
     const newPerson: Person = {
       ...formData,
       id: Date.now().toString(),
@@ -380,8 +387,8 @@ export default function Genealogie() {
                 <button
                   onClick={() => setIsEditing(false)}
                   className={`px-4 py-2 rounded ${!isEditing
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
                     }`}
                 >
                   Ajouter
@@ -389,8 +396,8 @@ export default function Genealogie() {
                 <button
                   onClick={() => setIsEditing(true)}
                   className={`px-4 py-2 rounded ${isEditing
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
                     }`}
                   disabled={!editingId}
                 >
@@ -420,8 +427,10 @@ export default function Genealogie() {
                   value={formData.nom}
                   onChange={handleInputChange}
                   className="w-full border rounded p-2"
-                  required
                 />
+                <p className="mt-1 text-sm text-gray-500">
+                  Si non renseigné, le nom du père sera utilisé
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Genre</label>
