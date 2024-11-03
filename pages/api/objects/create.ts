@@ -5,9 +5,25 @@ import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false, // Désactiver le bodyParser pour permettre l'upload de fichiers
+    bodyParser: false,
   },
 };
+
+// Définir l'interface pour les photos
+interface Photo {
+  url: string;
+  description: string[];
+}
+
+// Définir l'interface pour l'objet
+interface ObjectData {
+  id: string;
+  nom: string;
+  type: string;
+  status: 'brouillon' | 'publie';
+  utilisateur: string;
+  photos: Photo[];
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -24,14 +40,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const [fields, files] = await form.parse(req);
     
-    // Créer l'objet
-    const objectData = {
+    // Créer l'objet avec le type correct
+    const objectData: ObjectData = {
+      id: Date.now().toString(),
       nom: fields.nom?.[0] || '',
       type: fields.type?.[0] || '',
-      status: fields.status?.[0] || 'brouillon',
+      status: (fields.status?.[0] as 'brouillon' | 'publie') || 'brouillon',
       utilisateur: fields.utilisateur?.[0] || '',
-      id: Date.now().toString(),
-      photos: [],
+      photos: [], // Initialiser avec un tableau vide
     };
 
     // Gérer les photos si présentes

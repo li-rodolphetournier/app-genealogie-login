@@ -23,7 +23,7 @@ type Person = {
 };
 
 // Modifié pour être compatible avec RawNodeDatum
-type CustomNodeDatum = {
+interface CustomNodeDatum {
   name: string;
   attributes: {
     id: string;
@@ -35,7 +35,7 @@ type CustomNodeDatum = {
     image: string | null;
   };
   children?: CustomNodeDatum[];
-};
+}
 
 type RenderCustomNodeProps = {
   nodeDatum: CustomNodeDatum;
@@ -583,8 +583,8 @@ export default function Genealogie() {
           {treeData ? (
             <div className="w-full h-full bg-white">
               <Tree
-                data={treeData as any}
-                renderCustomNodeElement={(rd) => (
+                data={treeData as CustomNodeDatum}
+                renderCustomNodeElement={(rd: { nodeDatum: CustomNodeDatum }) => (
                   <g onClick={() => {
                     handleNodeClick(rd.nodeDatum);
                     setIsMenuOpen(true);
