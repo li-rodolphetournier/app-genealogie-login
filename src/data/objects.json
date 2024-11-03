@@ -3,7 +3,7 @@
     "nom": "biblot",
     "type": "ameublement",
     "utilisateur": "qsfqsfq",
-    "status": "brouillon",
+    "status": "publie",
     "photos": [
       {
         "url": "/uploads/objects/f8c6589149ed2cb2169b0a11a.jpg",
@@ -115,14 +115,57 @@
     "type": "meuble",
     "utilisateur": "Kenshin",
     "status": "publie",
+    "photos": [],
+    "id": "1730071566194"
+  },
+  {
+    "nom": "Trex",
+    "type": "dinosaure",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730647532368"
+  },
+  {
+    "nom": "qzrg",
+    "type": "rgzrez",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730647632907"
+  },
+  {
+    "nom": "qzrg",
+    "type": "rgzrez",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730647638893"
+  },
+  {
+    "nom": "plouf",
+    "type": "plouf",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730647836740"
+  },
+  {
+    "nom": "plouf",
+    "type": "plouf",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730647863421"
+  },
+  {
+    "nom": "plouf",
+    "type": "plouf",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "id": "1730648087307",
     "photos": [
       {
-        "url": "/uploads/objects/1730071558436-756957745.png",
+        "url": "/uploads/objects/1730648087302-ut7lwjjb3.png",
         "description": [
-          "stark"
+          ""
         ]
       }
-    ],
-    "id": "1730071566194"
+    ]
   }
 ]
