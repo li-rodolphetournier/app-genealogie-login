@@ -82,7 +82,7 @@ export default function CreateObject() {
             <div className="space-y-6">
               <div>
                 <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
-                  Nom
+                  Nom de l'objet
                 </label>
                 <input
                   type="text"
@@ -91,12 +91,13 @@ export default function CreateObject() {
                   onChange={(e) => setNom(e.target.value)}
                   required
                   className="mt-1 block w-full"
+                  placeholder="Saisissez le nom de l'objet"
                 />
               </div>
 
               <div>
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                  Type
+                  Catégorie
                 </label>
                 <input
                   type="text"
@@ -105,12 +106,13 @@ export default function CreateObject() {
                   onChange={(e) => setType(e.target.value)}
                   required
                   className="mt-1 block w-full"
+                  placeholder="Saisissez la catégorie"
                 />
               </div>
 
               <div>
                 <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                  Statut
+                  État de publication
                 </label>
                 <select
                   id="status"
@@ -138,7 +140,13 @@ export default function CreateObject() {
                     file:text-sm file:font-semibold
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100"
+                  lang="fr"
+                  aria-label="Sélectionner des photos"
+                  title="Cliquez pour ajouter des photos"
                 />
+                <p className="mt-1 text-sm text-gray-500">
+                  Formats acceptés : JPG, PNG, GIF
+                </p>
               </div>
 
               <div className="flex justify-end space-x-4">
@@ -153,7 +161,7 @@ export default function CreateObject() {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  Créer
+                  Créer l'objet
                 </button>
               </div>
             </div>
