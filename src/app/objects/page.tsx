@@ -341,7 +341,7 @@ export default function ObjectsList() {
                     className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
                   >
                     <div className="aspect-w-16 aspect-h-9">
-                      {object.photos && object.photos.length > 0 ? (
+                      {object.photos && object.photos.length > 0 && object.photos[0].url ? (
                         <img
                           src={object.photos[0].url}
                           alt={object.photos[0].description?.[0] || `Photo de ${object.nom}`}
@@ -390,7 +390,7 @@ export default function ObjectsList() {
                   <li key={object.id} className="p-4 hover:bg-gray-50">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0 w-16 h-16">
-                        {object.photos && object.photos.length > 0 ? (
+                        {object.photos && object.photos.length > 0 && object.photos[0].url ? (
                           <img
                             src={object.photos[0].url}
                             alt={object.photos[0].description?.[0] || `Photo de ${object.nom}`}

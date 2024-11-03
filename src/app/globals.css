@@ -90,3 +90,22 @@ label {
 *:focus-visible {
   @apply outline-none ring-2 ring-blue-500 ring-opacity-50;
 }
+
+/* Ajoutez ce style pour le composant de statut */
+.status-badge {
+  width: fit-content;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-draft {
+  background-color: #ef4444;
+  color: white;
+}
+
+.status-published {
+  background-color: #22c55e;
+  color: white;
+}

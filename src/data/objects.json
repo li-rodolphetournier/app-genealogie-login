@@ -6,12 +6,6 @@
     "status": "brouillon",
     "photos": [
       {
-        "url": "/uploads/objects/f8c6589149ed2cb2169b0a119.png",
-        "description": [
-          "bat"
-        ]
-      },
-      {
         "url": "/uploads/objects/f8c6589149ed2cb2169b0a11a.jpg",
         "description": [
           "chat"
@@ -60,10 +54,10 @@
     "id": "1730064851191"
   },
   {
-    "nom": "best",
-    "type": "rgerg",
+    "nom": "best of the cats",
+    "type": "chat",
     "utilisateur": "Kenshin",
-    "status": "brouillon",
+    "status": "publie",
     "photos": [
       {
         "url": "/uploads/objects/1730064885663-665635956.png",
@@ -84,7 +78,7 @@
     "nom": "nain",
     "type": "etre",
     "utilisateur": "Kenshin",
-    "status": "publie",
+    "status": "brouillon",
     "photos": [
       {
         "url": "/uploads/objects/1730065388367-35791242.png",
@@ -102,7 +96,7 @@
     "id": "1730065408424"
   },
   {
-    "nom": "coffre",
+    "nom": "coffre fort",
     "type": "coffre",
     "utilisateur": "Kenshin",
     "status": "brouillon",
@@ -110,7 +104,7 @@
       {
         "url": "/uploads/objects/1730067747996-818075609.png",
         "description": [
-          "batman"
+          "chauvesouris"
         ]
       }
     ],

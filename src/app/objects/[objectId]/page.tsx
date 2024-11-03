@@ -150,9 +150,9 @@ export default function ObjectDetail({ params }: PageProps): JSX.Element {
             <p className="text-sm text-gray-500">
               Créé par {object.utilisateur}
             </p>
-            <p className={`text-sm font-medium ${getStatusStyle(object?.status || '')}`}>
-              Statut: {object?.status === 'publie' ? 'Publié' : 'Brouillon'}
-            </p>
+            <div className={`status-badge ${object.status === 'brouillon' ? 'status-draft' : 'status-published'}`}>
+              {object.status}
+            </div>
           </div>
         </div>
       </div>

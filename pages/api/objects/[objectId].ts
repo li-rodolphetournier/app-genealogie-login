@@ -20,26 +20,47 @@ interface ObjectData {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { objectId } = req.query;
+  const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
 
-  if (req.method === 'GET') {
-    try {
-      const dataFilePath = path.join(process.cwd(), 'src/data/objects.json');
-      const jsonData = fs.readFileSync(dataFilePath, 'utf8');
-      const objects = JSON.parse(jsonData) as ObjectData[];
+  try {
+    // Lecture du fichier JSON
+    const jsonData = fs.readFileSync(objectsPath, 'utf8');
+    const objects = JSON.parse(jsonData);
 
-      const object = objects.find((obj: ObjectData) => obj.id === objectId);
+    switch (req.method) {
+      case 'GET':
+        const object = objects.find((obj: any) => obj.id === objectId);
+        if (!object) {
+          return res.status(404).json({ message: 'Objet non trouvé' });
+        }
+        return res.status(200).json(object);
 
-      if (!object) {
-        return res.status(404).json({ message: 'Object not found' });
-      }
+      case 'PUT':
+        const updatedObjectIndex = objects.findIndex((obj: any) => obj.id === objectId);
+        if (updatedObjectIndex === -1) {
+          return res.status(404).json({ message: 'Objet non trouvé' });
+        }
 
-      return res.status(200).json(object);
-    } catch (error) {
-      console.error('Error:', error);
-      return res.status(500).json({ message: 'Error retrieving object' });
+        // Mise à jour de l'objet en conservant les champs non modifiés
+        const updatedObject = {
+          ...objects[updatedObjectIndex],
+          ...req.body,
+          id: objectId // Garantit que l'ID ne change pas
+        };
+
+        objects[updatedObjectIndex] = updatedObject;
+
+        // Écriture des modifications dans le fichier
+        fs.writeFileSync(objectsPath, JSON.stringify(objects, null, 2));
+
+        return res.status(200).json(updatedObject);
+
+      default:
+        res.setHeader('Allow', ['GET', 'PUT']);
+        return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
     }
+  } catch (error) {
+    console.error('Error handling object:', error);
+    return res.status(500).json({ message: 'Erreur serveur interne' });
   }
-
-  res.setHeader('Allow', ['GET']);
-  return res.status(405).end(`Method ${req.method} Not Allowed`);
 }

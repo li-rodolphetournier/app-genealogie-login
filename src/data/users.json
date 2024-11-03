@@ -46,5 +46,12 @@
     "description": "",
     "profileImage": "/uploads/user-photo/profile/1730211035641-finance all hands juin.PNG",
     "status": "redacteur"
+  },
+  {
+    "id": "1730642802930",
+    "login": "omer",
+    "password": "123456",
+    "status": "utilisateur",
+    "email": "omer@free.fr"
   }
 ]
