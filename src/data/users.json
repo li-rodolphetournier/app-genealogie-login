@@ -4,65 +4,23 @@
     "password": "OctobreHalloween2024",
     "email": "monsieur@example.com",
     "description": "je suis l'admin de ce site",
-    "profileImage": "/uploads/objects/1730067298076-121711802.png",
+    "profileImage": "/uploads/users/1730653493489-t35za28um.jpg",
     "status": "administrateur"
   },
   {
     "login": "redacteur",
     "password": "OctobreHalloween2024",
     "email": "user2@example.com",
-    "description": "Je suis le deuxième utilisateur.",
-    "profileImage": "",
+    "description": "Je suis le redacteur",
+    "profileImage": "/uploads/users/1730653504698-odi8qjsy7.png",
     "status": "redacteur"
-  },
-  {
-    "login": "Kenshin",
-    "password": "1234",
-    "email": "kenshin@gmail.com",
-    "description": "Je suis kenshin le vagabon.",
-    "profileImage": "/uploads/objects/1730155120336-561516700.png",
-    "status": "administrateur"
   },
   {
     "login": "utilisateur",
     "password": "OctobreHalloween2024",
     "email": "genie@free.fr",
-    "description": "erzer",
-    "profileImage": "/uploads/objects/1730066756603-495996145.PNG",
+    "description": "Je suis le 1 utilisateur",
+    "profileImage": "",
     "status": "utilisateur"
-  },
-  {
-    "login": "julie",
-    "password": "123456",
-    "email": "julie@gmail.com",
-    "description": "",
-    "profileImage": "/uploads/user-photo/profile/1730211004170-phoot.PNG",
-    "status": "utilisateur"
-  },
-  {
-    "login": "glio",
-    "password": "123456",
-    "email": "glio@free.fr",
-    "description": "",
-    "profileImage": "/uploads/user-photo/profile/1730211035641-finance all hands juin.PNG",
-    "status": "redacteur"
-  },
-  {
-    "id": "1730642802930",
-    "login": "omer",
-    "password": "123456",
-    "status": "utilisateur",
-    "email": "omerS@free.fr",
-    "description": "un jour seulement",
-    "profileImage": "/uploads/users/1730649624685-cqzizpik1.PNG"
-  },
-  {
-    "id": "1730648457409",
-    "login": "a effacer",
-    "password": "123456",
-    "status": "utilisateur",
-    "email": "changment@free.fr",
-    "description": "dsqfqsdfqsdf",
-    "profileImage": "/uploads/users/1730650016203-7suyo3apr.webp"
   }
 ]

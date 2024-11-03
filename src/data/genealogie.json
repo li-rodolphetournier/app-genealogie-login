@@ -113,7 +113,7 @@
     "ordreNaissance": 1,
     "dateNaissance": "2024-10-01",
     "dateDeces": null,
-    "image": "/uploads/genealogie-photo/profile/1730211120392-phoot.PNG",
+    "image": null,
     "id": "1730210430890"
   },
   {
@@ -126,6 +126,7 @@
     "pere": "1730209919388",
     "ordreNaissance": 1,
     "dateNaissance": "2010-12-12",
-    "dateDeces": null
+    "dateDeces": null,
+    "image": null
   }
 ]
