@@ -25,6 +25,12 @@ interface ObjectData {
   photos: Photo[];
 }
 
+// Interface pour le fichier uploadé
+interface UploadedFile {
+  filepath: string;
+  // autres propriétés de formidable si nécessaire
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée' });
@@ -53,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Gérer les photos si présentes
     if (files.photos) {
       const photos = Array.isArray(files.photos) ? files.photos : [files.photos];
-      objectData.photos = photos.map(file => ({
+      objectData.photos = photos.map((file: UploadedFile) => ({
         url: `/uploads/objects/${path.basename(file.filepath)}`,
         description: ['']
       }));
