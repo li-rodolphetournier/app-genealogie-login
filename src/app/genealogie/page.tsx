@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Tree from 'react-d3-tree';
+import { RawNodeDatum } from 'react-d3-tree';
 import FamilyTreeNode from '../../components/FamilyTreeNode';
 import ImageUploader from '../../components/ImageUploader';
 import genealogieData from '../../data/genealogie.json';
@@ -23,7 +24,7 @@ type Person = {
 };
 
 // Modifié pour être compatible avec RawNodeDatum
-interface CustomNodeDatum {
+interface CustomNodeDatum extends RawNodeDatum {
   name: string;
   attributes: {
     id: string;
@@ -583,13 +584,13 @@ export default function Genealogie() {
           {treeData ? (
             <div className="w-full h-full bg-white">
               <Tree
-                data={treeData as CustomNodeDatum}
-                renderCustomNodeElement={(rd: { nodeDatum: CustomNodeDatum }) => (
+                data={treeData as RawNodeDatum}
+                renderCustomNodeElement={(rd) => (
                   <g onClick={() => {
-                    handleNodeClick(rd.nodeDatum);
+                    handleNodeClick(rd.nodeDatum as CustomNodeDatum);
                     setIsMenuOpen(true);
                   }}>
-                    <FamilyTreeNode nodeDatum={rd.nodeDatum} />
+                    <FamilyTreeNode nodeDatum={rd.nodeDatum as CustomNodeDatum} />
                   </g>
                 )}
                 orientation="vertical"
