@@ -11,7 +11,8 @@ module.exports = {
     '@typescript-eslint/ban-types': 'off',
     '@next/next/no-img-element': 'off',
     'react/no-unescaped-entities': 'off',
-    'react-hooks/exhaustive-deps': 'off'
+    'react-hooks/exhaustive-deps': 'off',
+    'prefer-const': 'off'
   },
   ignorePatterns: [
     'pages/api/login.ts',

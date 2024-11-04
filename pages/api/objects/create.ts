@@ -28,7 +28,6 @@ interface ObjectData {
 // Interface pour le fichier uploadé
 interface UploadedFile {
   filepath: string;
-  // autres propriétés de formidable si nécessaire
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -46,17 +45,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const [fields, files] = await form.parse(req);
     
-    // Créer l'objet avec le type correct
     const objectData: ObjectData = {
       id: Date.now().toString(),
       nom: fields.nom?.[0] || '',
       type: fields.type?.[0] || '',
       status: (fields.status?.[0] as 'brouillon' | 'publie') || 'brouillon',
       utilisateur: fields.utilisateur?.[0] || '',
-      photos: [], // Initialiser avec un tableau vide
+      photos: [],
     };
 
-    // Gérer les photos si présentes
     if (files.photos) {
       const photos = Array.isArray(files.photos) ? files.photos : [files.photos];
       objectData.photos = photos.map((file: UploadedFile) => ({
@@ -65,7 +62,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }));
     }
 
-    // Lire et mettre à jour le fichier JSON
     const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
     const jsonData = fs.readFileSync(objectsPath, 'utf8');
     const objects = JSON.parse(jsonData);

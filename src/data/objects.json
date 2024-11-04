@@ -28,5 +28,13 @@
         ]
       }
     ]
+  },
+  {
+    "id": "1730740736590",
+    "nom": "bureau",
+    "type": "Meuble",
+    "status": "brouillon",
+    "utilisateur": "admin",
+    "photos": []
   }
 ]
