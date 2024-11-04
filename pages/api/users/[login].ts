@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ...users[userIndex],
           ...Object.keys(fields).reduce((acc, key) => ({
             ...acc,
-            [key]: fields[key][0]
+            [key]: fields[key] && fields[key].length > 0 ? fields[key][0] : users[userIndex][key]
           }), {}),
           login
         };
