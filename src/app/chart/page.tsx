@@ -4,16 +4,15 @@ import { useEffect, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
+import Link from 'next/link';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Interface pour les données d'objet
 interface ObjectData {
   type: string;
   status: string;
 }
 
-// Interface pour les données du graphique
 interface ChartDataType {
   labels: string[];
   datasets: {
@@ -26,6 +25,8 @@ interface ChartDataType {
 
 export default function ChartPage() {
   const [chartData, setChartData] = useState<ChartDataType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -36,40 +37,41 @@ export default function ChartPage() {
       const response = await fetch('/api/objects');
       const objects: ObjectData[] = await response.json();
 
-      // Compter les objets par type
       const typeCount = objects.reduce((acc, obj) => {
         acc[obj.type] = (acc[obj.type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      // Préparer les données pour le graphique
       const data: ChartDataType = {
         labels: Object.keys(typeCount),
         datasets: [
           {
             data: Object.values(typeCount),
             backgroundColor: [
-              'rgba(255, 99, 132, 0.2)',
-              'rgba(54, 162, 235, 0.2)',
-              'rgba(255, 206, 86, 0.2)',
-              'rgba(75, 192, 192, 0.2)',
-              'rgba(153, 102, 255, 0.2)',
+              'rgba(59, 130, 246, 0.5)', // blue-500
+              'rgba(16, 185, 129, 0.5)', // green-500
+              'rgba(239, 68, 68, 0.5)',  // red-500
+              'rgba(245, 158, 11, 0.5)', // yellow-500
+              'rgba(139, 92, 246, 0.5)', // purple-500
             ],
             borderColor: [
-              'rgba(255, 99, 132, 1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(255, 206, 86, 1)',
-              'rgba(75, 192, 192, 1)',
-              'rgba(153, 102, 255, 1)',
+              'rgb(59, 130, 246)',  // blue-500
+              'rgb(16, 185, 129)',  // green-500
+              'rgb(239, 68, 68)',   // red-500
+              'rgb(245, 158, 11)',  // yellow-500
+              'rgb(139, 92, 246)',  // purple-500
             ],
-            borderWidth: 1,
+            borderWidth: 2,
           },
         ],
       };
 
       setChartData(data);
     } catch (error) {
-      console.error('Erreur lors de la récupération des données:', error);
+      setError('Erreur lors de la récupération des données');
+      console.error('Erreur:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,31 +81,84 @@ export default function ChartPage() {
     plugins: {
       legend: {
         display: true,
+        position: 'bottom',
+        labels: {
+          font: {
+            size: 14,
+          },
+          padding: 20,
+          color: '#374151', // text-gray-700
+        },
       },
       tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: {
+          size: 14,
+          weight: 'bold',
+        },
+        bodyFont: {
+          size: 14,
+        },
         callbacks: {
           label: function(tooltipItem) {
-            return `${tooltipItem.label}: ${tooltipItem.formattedValue}`;
+            return `${tooltipItem.label}: ${tooltipItem.formattedValue} objets`;
           }
         }
       }
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="sr-only">Chargement des statistiques...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold mb-6">Statistiques des objets</h1>
-        <div className="bg-white rounded-lg shadow px-6 py-8">
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Répartition par type</h2>
-            <div className="h-[400px] relative">
-              {chartData && (
-                <Doughnut data={chartData} options={options} />
-              )}
+        {/* En-tête avec bouton retour */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Statistiques des objets
+          </h1>
+          <Link
+            href="/accueil"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour à l&apos;accueil
+          </Link>
+        </div>
+
+        {error ? (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4" role="alert">
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow px-6 py-8">
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4" id="chart-title">
+                Répartition des objets par type
+              </h2>
+              <div className="h-[400px] relative" aria-labelledby="chart-title">
+                {chartData && (
+                  <Doughnut 
+                    data={chartData} 
+                    options={options}
+                    aria-label="Graphique en anneau montrant la répartition des objets par type"
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
