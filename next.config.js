@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['react-d3-tree'],
   images: {
     remotePatterns: [
       {

@@ -2,7 +2,19 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ObjectData } from '@/types/objects';
+import Image from 'next/image';
+
+interface ObjectData {
+  id: string;
+  nom: string;
+  type: string;
+  status: 'publie' | 'brouillon';
+  utilisateur: string;
+  photos?: {
+    url: string;
+    description: string[];
+  }[];
+}
 
 type FilterType = 'tous' | 'nom' | 'type' | 'utilisateur' | 'status';
 type SortType = 'nom' | 'type' | 'utilisateur' | 'status';
@@ -19,14 +31,14 @@ export default function ObjectsList() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showFilters, setShowFilters] = useState(false);
   const [userStatus, setUserStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchObjects = async () => {
       try {
         const response = await fetch('/api/objects');
         if (response.ok) {
-          const data = await response.json();
-          setObjects(data);
+          const data: ObjectData[] = await response.json();
           
           // Récupérer le statut de l'utilisateur
           const currentUser = localStorage.getItem('currentUser');
@@ -38,8 +50,8 @@ export default function ObjectsList() {
           }
 
           // Filtrer les objets selon le statut de l'utilisateur
-          const filteredData = userStatus === 'utilisateur' 
-            ? data.filter(obj => obj.status === 'publie')
+          const filteredData = userStatus === 'utilisateur'
+            ? data.filter((obj: ObjectData) => obj.status === 'publie')
             : data;
 
           setFilteredObjects(filteredData);

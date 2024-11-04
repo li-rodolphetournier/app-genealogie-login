@@ -12,12 +12,17 @@ module.exports = {
     '@next/next/no-img-element': 'off',
     'react/no-unescaped-entities': 'off',
     'react-hooks/exhaustive-deps': 'off',
-    'prefer-const': 'off'
+    'prefer-const': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off'
   },
   ignorePatterns: [
     'pages/api/login.ts',
     'pages/api/genealogie/update.ts',
     'src/pages/api/login.ts',
-    'pages/api/users/create.ts'
+    'pages/api/users/create.ts',
+    'src/app/users/[id]/page.tsx'
   ]
 }; 

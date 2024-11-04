@@ -24,16 +24,16 @@ type Person = {
 };
 
 // Modifié pour être compatible avec RawNodeDatum
-interface CustomNodeDatum extends RawNodeDatum {
+interface CustomNodeDatum extends Omit<RawNodeDatum, 'attributes'> {
   name: string;
   attributes: {
     id: string;
     genre: 'homme' | 'femme';
     description: string;
     dateNaissance: string;
-    dateDeces: string | null;
+    dateDeces: string | '';
     ordreNaissance: number;
-    image: string | null;
+    image: string | '';
   };
   children?: CustomNodeDatum[];
 }
@@ -112,9 +112,9 @@ export default function Genealogie() {
             genre: person.genre,
             description: person.description,
             dateNaissance: person.dateNaissance,
-            dateDeces: person.dateDeces,
+            dateDeces: person.dateDeces || '',
             ordreNaissance: person.ordreNaissance,
-            image: person.image
+            image: person.image || ''
           },
           children: childNodes.length > 0 ? childNodes : undefined
         };
@@ -134,9 +134,9 @@ export default function Genealogie() {
           genre: 'homme',
           description: 'Racine',
           dateNaissance: '',
-          dateDeces: null,
+          dateDeces: '',
           ordreNaissance: 0,
-          image: null
+          image: ''
         },
         children: treeDataResult
       });
@@ -584,13 +584,13 @@ export default function Genealogie() {
           {treeData ? (
             <div className="w-full h-full bg-white">
               <Tree
-                data={treeData as RawNodeDatum}
+                data={treeData as unknown as RawNodeDatum}
                 renderCustomNodeElement={(rd) => (
                   <g onClick={() => {
-                    handleNodeClick(rd.nodeDatum as CustomNodeDatum);
+                    handleNodeClick(rd.nodeDatum as unknown as CustomNodeDatum);
                     setIsMenuOpen(true);
                   }}>
-                    <FamilyTreeNode nodeDatum={rd.nodeDatum as CustomNodeDatum} />
+                    <FamilyTreeNode nodeDatum={rd.nodeDatum as unknown as CustomNodeDatum} />
                   </g>
                 )}
                 orientation="vertical"

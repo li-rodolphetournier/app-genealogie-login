@@ -84,7 +84,7 @@ export default function EditObject({ params }: PageProps) {
       
       if (result.message === 'Photo supprimée avec succès') {
         setObject(prev => {
-          if (!prev) return prev;
+          if (!prev || !prev.photos) return prev;
           const newPhotos = [...prev.photos];
           newPhotos.splice(photoIndex, 1);
           return { ...prev, photos: newPhotos };
@@ -99,7 +99,7 @@ export default function EditObject({ params }: PageProps) {
     if (!object?.photos) return;
 
     setObject(prev => {
-      if (!prev) return prev;
+      if (!prev || !prev.photos) return prev;
       const newPhotos = [...prev.photos];
       newPhotos[index] = {
         ...newPhotos[index],
@@ -177,7 +177,7 @@ export default function EditObject({ params }: PageProps) {
                 <select
                   id="status"
                   value={object.status}
-                  onChange={(e) => setObject({ ...object, status: e.target.value })}
+                  onChange={(e) => setObject({ ...object, status: e.target.value as 'brouillon' | 'publie' })}
                   className="mt-1 block w-full"
                 >
                   <option value="brouillon">Brouillon</option>

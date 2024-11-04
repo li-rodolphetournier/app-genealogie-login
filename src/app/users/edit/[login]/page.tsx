@@ -14,7 +14,8 @@ type User = {
 };
 
 export default function EditUser() {
-  const { login } = useParams();
+  const params = useParams();
+  const login = params?.login as string;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<Omit<User, 'login'>>({

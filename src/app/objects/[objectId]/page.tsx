@@ -98,7 +98,7 @@ export default function ObjectDetail({ params }: PageProps): JSX.Element {
               <p className="text-sm text-gray-500">Type: {object?.type}</p>
             </div>
             <div className="flex space-x-4">
-              {user && (user.status === 'administrateur' || user.login === object?.utilisateur) && (
+              {user && object && (user.status === 'administrateur' || user.login === object.utilisateur) && (
                 <Link 
                   href={`/objects/edit/${objectId}`}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -116,7 +116,7 @@ export default function ObjectDetail({ params }: PageProps): JSX.Element {
             </div>
           </div>
 
-          {object.description && (
+          {object?.description && (
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-2">Description</h2>
               <p className="text-gray-700">{object.description}</p>
@@ -127,33 +127,32 @@ export default function ObjectDetail({ params }: PageProps): JSX.Element {
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4">Photos</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {object.photos.map((photo, index) => {
-                  console.log('Photo URL:', photo.url); // Debug log
-                  return (
-                    <div key={index} className="relative aspect-square">
-                      <Image
-                        src={photo.url}
-                        alt={`Photo ${index + 1} de ${object.nom} - ${photo.description.join(', ')}`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover rounded"
-                        onError={(e) => console.error('Image load error:', e)}
-                      />
-                    </div>
-                  );
-                })}
+                {object.photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-square">
+                    <Image
+                      src={photo.url}
+                      alt={`Photo ${index + 1} de ${object.nom} - ${photo.description.join(', ')}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover rounded"
+                      onError={(e) => console.error('Image load error:', e)}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-500">
-              Créé par {object.utilisateur}
-            </p>
-            <div className={`status-badge ${object.status === 'brouillon' ? 'status-draft' : 'status-published'}`}>
-              {object.status}
+          {object && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500">
+                Créé par {object.utilisateur}
+              </p>
+              <div className={`status-badge ${object.status === 'brouillon' ? 'status-draft' : 'status-published'}`}>
+                {object.status}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
