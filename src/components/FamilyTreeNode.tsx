@@ -20,8 +20,8 @@ const FamilyTreeNode: React.FC<FamilyTreeNodeProps> = ({ nodeDatum }) => {
   // Image par défaut selon le genre
   const getDefaultImage = (genre?: 'homme' | 'femme') => {
     return genre === 'femme' 
-      ? '/uploads/genealogie-photo/profile/default-femme.png'
-      : '/uploads/genealogie-photo/profile/default-homme.png';
+      ? '/uploads/genealogie-photo/profile/female-avatar.png' 
+      : '/uploads/genealogie-photo/profile/male-avatar.png';
   };
 
   const getImage = () => {
@@ -54,7 +54,7 @@ const FamilyTreeNode: React.FC<FamilyTreeNodeProps> = ({ nodeDatum }) => {
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.onerror = null;
-          target.href.baseVal = getDefaultImage(nodeDatum.attributes?.genre);
+          target.setAttribute('href', getDefaultImage(nodeDatum.attributes?.genre));
         }}
       />
 
