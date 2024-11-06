@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "login": "admin",
+    "password": "OctobreHalloween2024",
+    "email": "monsieur@example.com",
+    "description": "je suis l'admin de ce site",
+    "profileImage": "/uploads/users/1730653493489-t35za28um.jpg",
+    "status": "administrateur"
+  },
+  {
+    "login": "redacteur",
+    "password": "OctobreHalloween2024",
+    "email": "user2@example.com",
+    "description": "Je suis le redacteur",
+    "profileImage": "/uploads/users/1730653504698-odi8qjsy7.png",
+    "status": "redacteur"
+  },
+  {
+    "login": "utilisateur",
+    "password": "OctobreHalloween2024",
+    "email": "genie@free.fr",
+    "description": "Je suis le 1 utilisateur",
+    "profileImage": "",
+    "status": "utilisateur"
+  }
+]
