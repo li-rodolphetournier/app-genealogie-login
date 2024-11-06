@@ -6,6 +6,7 @@ import path from 'path';
 export const config = {
   api: {
     bodyParser: false,
+    maxDuration: 30,
   },
 };
 
@@ -29,15 +30,14 @@ interface FormFields {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Méthode non autorisée' });
+    return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
     const form = formidable({
-      uploadDir: path.join(process.cwd(), 'public/uploads/objects'),
+      uploadDir: '/tmp',
       keepExtensions: true,
-      filename: (name, ext) => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${ext}`,
-      multiples: true,
+      maxFileSize: 5 * 1024 * 1024,
     });
 
     const [fields, files] = await form.parse(req);
@@ -67,7 +67,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json(objectData);
   } catch (error) {
-    console.error('Error creating object:', error);
-    return res.status(500).json({ message: 'Erreur lors de la création de l\'objet' });
+    console.error('Error:', error);
+    return res.status(500).json({ 
+      message: 'Internal Server Error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
