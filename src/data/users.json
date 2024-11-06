@@ -22,14 +22,5 @@
     "description": "Je suis le 1 utilisateur",
     "profileImage": "",
     "status": "utilisateur"
-  },
-  {
-    "id": "1730885271190",
-    "login": "test",
-    "password": "123456789",
-    "status": "utilisateur",
-    "email": "test@free.Fr",
-    "description": "",
-    "profileImage": "/uploads/users/1730885354548-xpzsxan0b.png"
   }
 ]
