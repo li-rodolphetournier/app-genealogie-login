@@ -5,8 +5,11 @@ import path from 'path';
 interface User {
   id: string;
   login: string;
+  email: string;
   password: string;
   status: 'administrateur' | 'utilisateur';
+  profileImage?: string;
+  description?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

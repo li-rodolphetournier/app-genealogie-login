@@ -1,31 +1,17 @@
-import formidable from 'formidable';
-import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
+import fs from 'fs';
 import path from 'path';
+import formidable from 'formidable';
 
 export const config = {
   api: {
     bodyParser: false,
-    maxDuration: 30,
   },
 };
 
-interface Photo {
+interface ImageData {
   url: string;
-  description: string[];
-}
-
-interface ObjectData {
-  id: string;
-  nom: string;
-  type: string;
-  status: 'brouillon' | 'publie';
-  utilisateur: string;
-  photos: Photo[];
-}
-
-interface FormFields {
-  [key: string]: string[] | undefined;
+  description: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -33,44 +19,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  try {
-    const form = formidable({
-      uploadDir: '/tmp',
-      keepExtensions: true,
-      maxFileSize: 5 * 1024 * 1024,
-    });
+  const uploadDir = path.join(process.cwd(), 'public/uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
 
-    const [fields, files] = await form.parse(req);
-    
-    const objectData: ObjectData = {
-      id: Date.now().toString(),
-      nom: fields.nom?.[0] || '',
-      type: fields.type?.[0] || '',
-      status: (fields.status?.[0] as 'brouillon' | 'publie') || 'brouillon',
-      utilisateur: fields.utilisateur?.[0] || '',
-      photos: [],
-    };
+  const form = formidable({
+    uploadDir,
+    keepExtensions: true,
+    multiples: true,
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+  });
 
-    if (files.image) {
-      const images = Array.isArray(files.image) ? files.image : [files.image];
-      objectData.photos = images.map((file: formidable.File, index: number) => ({
-        url: `/uploads/${file.newFilename}`,
-        description: [(fields[`imageDescription${index}`]?.[0] || '').toString()]
-      }));
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error('Erreur lors du traitement du formulaire:', err);
+      return res.status(500).json({ message: `Erreur lors du traitement du formulaire: ${err.message}` });
     }
 
-    const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-    const jsonData = fs.readFileSync(objectsPath, 'utf8');
-    const objects = JSON.parse(jsonData);
-    objects.push(objectData);
-    fs.writeFileSync(objectsPath, JSON.stringify(objects, null, 2));
+    try {
+      let images: ImageData[] = [];
+      if (Array.isArray(files.image)) {
+        images = files.image.map((file: formidable.File, index: number) => ({
+          url: `/uploads/${file.newFilename}`,
+          description: fields[`imageDescription${index}`]?.[0] || '' // Utilisation de l'opérateur optionnel et accès au premier élément
+        }));
+      } else if (files.image) {
+        images = [{
+          url: `/uploads/${(files.image as formidable.File).newFilename}`,
+          description: Array.isArray(fields.imageDescription0) ? fields.imageDescription0[0] : (fields.imageDescription0 || '') // Gestion des deux cas possibles
+        }];
+      }
 
-    return res.status(200).json(objectData);
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(500).json({ 
-      message: 'Internal Server Error',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
+      const newObject = {
+        id: Date.now().toString(),
+        nom: Array.isArray(fields.nom) ? fields.nom[0] : fields.nom || '',
+        type: Array.isArray(fields.type) ? fields.type[0] : fields.type || '',
+        utilisateur: Array.isArray(fields.utilisateur) ? fields.utilisateur[0] : fields.utilisateur || '',
+        description: Array.isArray(fields.description) ? fields.description[0] : fields.description || '',
+        status: Array.isArray(fields.status) ? fields.status[0] : fields.status || 'brouillon',
+        images: images,
+      };
+
+      const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
+      const jsonData = fs.readFileSync(objectsPath, 'utf8');
+      const objects = JSON.parse(jsonData);
+      objects.push(newObject);
+      fs.writeFileSync(objectsPath, JSON.stringify(objects, null, 2));
+
+      return res.status(200).json({ message: 'Objet ajouté avec succès', object: newObject });
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de l\'objet:', error);
+      res.status(500).json({ message: `Erreur lors de l'ajout de l'objet: ${error instanceof Error ? error.message : 'Erreur inconnue'}` });
+    }
+  });
 }
