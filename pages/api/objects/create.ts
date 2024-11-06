@@ -4,16 +4,27 @@ import fs from 'fs';
 import path from 'path';
 import { getTempDir } from '@/utils/tempPath';
 
-// Configuration pour désactiver le body parser par défaut
 export const config = {
   api: {
     bodyParser: false,
-    // Augmenter le timeout
     responseLimit: false,
-    // Augmenter la taille maximale
     maxDuration: 30,
   },
 };
+
+interface Photo {
+  url: string;
+  description: string[];
+}
+
+interface ObjectData {
+  id: string;
+  nom: string;
+  type: string;
+  status: 'brouillon' | 'publie';
+  utilisateur: string;
+  photos: Photo[];
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,16 +32,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Utiliser le dossier /tmp pour Vercel
     const uploadDir = getTempDir();
     const form = formidable({
       uploadDir,
       keepExtensions: true,
       maxFiles: 5,
-      maxFileSize: 5 * 1024 * 1024, // 5MB
+      maxFileSize: 5 * 1024 * 1024,
     });
 
-    // Parser le formulaire
     const [fields, files] = await new Promise<[formidable.Fields, formidable.Files]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) reject(err);
@@ -38,8 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     });
 
-    // Créer l'objet
-    const objectData = {
+    const objectData: ObjectData = {
       id: Date.now().toString(),
       nom: fields.nom?.[0] || '',
       type: fields.type?.[0] || '',
@@ -48,21 +56,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       photos: [],
     };
 
-    // Gérer les photos
     if (files.photos) {
       const photos = Array.isArray(files.photos) ? files.photos : [files.photos];
       
-      // Créer le dossier de destination s'il n'existe pas
       const publicUploadDir = path.join(process.cwd(), 'public/uploads/objects');
       if (!fs.existsSync(publicUploadDir)) {
         fs.mkdirSync(publicUploadDir, { recursive: true });
       }
 
-      // Déplacer les fichiers de /tmp vers le dossier public
       objectData.photos = await Promise.all(photos.map(async (file: formidable.File) => {
         const newPath = path.join(publicUploadDir, file.newFilename);
         await fs.promises.copyFile(file.filepath, newPath);
-        await fs.promises.unlink(file.filepath); // Nettoyer le fichier temporaire
+        await fs.promises.unlink(file.filepath);
 
         return {
           url: `/uploads/objects/${file.newFilename}`,
@@ -71,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }));
     }
 
-    // Sauvegarder dans le JSON
     const dataPath = path.join(process.cwd(), 'src/data/objects.json');
     let objects = [];
     try {

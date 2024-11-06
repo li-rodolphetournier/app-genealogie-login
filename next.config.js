@@ -22,7 +22,10 @@ const nextConfig = {
     TEMP_DIR: process.env.NODE_ENV === 'production' ? '/tmp' : './tmp'
   },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000', '*.vercel.app'],
+      bodySizeLimit: '2mb'
+    }
   }
 };
 
