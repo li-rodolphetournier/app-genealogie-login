@@ -1,7 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
 import formidable from 'formidable';
+import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
+import path from 'path';
 
 export const config = {
   api: {
@@ -42,22 +42,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (Array.isArray(files.image)) {
         images = files.image.map((file: formidable.File, index: number) => ({
           url: `/uploads/${file.newFilename}`,
-          description: fields[`imageDescription${index}`] as string || ''
+          description: (fields[`imageDescription${index}`] as string[] | string)?.[0] || ''
         }));
       } else if (files.image) {
         images = [{
           url: `/uploads/${(files.image as formidable.File).newFilename}`,
-          description: fields.imageDescription0 as string || ''
+          description: Array.isArray(fields.imageDescription0) 
+          ? fields.imageDescription0[0] 
+          : fields.imageDescription0 || ''
         }];
       }
 
       const newObject = {
         id: Date.now().toString(),
-        nom: fields.nom as string,
-        type: fields.type as string,
-        utilisateur: fields.utilisateur as string,
-        description: fields.description as string,
-        status: fields.status as string,
+        nom: Array.isArray(fields.nom) 
+        ? fields.nom[0] 
+        : fields.nom || '',
+        type: Array.isArray(fields.type) 
+        ? fields.type[0] 
+        : fields.type || '',
+        utilisateur: Array.isArray(fields.utilisateur) 
+        ? fields.utilisateur[0] 
+        : fields.utilisateur || '',
+        description: Array.isArray(fields.description) 
+        ? fields.description[0] 
+        : fields.description || '',
+        status: Array.isArray(fields.status) 
+        ? fields.status[0] 
+        : fields.status || '',
         images: images,
       };
 

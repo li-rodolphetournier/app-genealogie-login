@@ -1,7 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
 import formidable from 'formidable';
+import fs from 'fs';
+import { NextApiRequest, NextApiResponse } from 'next';
+import path from 'path';
 
 export const config = {
   api: {
@@ -9,13 +9,11 @@ export const config = {
   },
 };
 
-// Définir l'interface pour les photos
 interface Photo {
   url: string;
   description: string[];
 }
 
-// Définir l'interface pour l'objet
 interface ObjectData {
   id: string;
   nom: string;
@@ -25,9 +23,8 @@ interface ObjectData {
   photos: Photo[];
 }
 
-// Interface pour le fichier uploadé
-interface UploadedFile {
-  filepath: string;
+interface FormFields {
+  [key: string]: string[] | undefined;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -54,11 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       photos: [],
     };
 
-    if (files.photos) {
-      const photos = Array.isArray(files.photos) ? files.photos : [files.photos];
-      objectData.photos = photos.map((file: UploadedFile) => ({
-        url: `/uploads/objects/${path.basename(file.filepath)}`,
-        description: ['']
+    if (files.image) {
+      const images = Array.isArray(files.image) ? files.image : [files.image];
+      objectData.photos = images.map((file: formidable.File, index: number) => ({
+        url: `/uploads/${file.newFilename}`,
+        description: [(fields[`imageDescription${index}`]?.[0] || '').toString()]
       }));
     }
 
