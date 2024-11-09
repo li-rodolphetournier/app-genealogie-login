@@ -26,17 +26,17 @@
   {
     "login": "MarieGe",
     "password": "DecembreNoel2024",
-    "email": "genie@free.fr",
-    "description": "Je suis le 1 utilisateur",
-    "profileImage": "",
-    "status": "utilisateur"
+    "email": "test@gmail.com",
+    "description": "Je suis Marie-Ge",
+    "profileImage": "/uploads/users/1730653504698-odi8qjsy7.png",
+    "status": "administrateur"
   },
   {
     "login": "Florian",
     "password": "DecembreNoel2024",
-    "email": "genie@free.fr",
-    "description": "Je suis le 1 utilisateur",
-    "profileImage": "",
-    "status": "utilisateur"
+    "email": "test@gmail.com",
+    "description": "Je suis le Florian",
+    "profileImage": "/uploads/users/1730653493489-t35za28um.jpg",
+    "status": "administrateur"
   }
 ]
