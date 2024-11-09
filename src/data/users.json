@@ -22,5 +22,21 @@
     "description": "Je suis le 1 utilisateur",
     "profileImage": "",
     "status": "utilisateur"
+  },
+  {
+    "login": "MarieGe",
+    "password": "DecembreNoel2024",
+    "email": "genie@free.fr",
+    "description": "Je suis le 1 utilisateur",
+    "profileImage": "",
+    "status": "utilisateur"
+  },
+  {
+    "login": "Florian",
+    "password": "DecembreNoel2024",
+    "email": "genie@free.fr",
+    "description": "Je suis le 1 utilisateur",
+    "profileImage": "",
+    "status": "utilisateur"
   }
 ]
