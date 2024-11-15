@@ -10,6 +10,7 @@
     "vercel-build": "next build && next export"
   },
   "dependencies": {
+    "@vercel/blob": "^0.26.0",
     "chart.js": "^4.4.6",
     "formidable": "^3.5.2",
     "next": "^15.0.3",
@@ -17,6 +18,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-d3-tree": "^3.6.2",
     "react-dom": "^18",
+    "react-router-dom": "^6.28.0",
     "recharts": "^2.13.0",
     "uuid": "^9.0.0"
   },

@@ -2,6 +2,7 @@ import formidable from 'formidable';
 import fs from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
 import path from 'path';
+import { put } from '@vercel/blob';
 
 export const config = {
   api: {
@@ -9,9 +10,11 @@ export const config = {
   },
 };
 
-interface ImageData {
-  url: string;
-  description: string;
+interface UserData {
+  id: string;
+  nom: string;
+  email: string;
+  profilePictureUrl?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -19,16 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const uploadDir = path.join(process.cwd(), 'public/uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
   const form = formidable({
-    uploadDir,
-    keepExtensions: true,
-    multiples: true,
-    maxFileSize: 5 * 1024 * 1024, // 5MB
+    multiples: false,
+    maxFileSize: 5 * 1024 * 1024,
   });
 
   form.parse(req, async (err, fields, files) => {
@@ -38,65 +34,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      let images: ImageData[] = [];
-      if (Array.isArray(files.image)) {
-        images = files.image.map((file: formidable.File, index: number) => ({
-          url: `/uploads/${file.newFilename}`,
-          description: (fields[`imageDescription${index}`] as string[] | string)?.[0] || ''
-        }));
-      } else if (files.image) {
-        images = [{
-          url: `/uploads/${(files.image as formidable.File).newFilename}`,
-          description: Array.isArray(fields.imageDescription0) 
-          ? fields.imageDescription0[0] 
-          : fields.imageDescription0 || ''
-        }];
+      let profilePictureUrl: string | undefined;
+
+      if (files.profilePicture) {
+        const file = Array.isArray(files.profilePicture) ? files.profilePicture[0] : files.profilePicture as formidable.File;
+
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+          return res.status(500).json({ message: 'Token d\'authentification manquant pour Vercel Blob.' });
+        }
+
+        const fileBuffer = fs.readFileSync(file.filepath);
+        const blob = await put(file.originalFilename as string, fileBuffer, {
+          access: 'public',
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        });
+
+        profilePictureUrl = blob.url;
+        console.log('Image de profil téléchargée avec succès:', profilePictureUrl);
       }
 
-      const newObject = {
+      const newUser: UserData = {
         id: Date.now().toString(),
-        nom: Array.isArray(fields.nom) 
-        ? fields.nom[0] 
-        : fields.nom || '',
-        type: Array.isArray(fields.type) 
-        ? fields.type[0] 
-        : fields.type || '',
-        utilisateur: Array.isArray(fields.utilisateur) 
-        ? fields.utilisateur[0] 
-        : fields.utilisateur || '',
-        description: Array.isArray(fields.description) 
-        ? fields.description[0] 
-        : fields.description || '',
-        status: Array.isArray(fields.status) 
-        ? fields.status[0] 
-        : fields.status || '',
-        images: images,
+        nom: fields.nom as unknown as string,
+        email: fields.email as unknown as string,
+        profilePictureUrl: profilePictureUrl as string | undefined,
       };
 
-      const dataFilePath = path.join(process.cwd(), 'src/data/objects.json');
-      let objects = [];
+      const dataFilePath = path.join(process.cwd(), 'src/data/users.json');
+      let users = [];
       try {
         const jsonData = fs.readFileSync(dataFilePath, 'utf8');
-        objects = JSON.parse(jsonData);
+        users = JSON.parse(jsonData);
       } catch (error) {
         console.warn('Le fichier JSON était vide ou invalide. Création d\'un nouveau tableau.');
       }
 
-      if (!Array.isArray(objects)) {
-        objects = [];
+      if (!Array.isArray(users)) {
+        users = [];
       }
 
-      if (newObject.status !== 'brouillon' && newObject.status !== 'publie') {
-        return res.status(400).json({ error: 'Le status doit être "brouillon" ou "publie"' });
-      }
+      users.push(newUser);
+      fs.writeFileSync(dataFilePath, JSON.stringify(users, null, 2));
 
-      objects.push(newObject);
-      fs.writeFileSync(dataFilePath, JSON.stringify(objects, null, 2));
-
-      res.status(200).json({ message: 'Objet ajouté avec succès', object: newObject });
+      res.status(200).json({ message: 'Utilisateur ajouté avec succès', user: newUser });
     } catch (error) {
-      console.error('Erreur lors de l\'ajout de l\'objet:', error);
-      res.status(500).json({ message: `Erreur lors de l'ajout de l'objet: ${error instanceof Error ? error.message : 'Erreur inconnue'}` });
+      console.error('Erreur lors de l\'ajout de l\'utilisateur:', error);
+      res.status(500).json({ message: `Erreur lors de l'ajout de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}` });
     }
   });
 }

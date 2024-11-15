@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
 type User = {
   login: string;
@@ -16,6 +17,8 @@ export default function UsersList() {
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -140,10 +143,10 @@ export default function UsersList() {
 
                       <div className="mt-4 flex justify-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'administrateur'
-                            ? 'bg-purple-100 text-purple-800'
-                            : user.status === 'redacteur'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
+                          ? 'bg-purple-100 text-purple-800'
+                          : user.status === 'redacteur'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
                           }`}>
                           {user.status}
                         </span>
@@ -198,10 +201,10 @@ export default function UsersList() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'administrateur'
-                            ? 'bg-purple-100 text-purple-800'
-                            : user.status === 'redacteur'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
+                          ? 'bg-purple-100 text-purple-800'
+                          : user.status === 'redacteur'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
                           }`}>
                           {user.status}
                         </span>
@@ -228,6 +231,31 @@ export default function UsersList() {
           )}
         </div>
       </main>
+
+      {/* Modal de confirmation */}
+      <ConfirmDeleteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async () => {
+          if (userToDelete) {
+            try {
+              const response = await fetch(`/api/users/${userToDelete}`, {
+                method: 'DELETE',
+              });
+
+              if (response.ok) {
+                alert("Utilisateur supprimé avec succès !");
+                window.location.reload();
+              } else {
+                alert("Erreur lors de la suppression de l'utilisateur.");
+              }
+            } catch (error) {
+              alert("Erreur réseau lors de la suppression de l'utilisateur.");
+            }
+            setIsModalOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }

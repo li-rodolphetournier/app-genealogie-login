@@ -128,5 +128,18 @@
     "dateNaissance": "2010-12-12",
     "dateDeces": null,
     "image": null
+  },
+  {
+    "nom": "de machin",
+    "prenom": "jean",
+    "genre": "homme",
+    "description": "desc",
+    "mere": "6",
+    "pere": "1730651080817",
+    "ordreNaissance": 1,
+    "dateNaissance": "2024-11-14",
+    "dateDeces": null,
+    "image": null,
+    "id": "1731585924618"
   }
 ]

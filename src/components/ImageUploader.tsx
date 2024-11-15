@@ -1,57 +1,68 @@
-import React, { ChangeEvent } from 'react';
+import React, { useState } from 'react';
+import Modal from './Modal';
 
-interface ImageUploaderProps {
-  onUpload: (imageUrls: string[]) => void;
-  type: 'genealogie' | 'user' | 'object';
-}
+const ImageUploader = () => {
+  const [image, setImage] = useState<File | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onUpload, type }) => {
-  const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      try {
-        const uploadedUrls = await Promise.all(
-          Array.from(files).map(async (file) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', type);
-
-            console.log('Uploading file:', file.name);
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
-            });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error('Upload error:', errorText);
-              throw new Error(`Upload failed: ${errorText}`);
-            }
-
-            const data = await response.json();
-            console.log('Upload success:', data);
-            return data.url;
-          })
-        );
-
-        const validUrls = uploadedUrls.filter((url): url is string => url !== null);
-        if (validUrls.length > 0) {
-          onUpload(validUrls);
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
-        alert('Erreur lors de l\'upload de l\'image. Veuillez réessayer.');
-      }
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImage(file);
     }
   };
 
+  const handleUpload = async () => {
+    if (!image) {
+      setAlertMessage('Veuillez sélectionner une image.');
+      setModalOpen(true);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', image);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'upload de l\'image');
+      }
+
+      const data = await response.json();
+      console.log('Image uploadée avec succès:', data);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      setAlertMessage('Erreur d\'upload: ' + errorMessage);
+      setModalOpen(true);
+    }
+  };
+
+  const handleConfirm = () => {
+    setModalOpen(false);
+    // Vous pouvez ajouter d'autres actions ici si nécessaire
+  };
+
+  const handleCancel = () => {
+    setModalOpen(false);
+  };
+
   return (
-    <input
-      type="file"
-      accept="image/*"
-      onChange={handleFileChange}
-      className="border rounded p-2"
-    />
+    <div>
+      <h1>Uploader d'Images</h1>
+      <input type="file" accept="image/*" onChange={handleFileChange} />
+      <button onClick={handleUpload}>Uploader l'Image</button>
+      <Modal 
+        isOpen={isModalOpen} 
+        message={alertMessage} 
+        onConfirm={handleConfirm} 
+        onCancel={handleCancel} 
+      />
+    </div>
   );
 };
 
