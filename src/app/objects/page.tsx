@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
 
 interface ObjectData {
   id: string;
@@ -32,6 +33,8 @@ export default function ObjectsList() {
   const [showFilters, setShowFilters] = useState(false);
   const [userStatus, setUserStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [objectToDelete, setObjectToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchObjects = async () => {
@@ -125,19 +128,27 @@ export default function ObjectsList() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet objet ?')) {
+    setObjectToDelete(id);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (objectToDelete) {
       try {
-        const response = await fetch(`/api/objects/delete?id=${id}`, {
+        const response = await fetch(`/api/objects/delete?id=${objectToDelete}`, {
           method: 'DELETE',
         });
 
         if (response.ok) {
-          setObjects(objects.filter(obj => obj.id !== id));
+          setObjects(objects.filter(obj => obj.id !== objectToDelete));
         } else {
-          console.error('Erreur lors de la suppression de l&apos;objet');
+          console.error('Erreur lors de la suppression de l\'objet');
         }
       } catch (error) {
         console.error('Erreur réseau lors de la suppression:', error);
+      } finally {
+        setIsModalOpen(false);
+        setObjectToDelete(null);
       }
     }
   };
@@ -443,6 +454,11 @@ export default function ObjectsList() {
           )}
         </div>
       </main>
+      <ConfirmDeleteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

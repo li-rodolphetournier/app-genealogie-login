@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface User {
   login: string;
   status: 'administrateur' | 'utilisateur';
 }
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // Taille maximale de fichier en octets (2 Mo)
 
 export default function CreateObject() {
   const router = useRouter();
@@ -16,6 +18,7 @@ export default function CreateObject() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     // Récupérer l'utilisateur connecté depuis le localStorage
@@ -43,9 +46,13 @@ export default function CreateObject() {
       formData.append('utilisateur', user.login);
 
       // Ajouter les photos si présentes
-      photos.forEach(photo => {
+      for (const photo of photos) {
+        if (photo.size > MAX_FILE_SIZE) {
+          setError('L\'image est trop grosse. La taille maximale autorisée est de 2 Mo.');
+          return;
+        }
         formData.append('photos', photo);
-      });
+      }
 
       const response = await fetch('/api/objects/create', {
         method: 'POST',
@@ -59,6 +66,20 @@ export default function CreateObject() {
       router.push('/objects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      setPhotos(Array.from(e.target.files));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      if (file) {
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -133,20 +154,42 @@ export default function CreateObject() {
                   type="file"
                   multiple
                   accept="image/*"
-                  onChange={(e) => e.target.files && setPhotos(Array.from(e.target.files))}
-                  className="mt-1 block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
                   lang="fr"
                   aria-label="Sélectionner des photos"
-                  title="Cliquez pour ajouter des photos"
                 />
+                <label
+                  htmlFor="file-upload"
+                  className="mt-1 block w-full text-sm text-gray-500
+                    cursor-pointer
+                    border border-gray-300 rounded-md
+                    py-2 px-4 flex items-center justify-center
+                    hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  title="Cliquez pour ajouter des photos"
+                  aria-labelledby="file-upload-label"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2 text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5V21h18v-4.5M3 12l9-9 9 9M12 3v15" />
+                  </svg>
+                  <span id="file-upload-label">Cliquez pour ajouter des photos</span>
+                </label>
                 <p className="mt-1 text-sm text-gray-500">
                   Formats acceptés : JPG, PNG, GIF
                 </p>
+                {imagePreview && (
+                  <div className="mt-2">
+                    <img src={imagePreview} alt="Aperçu" className="h-32 w-auto rounded-md" />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-4">

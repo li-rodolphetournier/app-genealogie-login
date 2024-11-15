@@ -20,12 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     maxFileSize: 5 * 1024 * 1024, // 5MB
   });
 
-  // Créer le dossier d'upload s'il n'existe pas
-  const uploadDir = path.join(process.cwd(), 'public/uploads/users');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
   try {
     const [fields, files] = await form.parse(req);
     const imageFile = files.image?.[0] as formidable.File | undefined;
@@ -34,8 +28,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Aucune image n\'a été uploadée' });
     }
 
-    // Générer l'URL de l'image
-    const imageUrl = `/uploads/users/${path.basename(imageFile.filepath)}`;
+    // Utiliser Vercel Blob pour l'upload
+    const blob = await fetch('https://api.vercel.com/v1/blobs', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: fs.readFileSync(imageFile.filepath), // Lire le fichier
+    });
+
+    const blobData = await blob.json();
+    const imageUrl = blobData.url; // URL de l'image uploadée
 
     return res.status(200).json({
       url: imageUrl,
