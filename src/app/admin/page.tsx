@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import ImageUploader from '../../components/ImageUploader';
 
 type User = {
@@ -42,7 +42,25 @@ export default function EditProfile() {
       description: userData.description || '',
       profileImage: userData.profileImage || ''
     }));
+
+    // Log de débug pour vérifier l'utilisateur courant
+    console.log('DEBUG: Utilisateur courant', userData);
   }, [router]);
+
+  // Log pour vérifier le callback de l'upload
+  const handleImageUpload = (imageUrls: string[]) => {
+    console.log('DEBUG: handleImageUpload appelé avec imageUrls:', imageUrls);
+    // Vérifions le type de parameter imageUrls (tableau de string)
+    console.log('DEBUG: Type de imageUrls:', typeof imageUrls, Array.isArray(imageUrls));
+
+    if (imageUrls.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        profileImage: imageUrls[0]
+      }));
+      console.log('DEBUG: Nouvelle image de profil sélectionnée:', imageUrls[0]);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -51,15 +69,6 @@ export default function EditProfile() {
       [name]: value
     }));
     setError(null);
-  };
-
-  const handleImageUpload = (imageUrls: string[]) => {
-    if (imageUrls.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        profileImage: imageUrls[0]
-      }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,7 +100,6 @@ export default function EditProfile() {
         const updatedUser = await response.json();
         localStorage.setItem('currentUser', JSON.stringify(updatedUser));
         setSuccess('Profil mis à jour avec succès');
-        
         // Réinitialiser les champs de mot de passe
         setFormData(prev => ({
           ...prev,
@@ -109,6 +117,8 @@ export default function EditProfile() {
     }
   };
 
+  // Affichage d'un log avant de rendre ImageUploader
+  console.log('DEBUG: Rendu du composant ImageUploader avec type "user" et onUpload:', handleImageUpload);
   if (!user) {
     return (
       <div role="alert" className="flex items-center justify-center h-screen">

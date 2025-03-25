@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
-const ImageUploader = () => {
+interface ImageUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  onUpload: (imageUrls: string[]) => void;
+  type: string;
+  as?: any; // Adjust the type as needed
+}
+
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onUpload, type, as, ...rest }) => {
   const [image, setImage] = useState<File | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -30,21 +36,21 @@ const ImageUploader = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'upload de l\'image');
+        throw new Error("Erreur lors de l'upload de l'image");
       }
 
       const data = await response.json();
-      console.log('Image uploadée avec succès:', data);
+      // Call the onUpload callback with the image URLs returned by the server
+      onUpload(data.imageUrls);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      setAlertMessage('Erreur d\'upload: ' + errorMessage);
+      setAlertMessage("Erreur d'upload: " + errorMessage);
       setModalOpen(true);
     }
   };
 
   const handleConfirm = () => {
     setModalOpen(false);
-    // Vous pouvez ajouter d'autres actions ici si nécessaire
   };
 
   const handleCancel = () => {
@@ -52,15 +58,15 @@ const ImageUploader = () => {
   };
 
   return (
-    <div>
+    <div {...rest}>
       <h1>Uploader d'Images</h1>
       <input type="file" accept="image/*" onChange={handleFileChange} />
       <button onClick={handleUpload}>Uploader l'Image</button>
-      <Modal 
-        isOpen={isModalOpen} 
-        message={alertMessage} 
-        onConfirm={handleConfirm} 
-        onCancel={handleCancel} 
+      <Modal
+        isOpen={isModalOpen}
+        message={alertMessage}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
       />
     </div>
   );

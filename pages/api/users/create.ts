@@ -1,7 +1,7 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
-import formidable from 'formidable';
+import formidable from "formidable";
+import fs from "fs";
+import { NextApiRequest, NextApiResponse } from "next";
+import path from "path";
 
 export const config = {
   api: {
@@ -13,21 +13,24 @@ interface User {
   id: string;
   login: string;
   password: string;
-  status: 'administrateur' | 'utilisateur';
+  status: "administrateur" | "utilisateur";
   email?: string;
   profileImage?: string;
   description?: string;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Méthode non autorisée' });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Méthode non autorisée" });
   }
 
   try {
     // Utiliser /tmp pour le stockage temporaire sur Vercel
     const form = formidable({
-      uploadDir: '/tmp',
+      uploadDir: "/tmp",
       keepExtensions: true,
       maxFileSize: 5 * 1024 * 1024, // 5MB
     });
@@ -35,36 +38,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [fields, files] = await form.parse(req);
 
     // Vérifier si l'utilisateur existe déjà
-    const usersPath = path.join(process.cwd(), 'src/data/users.json');
+    const usersPath = path.join(process.cwd(), "src/data/users.json");
     let users: User[] = [];
+    console.log("usersPath", usersPath);
 
     try {
-      const jsonData = fs.readFileSync(usersPath, 'utf8');
+      const jsonData = fs.readFileSync(usersPath, "utf8");
       users = JSON.parse(jsonData);
     } catch (error) {
-      console.warn('Fichier users.json non trouvé ou invalide, création d\'un nouveau fichier');
+      console.warn(
+        "Fichier users.json non trouvé ou invalide, création d'un nouveau fichier"
+      );
     }
 
-    const existingUser = users.find(u => u.login === fields.login?.[0]);
+    const existingUser = users.find((u) => u.login === fields.login?.[0]);
     if (existingUser) {
-      return res.status(400).json({ message: 'Cet identifiant est déjà utilisé' });
+      return res
+        .status(400)
+        .json({ message: "Cet identifiant est déjà utilisé" });
     }
 
     // Créer le nouvel utilisateur
     const newUser: User = {
       id: Date.now().toString(),
-      login: fields.login?.[0] || '',
-      password: fields.password?.[0] || '',
-      status: (fields.status?.[0] as 'administrateur' | 'utilisateur') || 'utilisateur',
+      login: fields.login?.[0] || "",
+      password: fields.password?.[0] || "",
+      status:
+        (fields.status?.[0] as "administrateur" | "utilisateur") ||
+        "utilisateur",
       email: fields.email?.[0],
       description: fields.description?.[0],
     };
 
     // Gérer l'upload de l'image de profil
     if (files.profileImage) {
-      const file = Array.isArray(files.profileImage) ? files.profileImage[0] : files.profileImage;
-      const uploadDir = path.join(process.cwd(), 'public/uploads/users');
-      
+      const file = Array.isArray(files.profileImage)
+        ? files.profileImage[0]
+        : files.profileImage;
+      const uploadDir = path.join(process.cwd(), "public/uploads/users");
+
       // Créer le dossier s'il n'existe pas
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -73,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Déplacer le fichier du dossier temporaire vers le dossier final
       const finalPath = path.join(uploadDir, file.newFilename);
       await fs.promises.rename(file.filepath, finalPath);
-      
+
       newUser.profileImage = `/uploads/users/${file.newFilename}`;
     }
 
@@ -84,12 +96,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Retourner la réponse sans le mot de passe
     const { password, ...userWithoutPassword } = newUser;
     return res.status(201).json(userWithoutPassword);
-
   } catch (error) {
-    console.error('Erreur lors de la création de l\'utilisateur:', error);
-    return res.status(500).json({ 
-      message: 'Erreur lors de la création de l\'utilisateur',
-      error: error instanceof Error ? error.message : 'Erreur inconnue'
+    console.error("Erreur lors de la création de l'utilisateur:", error);
+    return res.status(500).json({
+      message: "Erreur lors de la création de l'utilisateur",
+      error: error instanceof Error ? error.message : "Erreur inconnue",
     });
   }
 }
