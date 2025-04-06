@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 import Image from 'next/image';
+import Link from 'next/link';
 
 type User = {
   login: string;
@@ -58,10 +59,10 @@ export default function EditUser() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     try {
       const formDataToSend = new FormData();
-      
+
       // Ajouter tous les champs au FormData
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -96,7 +97,7 @@ export default function EditUser() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Modifier l&apos;utilisateur {login}</h1>
-      
+
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <p className="text-red-700">{error}</p>

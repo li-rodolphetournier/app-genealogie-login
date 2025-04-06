@@ -26,9 +26,7 @@ export default async function handler(
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Méthode non autorisée" });
   }
-
   try {
-    // Utiliser /tmp pour le stockage temporaire sur Vercel
     const form = formidable({
       uploadDir: "/tmp",
       keepExtensions: true,
@@ -37,10 +35,8 @@ export default async function handler(
 
     const [fields, files] = await form.parse(req);
 
-    // Vérifier si l'utilisateur existe déjà
     const usersPath = path.join(process.cwd(), "src/data/users.json");
     let users: User[] = [];
-    console.log("usersPath", usersPath);
 
     try {
       const jsonData = fs.readFileSync(usersPath, "utf8");
@@ -51,50 +47,55 @@ export default async function handler(
       );
     }
 
-    const existingUser = users.find((u) => u.login === fields.login?.[0]);
+    const loginToCompare = Array.isArray(fields.login)
+      ? fields.login[0]
+      : fields.login;
+
+    const existingUser = users.find((u) => u.login === loginToCompare);
     if (existingUser) {
       return res
         .status(400)
         .json({ message: "Cet identifiant est déjà utilisé" });
     }
-
-    // Créer le nouvel utilisateur
+    console.log("Champs du formulaire:", fields);
     const newUser: User = {
       id: Date.now().toString(),
-      login: fields.login?.[0] || "",
-      password: fields.password?.[0] || "",
+      login: Array.isArray(fields.login) ? fields.login[0] : fields.login || "",
+      password: Array.isArray(fields.password)
+        ? fields.password[0]
+        : fields.password || "",
       status:
-        (fields.status?.[0] as "administrateur" | "utilisateur") ||
-        "utilisateur",
-      email: fields.email?.[0],
-      description: fields.description?.[0],
+        ((Array.isArray(fields.status) ? fields.status[0] : fields.status) as
+          | "administrateur"
+          | "utilisateur") || "utilisateur",
+      email: Array.isArray(fields.email) ? fields.email[0] : fields.email,
+      description: Array.isArray(fields.description)
+        ? fields.description[0]
+        : fields.description,
     };
-
-    // Gérer l'upload de l'image de profil
+    console.log("Nouvel utilisateur:", newUser);
     if (files.profileImage) {
       const file = Array.isArray(files.profileImage)
         ? files.profileImage[0]
         : files.profileImage;
+      console.log("Chemin du fichier 1:", file.filepath);
       const uploadDir = path.join(process.cwd(), "public/uploads/users");
 
-      // Créer le dossier s'il n'existe pas
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
-
-      // Déplacer le fichier du dossier temporaire vers le dossier final
+      console.log("Chemin du fichier 2:", file.filepath);
       const finalPath = path.join(uploadDir, file.newFilename);
       await fs.promises.rename(file.filepath, finalPath);
-
       newUser.profileImage = `/uploads/users/${file.newFilename}`;
+      console.log("Chemin de l'image: 3", finalPath);
     }
 
-    // Ajouter l'utilisateur et sauvegarder
     users.push(newUser);
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
 
-    // Retourner la réponse sans le mot de passe
     const { password, ...userWithoutPassword } = newUser;
+
     return res.status(201).json(userWithoutPassword);
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur:", error);

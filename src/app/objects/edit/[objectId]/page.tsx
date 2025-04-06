@@ -1,145 +1,155 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
-import { ObjectData } from '@/types/objects';
+import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { ObjectData, Photo } from '../../../types/objects';
+
 import Image from 'next/image';
+import LoadingIndicator from '../../../share-components/LoadingIndicator';
+import { User } from '../../../types/user';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
 
 interface PageProps {
   params: Promise<{ objectId: string }>;
 }
 
-export default function EditObject({ params }: PageProps) {
-  const { objectId } = use(params);
+export default function EditObject() {
   const router = useRouter();
+  const params = useParams();
+  const objectId = params?.objectId as string | undefined;
+
   const [object, setObject] = useState<ObjectData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [newImages, setNewImages] = useState<File[]>([]);
-  const [newImageDescriptions, setNewImageDescriptions] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      setUser(JSON.parse(currentUser));
+    } else {
+      router.push('/');
+    }
+  }, [router]);
 
   useEffect(() => {
     if (objectId) {
+      const fetchObject = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/objects/${objectId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setObject(data);
+            setPreviews(data.photos?.map((p: { url: string }) => p.url) || []);
+          } else {
+            setError('Impossible de charger l\'objet');
+          }
+        } catch (err) {
+          setError('Erreur de connexion');
+        } finally {
+          setIsLoading(false);
+        }
+      };
       void fetchObject();
     }
   }, [objectId]);
 
-  const fetchObject = async () => {
-    try {
-      const response = await fetch(`/api/objects/${objectId}`);
-      if (!response.ok) {
-        throw new Error('Erreur lors de la récupération de l\'objet');
-      }
-      const data = await response.json();
-      setObject(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-    } finally {
-      setIsLoading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setNewImages(filesArray);
+
+      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
+      const existingValidPreviews = previews.filter(url => !removedPhotos.includes(url) && !url.startsWith('blob:'));
+      setPreviews([...existingValidPreviews, ...newPreviews]);
     }
   };
 
-  const handleImageUpload = async (files: FileList) => {
-    const formData = new FormData();
-    Array.from(files).forEach((file) => {
-      formData.append('photos', file);
-    });
-
-    try {
-      const response = await fetch(`/api/objects/${objectId}/photos`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors du téléchargement des images');
-      }
-
-      const data = await response.json();
-      setObject(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          photos: [...(prev.photos || []), ...data.photos]
-        };
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du téléchargement');
-    }
+  const handleRemoveExistingPhoto = (urlToRemove: string) => {
+    setRemovedPhotos((prev: string[]) => [...prev, urlToRemove]);
+    setPreviews((prev: string[]) => prev.filter(url => url !== urlToRemove));
   };
 
-  const handleRemoveImage = async (photoIndex: number) => {
-    if (!object?.photos) return;
-
-    try {
-      const response = await fetch(`/api/objects/${objectId}/photos?photoIndex=${photoIndex}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la suppression de l\'image');
-      }
-
-      const result = await response.json();
-      
-      if (result.message === 'Photo supprimée avec succès') {
-        setObject(prev => {
-          if (!prev || !prev.photos) return prev;
-          const newPhotos = [...prev.photos];
-          newPhotos.splice(photoIndex, 1);
-          return { ...prev, photos: newPhotos };
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
-    }
-  };
-
-  const handleUpdateImageDescription = (index: number, description: string) => {
-    if (!object?.photos) return;
-
-    setObject(prev => {
-      if (!prev || !prev.photos) return prev;
-      const newPhotos = [...prev.photos];
-      newPhotos[index] = {
-        ...newPhotos[index],
-        description: [description]
-      };
-      return { ...prev, photos: newPhotos };
-    });
+  const handleRemoveNewPhoto = (indexToRemove: number, previewUrl: string) => {
+    setNewImages((prev: File[]) => prev.filter((_, index) => index !== indexToRemove));
+    setPreviews((prev: string[]) => prev.filter(url => url !== previewUrl));
+    URL.revokeObjectURL(previewUrl);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!object || !user) return;
+
+    setIsSaving(true);
+    setError(null);
+
     try {
-      const response = await fetch(`/api/objects/${objectId}`, {
+      const formData = new FormData();
+      formData.append('id', object.id);
+      formData.append('nom', object.nom);
+      formData.append('type', object.type);
+      formData.append('description', object.description || '');
+      formData.append('longDescription', object.longDescription || '');
+      formData.append('status', object.status);
+      formData.append('utilisateur', object.utilisateur);
+
+      const existingPhotos = object.photos?.filter((p: Photo) => !removedPhotos.includes(p.url)).map((p: Photo) => JSON.stringify(p)) || [];
+      existingPhotos.forEach((photo: string) => formData.append('existingPhotosJson', photo));
+
+      newImages.forEach(file => {
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`Le fichier ${file.name} dépasse la taille maximale de 2 Mo.`);
+        }
+        formData.append('newPhotos', file);
+      });
+
+      const response = await fetch(`/api/objects/${object.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(object),
+        body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour de l\'objet');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Erreur lors de la mise à jour de l\'objet');
       }
 
-      router.push(`/objects/${objectId}`);
+      router.push(`/objects/${object.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  if (isLoading) return <div>Chargement...</div>;
+  if (isLoading) {
+    return <LoadingIndicator text="Chargement de l'objet à modifier..." />;
+  }
   if (error) return <div className="text-red-500">{error}</div>;
   if (!object) return <div>Objet non trouvé</div>;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setObject((prev: ObjectData | null) => (prev ? { ...prev, [name]: value } : null));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow px-6 py-8">
-          <h1 className="text-2xl font-bold mb-6">Modifier l&apos;objet</h1>
-          
+          <h1 className="text-2xl font-bold mb-6">Modifier l'objet : {object.nom}</h1>
+
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div>
@@ -148,9 +158,10 @@ export default function EditObject({ params }: PageProps) {
                 </label>
                 <input
                   type="text"
+                  name="nom"
                   id="nom"
                   value={object.nom}
-                  onChange={(e) => setObject({ ...object, nom: e.target.value })}
+                  onChange={handleChange}
                   className="mt-1 block w-full"
                   required
                 />
@@ -162,9 +173,10 @@ export default function EditObject({ params }: PageProps) {
                 </label>
                 <input
                   type="text"
+                  name="type"
                   id="type"
                   value={object.type}
-                  onChange={(e) => setObject({ ...object, type: e.target.value })}
+                  onChange={handleChange}
                   className="mt-1 block w-full"
                   required
                 />
@@ -175,56 +187,92 @@ export default function EditObject({ params }: PageProps) {
                   Statut
                 </label>
                 <select
+                  name="status"
                   id="status"
                   value={object.status}
-                  onChange={(e) => setObject({ ...object, status: e.target.value as 'brouillon' | 'publie' })}
+                  onChange={handleChange}
                   className="mt-1 block w-full"
+                  required
                 >
                   <option value="brouillon">Brouillon</option>
                   <option value="publie">Publié</option>
                 </select>
               </div>
 
-              {/* Section des images */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description Courte
+                </label>
+                <textarea
+                  name="description"
+                  id="description"
+                  value={object.description || ''}
+                  onChange={handleChange}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700">
+                  Description Longue (Détails)
+                </label>
+                <textarea
+                  name="longDescription"
+                  id="longDescription"
+                  value={object.longDescription || ''}
+                  onChange={handleChange}
+                  rows={6}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Description détaillée de l'objet..."
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Images
+                  Photos
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {object.photos?.map((photo, index) => (
-                    <div key={index} className="relative border rounded p-4">
-                      <div className="relative h-48 mb-2">
-                        <Image
-                          src={photo.url}
-                          alt={photo.description?.[0] || ''}
-                          fill
-                          className="object-cover rounded"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value={photo.description?.[0] || ''}
-                        onChange={(e) => handleUpdateImageDescription(index, e.target.value)}
-                        className="w-full mb-2"
-                        placeholder="Description"
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {previews.map((previewUrl, index) => (
+                    <div key={previewUrl} className="relative group">
+                      <Image
+                        src={previewUrl}
+                        alt={`Aperçu ${index + 1}`}
+                        width={200}
+                        height={200}
+                        className="object-cover rounded aspect-square"
                       />
                       <button
                         type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="text-red-600 hover:text-red-800"
+                        onClick={() => {
+                          const isExisting = object.photos?.some((p: Photo) => p.url === previewUrl);
+                          if (isExisting) {
+                            handleRemoveExistingPhoto(previewUrl);
+                          } else {
+                            const originalFileIndex = newImages.findIndex(file => URL.createObjectURL(file) === previewUrl);
+                            if (originalFileIndex !== -1) {
+                              handleRemoveNewPhoto(originalFileIndex, previewUrl);
+                            } else {
+                              console.warn('Could not find original file index for preview:', previewUrl);
+                            }
+                          }
+                        }}
+                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Supprimer l'image"
                       >
-                        Supprimer
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
                       </button>
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-4">
                   <input
                     type="file"
                     multiple
                     accept="image/*"
-                    onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                    onChange={handleFileChange}
                     className="block w-full text-sm text-gray-500
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-full file:border-0
@@ -235,19 +283,27 @@ export default function EditObject({ params }: PageProps) {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => router.back()}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  onClick={() => router.push(`/objects/${objectId}`)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  disabled={isSaving}
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  disabled={isSaving}
                 >
-                  Enregistrer
+                  {isSaving && (
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {isSaving ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
                 </button>
               </div>
             </div>

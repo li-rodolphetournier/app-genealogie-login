@@ -1,14 +1,16 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
+import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import ImageUploader from '../../components/ImageUploader';
 
 type User = {
   login: string;
   email: string;
   description: string;
+  detail?: string;
   status: string;
   profileImage?: string;
 };
@@ -19,6 +21,7 @@ export default function EditProfile() {
   const [formData, setFormData] = useState({
     email: '',
     description: '',
+    detail: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -40,26 +43,25 @@ export default function EditProfile() {
       ...prev,
       email: userData.email || '',
       description: userData.description || '',
+      detail: userData.detail || '',
       profileImage: userData.profileImage || ''
     }));
-
-    // Log de débug pour vérifier l'utilisateur courant
-    console.log('DEBUG: Utilisateur courant', userData);
   }, [router]);
 
-  // Log pour vérifier le callback de l'upload
-  const handleImageUpload = (imageUrls: string[]) => {
-    console.log('DEBUG: handleImageUpload appelé avec imageUrls:', imageUrls);
-    // Vérifions le type de parameter imageUrls (tableau de string)
-    console.log('DEBUG: Type de imageUrls:', typeof imageUrls, Array.isArray(imageUrls));
+  const handleImageUploadSuccess = (imageUrl: string) => {
+    console.log('DEBUG: Nouvelle image de profil sélectionnée:', imageUrl);
+    setFormData(prev => ({
+      ...prev,
+      profileImage: imageUrl
+    }));
+    setError(null);
+    setSuccess(null);
+  };
 
-    if (imageUrls.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        profileImage: imageUrls[0]
-      }));
-      console.log('DEBUG: Nouvelle image de profil sélectionnée:', imageUrls[0]);
-    }
+  const handleImageUploadError = (errorMessage: string) => {
+    console.error("Upload error:", errorMessage);
+    setError(`Erreur d'upload: ${errorMessage}`);
+    setSuccess(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -69,6 +71,7 @@ export default function EditProfile() {
       [name]: value
     }));
     setError(null);
+    setSuccess(null);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -81,6 +84,11 @@ export default function EditProfile() {
       return;
     }
 
+    if (formData.newPassword && !formData.currentPassword) {
+      setError('Le mot de passe actuel est requis pour changer le mot de passe.');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/users/${user?.login}/update`, {
         method: 'PUT',
@@ -90,19 +98,23 @@ export default function EditProfile() {
         body: JSON.stringify({
           email: formData.email,
           description: formData.description,
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
+          detail: formData.detail,
           profileImage: formData.profileImage
         }),
       });
 
       if (response.ok) {
         const updatedUser = await response.json();
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        const fullUserForStorage = { ...user, ...updatedUser };
+        localStorage.setItem('currentUser', JSON.stringify(fullUserForStorage));
+        setUser(fullUserForStorage);
         setSuccess('Profil mis à jour avec succès');
-        // Réinitialiser les champs de mot de passe
         setFormData(prev => ({
           ...prev,
+          email: updatedUser.email || '',
+          description: updatedUser.description || '',
+          detail: updatedUser.detail || '',
+          profileImage: updatedUser.profileImage || '',
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
@@ -117,8 +129,6 @@ export default function EditProfile() {
     }
   };
 
-  // Affichage d'un log avant de rendre ImageUploader
-  console.log('DEBUG: Rendu du composant ImageUploader avec type "user" et onUpload:', handleImageUpload);
   if (!user) {
     return (
       <div role="alert" className="flex items-center justify-center h-screen">
@@ -130,7 +140,6 @@ export default function EditProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* En-tête fixe */}
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -146,29 +155,29 @@ export default function EditProfile() {
               href="/accueil"
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Retour à l&apos;accueil
+              Retour à l'accueil
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Contenu principal */}
       <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div role="alert" className="bg-red-50 border-l-4 border-red-500 p-4">
-                <p className="text-red-700">{error}</p>
+              <div role="alert" className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                <strong className="font-bold">Erreur !</strong>
+                <span className="block sm:inline"> {error}</span>
               </div>
             )}
 
             {success && (
-              <div role="status" className="bg-green-50 border-l-4 border-green-500 p-4">
-                <p className="text-green-700">{success}</p>
+              <div role="status" className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                <strong className="font-bold">Succès !</strong>
+                <span className="block sm:inline"> {success}</span>
               </div>
             )}
 
-            {/* Informations de base */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-6">
                 Informations personnelles
@@ -202,33 +211,49 @@ export default function EditProfile() {
                     className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor="detail" className="block text-sm font-medium text-gray-700">
+                    Détail (Plusieurs paragraphes)
+                  </label>
+                  <textarea
+                    id="detail"
+                    name="detail"
+                    value={formData.detail}
+                    onChange={handleChange}
+                    rows={6}
+                    className="mt-1 block w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    placeholder="Entrez des informations plus détaillées ici..."
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Photo de profil */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-6">
                 Photo de profil
               </h2>
-              <div className="flex items-center space-x-6">
+              <div className="mt-1 flex items-center space-x-4">
                 {formData.profileImage ? (
-                  <img
-                    src={formData.profileImage}
-                    alt="Photo de profil actuelle"
-                    className="w-24 h-24 rounded-full object-cover"
-                  />
+                  <img src={formData.profileImage} alt="Photo de profil actuelle" className="h-16 w-16 rounded-full object-cover border border-gray-300" />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-2xl text-gray-500">
-                      {user.login.charAt(0).toUpperCase()}
+                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300">
+                    <span className="text-xl text-gray-500">
+                      {user?.login.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <ImageUploader onUpload={handleImageUpload} type="user" />
+                <GenericImageUploader
+                  onUploadSuccess={handleImageUploadSuccess}
+                  onError={handleImageUploadError}
+                >
+                  <button type="button" className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Modifier l'image
+                  </button>
+                </GenericImageUploader>
               </div>
             </div>
 
-            {/* Modification du mot de passe */}
             <div className="bg-white shadow-sm rounded-lg p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-6">
                 Modifier le mot de passe
@@ -280,7 +305,6 @@ export default function EditProfile() {
               </div>
             </div>
 
-            {/* Bouton de soumission */}
             <div className="flex justify-end">
               <button
                 type="submit"

@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
+import { useRouter } from 'next/navigation';
 
 interface User {
   login: string;
@@ -15,6 +16,8 @@ export default function CreateObject() {
   const [nom, setNom] = useState('');
   const [type, setType] = useState('');
   const [status, setStatus] = useState<'brouillon' | 'publie'>('brouillon');
+  const [description, setDescription] = useState('');
+  const [longDescription, setLongDescription] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -44,6 +47,8 @@ export default function CreateObject() {
       formData.append('type', type);
       formData.append('status', status);
       formData.append('utilisateur', user.login);
+      formData.append('description', description);
+      formData.append('longDescription', longDescription);
 
       // Ajouter les photos si présentes
       for (const photo of photos) {
@@ -190,6 +195,34 @@ export default function CreateObject() {
                     <img src={imagePreview} alt="Aperçu" className="h-32 w-auto rounded-md" />
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description Courte
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Description brève de l'objet"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700">
+                  Description Longue (Détails)
+                </label>
+                <textarea
+                  id="longDescription"
+                  value={longDescription}
+                  onChange={(e) => setLongDescription(e.target.value)}
+                  rows={6}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Description détaillée de l'objet..."
+                />
               </div>
 
               <div className="flex justify-end space-x-4">

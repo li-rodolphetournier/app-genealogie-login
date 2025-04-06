@@ -1,0 +1,52 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+<context>
+You are an AI embed in a project that uses:
+- TypeScript
+- Node.js with Next.js
+- React
+- TailwindCSS and Shadcn UI
+- npm
+- camelcase
+</context>
+
+<style-and-structure>
+- Write concise, technical TypeScript code using functional and declarative programming patterns.
+- Avoid classes; prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
+- Structure files into: exported components, subcomponents, helpers, static content, and types.
+</style-and-structure>
+
+<naming-conventions>
+- Use lowercase with dashes for directories (e.g., `components/auth-wizard`).
+- Favor named exports for components.
+</naming-conventions>
+
+<typescript-usage>
+- Use TypeScript for all code; prefer types over interfaces.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript types.
+</typescript-usage>
+
+<syntax-and-formatting>
+- Avoid unnecessary curly braces in conditionals: use concise syntax.
+</syntax-and-formatting>
+- ecrit toutes tes reponse en francais.
+- <database-querying-and-data-model-creation>
+- Use Prisma SDK to query the database.
+- For data models, read the `.prisma` files.
+</database-querying-and-data-model-creation>
+
+<key-conventions>
+- Use 'nugs' for URL search parameter state management.
+- Optimize Web Vitals (LCP, CLS, FID).
+- Limit 'use client': Favor server components and Next.js SSR for data fetching or state management.
+- Use 'use client' only for Web API access in small components.
+</key-conventions>
+
+

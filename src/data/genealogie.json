@@ -39,16 +39,17 @@
     "image": null
   },
   {
-    "nom": "Martin",
-    "prenom": "Julie",
-    "genre": "femme",
-    "description": "Fille unique de Robert",
+    "nom": "Le Riche de Cheveigné",
+    "prenom": "Robert",
+    "genre": "homme",
+    "description": "Fils d'Alexandre",
+    "detail": "",
     "mere": null,
     "pere": "3",
     "ordreNaissance": 1,
-    "dateNaissance": "1960-12-25",
+    "dateNaissance": "1800-12-25",
     "dateDeces": null,
-    "image": null,
+    "image": "/uploads/1743874245375-545583170-mariage-Robert-et-Germaine-de-CHEVEIGNE-001.jpg",
     "id": "4"
   },
   {

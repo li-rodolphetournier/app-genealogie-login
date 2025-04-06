@@ -1,17 +1,14 @@
 'use client';
 
+import { ArcElement, Chart as ChartJS, ChartOptions, Legend, Tooltip, TooltipItem } from 'chart.js';
 import { useEffect, useState } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
-import type { ChartData, ChartOptions } from 'chart.js';
+
 import Link from 'next/link';
+import { Doughnut } from 'react-chartjs-2';
+import LoadingIndicator from '../../components/LoadingIndicator';
+import { ObjectData } from '../../types/objects';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-interface ObjectData {
-  type: string;
-  status: string;
-}
 
 interface ChartDataType {
   labels: string[];
@@ -29,80 +26,76 @@ export default function ChartPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchData();
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const objectsRes = await fetch('/api/objects');
+
+        if (!objectsRes.ok) {
+          throw new Error('Erreur lors de la récupération des objets');
+        }
+
+        const objectsData: ObjectData[] = await objectsRes.json();
+
+        const typeCount = objectsData.reduce((acc, obj) => {
+          acc[obj.type] = (acc[obj.type] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        const backgroundColors = [
+          'rgba(59, 130, 246, 0.7)',
+          'rgba(16, 185, 129, 0.7)',
+          'rgba(239, 68, 68, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(139, 92, 246, 0.7)',
+          'rgba(236, 72, 153, 0.7)',
+          'rgba(14, 165, 233, 0.7)',
+        ];
+        const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+
+        const builtChartData: ChartDataType = {
+          labels: Object.keys(typeCount),
+          datasets: [
+            {
+              data: Object.values(typeCount),
+              backgroundColor: backgroundColors.slice(0, Object.keys(typeCount).length),
+              borderColor: borderColors.slice(0, Object.keys(typeCount).length),
+              borderWidth: 1,
+            },
+          ],
+        };
+        setChartData(builtChartData);
+
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        setChartData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const response = await fetch('/api/objects');
-      const objects: ObjectData[] = await response.json();
-
-      const typeCount = objects.reduce((acc, obj) => {
-        acc[obj.type] = (acc[obj.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const data: ChartDataType = {
-        labels: Object.keys(typeCount),
-        datasets: [
-          {
-            data: Object.values(typeCount),
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.5)', // blue-500
-              'rgba(16, 185, 129, 0.5)', // green-500
-              'rgba(239, 68, 68, 0.5)',  // red-500
-              'rgba(245, 158, 11, 0.5)', // yellow-500
-              'rgba(139, 92, 246, 0.5)', // purple-500
-            ],
-            borderColor: [
-              'rgb(59, 130, 246)',  // blue-500
-              'rgb(16, 185, 129)',  // green-500
-              'rgb(239, 68, 68)',   // red-500
-              'rgb(245, 158, 11)',  // yellow-500
-              'rgb(139, 92, 246)',  // purple-500
-            ],
-            borderWidth: 2,
-          },
-        ],
-      };
-
-      setChartData(data);
-    } catch (error) {
-      setError('Erreur lors de la récupération des données');
-      console.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const options: ChartOptions<'doughnut'> = {
+  const chartOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          font: {
-            size: 14,
-          },
-          padding: 20,
-          color: '#374151', // text-gray-700
-        },
+        position: 'top',
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 14,
-        },
         callbacks: {
-          label: function(tooltipItem) {
-            return `${tooltipItem.label}: ${tooltipItem.formattedValue} objets`;
+          label: function (context: TooltipItem<'doughnut'>) {
+            let label = context.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed !== null) {
+              label += context.parsed + ' objet(s)';
+            }
+            return label;
           }
         }
       }
@@ -110,21 +103,15 @@ export default function ChartPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <span className="sr-only">Chargement des statistiques...</span>
-      </div>
-    );
+    return <LoadingIndicator text="Chargement des statistiques..." />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* En-tête avec bouton retour */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
-            Statistiques des objets
+            Statistiques des Objets
           </h1>
           <Link
             href="/accueil"
@@ -137,26 +124,30 @@ export default function ChartPage() {
           </Link>
         </div>
 
-        {error ? (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4" role="alert">
-            <p className="text-red-700">{error}</p>
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6" role="alert">
+            <p className="text-red-700">Erreur de chargement: {error}</p>
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow px-6 py-8">
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4" id="chart-title">
-                Répartition des objets par type
-              </h2>
-              <div className="h-[400px] relative" aria-labelledby="chart-title">
-                {chartData && (
-                  <Doughnut 
-                    data={chartData} 
-                    options={options}
-                    aria-label="Graphique en anneau montrant la répartition des objets par type"
-                  />
-                )}
-              </div>
+        )}
+
+        {!error && chartData && (
+          <div className="bg-white rounded-lg shadow px-6 py-8 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4" id="chart-title">
+              Répartition des Objets par Type
+            </h2>
+            <div className="h-[400px] relative" aria-labelledby="chart-title">
+              <Doughnut
+                data={chartData}
+                options={chartOptions}
+                aria-label="Graphique Donut des types d'objets"
+              />
             </div>
+          </div>
+        )}
+
+        {!isLoading && !error && !chartData && (
+          <div className="text-center text-gray-500 py-10">
+            Aucune donnée statistique à afficher.
           </div>
         )}
       </div>

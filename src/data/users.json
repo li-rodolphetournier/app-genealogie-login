@@ -28,7 +28,7 @@
     "password": "DecembreNoel2024",
     "email": "genie@free.fr",
     "description": "Je suis le 1 utilisateur",
-    "profileImage": "",
+    "profileImage": "/uploads/users/1743808292025-nd4p2mfda.png",
     "status": "utilisateur"
   },
   {
@@ -36,31 +36,17 @@
     "password": "DecembreNoel2024",
     "email": "genie@free.fr",
     "description": "Je suis le 1 utilisateur",
-    "profileImage": "",
+    "profileImage": "/uploads/users/1743808211265-1k1pc7qrx.avif",
     "status": "utilisateur"
   },
   {
-    "id": "1742847775258",
-    "login": "m",
-    "password": "1",
-    "status": "u",
-    "email": "m",
-    "description": "t"
-  },
-  {
-    "id": "1742847964518",
-    "login": "i",
-    "password": "O",
-    "status": "u",
-    "email": "t",
-    "description": "g"
-  },
-  {
-    "id": "1742849130221",
-    "login": "s",
-    "password": "O",
-    "status": "u",
-    "email": "sxb@qsfqsg.Fr",
-    "description": "<"
+    "id": "1743888041927",
+    "login": "rodolphe",
+    "email": "rodolphe@rodolphe.com",
+    "password": "rodolphe",
+    "description": "C'est mon profil d'administrateur.",
+    "detail": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    "status": "administrateur",
+    "profileImage": "/uploads/1743888037837-155544476-buffet-2-portes-2-tiroirs-noirs-et-imprime-perroquets-1000-14-10-186232-4.avif"
   }
 ]

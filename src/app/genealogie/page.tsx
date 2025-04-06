@@ -1,13 +1,13 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Tree, { RawNodeDatum } from 'react-d3-tree';
 import { useEffect, useState } from 'react';
-import Tree from 'react-d3-tree';
-import { RawNodeDatum } from 'react-d3-tree';
+
 import FamilyTreeNode from '../../components/FamilyTreeNode';
-import ImageUploader from '../../components/ImageUploader';
+import GenericImageUploader from '../../components/ImageUploader';
+import Link from 'next/link';
 import genealogieData from '../../data/genealogie.json';
+import { useRouter } from 'next/navigation';
 
 type Person = {
   id: string;
@@ -15,6 +15,7 @@ type Person = {
   prenom: string;
   genre: 'homme' | 'femme';
   description: string;
+  detail?: string;
   mere: string | null;
   pere: string | null;
   ordreNaissance: number;
@@ -30,6 +31,7 @@ interface CustomNodeDatum extends Omit<RawNodeDatum, 'attributes'> {
     id: string;
     genre: 'homme' | 'femme';
     description: string;
+    detail: string | '';
     dateNaissance: string;
     dateDeces: string | '';
     ordreNaissance: number;
@@ -63,6 +65,7 @@ export default function Genealogie() {
     prenom: '',
     genre: 'homme',
     description: '',
+    detail: '',
     mere: null,
     pere: null,
     ordreNaissance: 1,
@@ -111,6 +114,7 @@ export default function Genealogie() {
             id: person.id,
             genre: person.genre,
             description: person.description,
+            detail: person.detail || '',
             dateNaissance: person.dateNaissance,
             dateDeces: person.dateDeces || '',
             ordreNaissance: person.ordreNaissance,
@@ -133,6 +137,7 @@ export default function Genealogie() {
           id: "root",
           genre: 'homme',
           description: 'Racine',
+          detail: '',
           dateNaissance: '',
           dateDeces: '',
           ordreNaissance: 0,
@@ -143,24 +148,29 @@ export default function Genealogie() {
     }
   }, [persons]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value === '' ? null : value
+      [name]: value === '' && (name === 'mere' || name === 'pere' || name === 'dateDeces' || name === 'image') ? null : value
     }));
   };
 
-  const handleImageUpload = async (imageUrls: string[]) => {
-    if (imageUrls.length > 0) {
-      const imageUrl = imageUrls[0];
-      console.log('Image URL reçue:', imageUrl);
+  const handleImageUploadSuccess = (imageUrl: string) => {
+    console.log('Image URL reçue:', imageUrl);
+    setFormData(prev => ({
+      ...prev,
+      image: imageUrl
+    }));
+  };
 
-      setFormData(prev => ({
-        ...prev,
-        image: imageUrl
-      }));
-    }
+  const handleImageUploadError = (errorMessage: string) => {
+    console.error("Upload error:", errorMessage);
+    alert(`Erreur d'upload: ${errorMessage}`);
+  };
+
+  const handleImageUploadStart = () => {
+    console.log("Upload started...");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,44 +183,60 @@ export default function Genealogie() {
       }
     }
 
-    const newPerson: Person = {
-      ...formData,
-      id: Date.now().toString(),
-      image: formData.image
-    };
+    if (isEditing && editingId) {
+      setPersons(prevPersons =>
+        prevPersons.map(p =>
+          p.id === editingId
+            ? { ...p, ...formData, detail: formData.detail || '' }
+            : p
+        )
+      );
+      alert('Personne mise à jour avec succès !');
+      setIsEditing(false);
+      setEditingId(null);
+    } else {
+      const newPerson: Person = {
+        ...formData,
+        id: Date.now().toString(),
+        detail: formData.detail || '',
+        image: formData.image
+      };
 
-    try {
-      const response = await fetch('/api/genealogie/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newPerson),
-      });
-
-      if (response.ok) {
-        setPersons(prev => [...prev, newPerson]);
-        setFormData({
-          nom: '',
-          prenom: '',
-          genre: 'homme',
-          description: '',
-          mere: null,
-          pere: null,
-          ordreNaissance: 1,
-          dateNaissance: '',
-          dateDeces: null,
-          image: null
+      try {
+        const response = await fetch('/api/genealogie/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newPerson),
         });
-        alert('Personne ajoutée avec succès !');
-      } else {
-        const error = await response.json();
-        alert(`Erreur lors de l'ajout : ${error.message}`);
+
+        if (response.ok) {
+          setPersons(prev => [...prev, newPerson]);
+          alert('Personne ajoutée avec succès !');
+        } else {
+          const error = await response.json();
+          alert(`Erreur lors de l'ajout : ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout :', error);
+        alert('Erreur lors de l\'ajout de la personne');
       }
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout :', error);
-      alert('Erreur lors de l\'ajout de la personne');
     }
+
+    setFormData({
+      nom: '',
+      prenom: '',
+      genre: 'homme',
+      description: '',
+      detail: '',
+      mere: null,
+      pere: null,
+      ordreNaissance: 1,
+      dateNaissance: '',
+      dateDeces: null,
+      image: null
+    });
   };
 
   const handleNodeClick = (nodeDatum: CustomNodeDatum) => {
@@ -223,6 +249,7 @@ export default function Genealogie() {
         prenom: person.prenom,
         genre: person.genre,
         description: person.description,
+        detail: person.detail || '',
         mere: person.mere,
         pere: person.pere,
         ordreNaissance: person.ordreNaissance,
@@ -243,6 +270,7 @@ export default function Genealogie() {
       prenom: '',
       genre: 'homme',
       description: '',
+      detail: '',
       mere: null,
       pere: null,
       ordreNaissance: 1,
@@ -446,13 +474,19 @@ export default function Genealogie() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={formData.description}
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description (Courte)</label>
+                <textarea name="description" id="description" value={formData.description} onChange={handleInputChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              </div>
+              <div>
+                <label htmlFor="detail" className="block text-sm font-medium text-gray-700">Détail (Paragraphes)</label>
+                <textarea
+                  name="detail"
+                  id="detail"
+                  value={formData.detail}
                   onChange={handleInputChange}
-                  className="w-full border rounded p-2"
+                  rows={6}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="Informations détaillées sur la personne..."
                 />
               </div>
               <div>
@@ -493,7 +527,15 @@ export default function Genealogie() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Photo de profil</label>
-                <ImageUploader onUpload={handleImageUpload} type="genealogie" />
+                <GenericImageUploader
+                  onUploadSuccess={handleImageUploadSuccess}
+                  onError={handleImageUploadError}
+                  onUploadStart={handleImageUploadStart}
+                >
+                  <button type="button" className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Choisir une image
+                  </button>
+                </GenericImageUploader>
                 {formData.image && (
                   <div className="mt-2">
                     <img

@@ -1,8 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+
+import Link from 'next/link';
+import ConfirmDeleteModal from '../../components/ConfirmDeleteModal';
+import LoadingIndicator from '../../components/LoadingIndicator';
 
 type User = {
   login: string;
@@ -24,30 +26,23 @@ export default function UsersList() {
     const fetchUsers = async () => {
       try {
         const response = await fetch('/api/users');
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data);
-        } else {
-          setError('Erreur lors de la récupération des utilisateurs');
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des utilisateurs');
         }
-      } catch (error) {
-        setError('Erreur réseau lors de la récupération des utilisateurs');
-        console.error('Erreur:', error);
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUsers();
+    void fetchUsers();
   }, []);
 
   if (isLoading) {
-    return (
-      <div role="alert" className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        <span className="sr-only">Chargement...</span>
-      </div>
-    );
+    return <LoadingIndicator text="Chargement de la liste des utilisateurs..." />;
   }
 
   if (error) {

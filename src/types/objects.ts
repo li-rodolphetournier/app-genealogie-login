@@ -3,10 +3,11 @@ export interface ObjectData {
   nom: string;
   type: string;
   description?: string;
-  status: 'publie' | 'brouillon';
+  longDescription?: string;
+  status: "publie" | "brouillon";
   utilisateur: string;
   photos?: Array<{
     url: string;
     description: string[];
   }>;
-} 
+}

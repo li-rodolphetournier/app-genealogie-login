@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { User } from '../../types/user';
 
 interface User {
   id: string;
@@ -34,7 +36,7 @@ export default function UserDetail({ params }: PageProps) {
     if (loggedInUser) {
       setCurrentUser(JSON.parse(loggedInUser));
     }
-    
+
     if (login) {
       void fetchUser();
     }
@@ -95,7 +97,7 @@ export default function UserDetail({ params }: PageProps) {
               <h1 className="text-2xl font-bold text-gray-900" id="userDetailTitle">
                 Profil de {user.prenom || ''} {user.nom || user.login}
               </h1>
-              
+
               {currentUser && (currentUser.status === 'administrateur' || currentUser.login === user.login) && (
                 <div className="flex space-x-4">
                   <Link
@@ -182,9 +184,8 @@ export default function UserDetail({ params }: PageProps) {
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Statut</dt>
                       <dd className="mt-1">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.status === 'administrateur' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === 'administrateur' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                          }`}>
                           {user.status}
                         </span>
                       </dd>
