@@ -1,5 +1,11 @@
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Corriger l'avertissement sur les lockfiles multiples
+  outputFileTracingRoot: require('path').join(__dirname),
   transpilePackages: ["react-d3-tree"],
   images: {
     remotePatterns: [
@@ -10,22 +16,26 @@ const nextConfig = {
         pathname: "/uploads/**",
       },
       {
+        protocol: "http",
+        hostname: "localhost",
+        port: "3002",
+        pathname: "/uploads/**",
+      },
+      {
         protocol: "https",
         hostname: "**.vercel.app",
         pathname: "/uploads/**",
       },
     ],
   },
-  serverRuntimeConfig: {
-    PROJECT_ROOT: __dirname,
-    TEMP_DIR: process.env.NODE_ENV === "production" ? "/tmp" : "./tmp",
-  },
+  // serverRuntimeConfig est déprécié et sera supprimé dans Next.js 16
+  // Utiliser des variables d'environnement à la place
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", "*.vercel.app"],
+      allowedOrigins: ["localhost:3000", "localhost:3002", "*.vercel.app"],
       bodySizeLimit: "2mb",
     },
   },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);

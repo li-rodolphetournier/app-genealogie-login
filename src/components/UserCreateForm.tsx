@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getErrorMessage } from '@/lib/errors/messages';
 
 // Importer les composants Shadcn UI si nécessaire
 // import { Input } from "@/components/ui/input";
@@ -82,30 +83,48 @@ const UserCreateForm: React.FC = () => {
       return;
     }
 
-    const formDataObj = new FormData();
-    formDataObj.append('login', formData.login);
-    formDataObj.append('password', formData.password);
-    formDataObj.append('status', formData.status);
-    if (formData.email) formDataObj.append('email', formData.email);
-    if (formData.description) formDataObj.append('description', formData.description);
-    if (profileImageFile) {
-      formDataObj.append('profileImage', profileImageFile);
-    }
-
     try {
-      const response = await fetch('/api/create-user', {
+      // Upload de l'image si présente
+      let profileImageUrl: string | null = null;
+      if (profileImageFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', profileImageFile);
+        uploadFormData.append('folder', 'users');
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          profileImageUrl = uploadData.imageUrl || uploadData.url;
+        }
+      }
+
+      // Créer l'utilisateur
+      const response = await fetch('/api/users', {
         method: 'POST',
-        body: formDataObj,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          login: formData.login,
+          email: formData.email,
+          password: formData.password,
+          status: formData.status,
+          description: formData.description,
+          profileImage: profileImageUrl,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de la creation de l utilisateur');
+        throw new Error(errorData.message || getErrorMessage('USER_CREATE_FAILED'));
       }
 
       const data = await response.json();
       setSuccess(`Utilisateur ${data.login} créé avec succès !`); // Afficher un message de succès
-      console.log('Utilisateur créé avec succès:', data);
 
       // Réinitialiser le formulaire
       setFormData({

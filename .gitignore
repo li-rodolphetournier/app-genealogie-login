@@ -9,6 +9,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+# Si vous utilisez Yarn, ignorez package-lock.json
+package-lock.json
 
 # testing
 /coverage

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
-import type { ObjectData, ObjectUpdateInput } from '@/types/objects';
+import { objectUpdateSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import { getErrorMessage } from '@/lib/errors/messages';
+import type { ObjectData } from '@/types/objects';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
@@ -38,7 +42,7 @@ export async function GET(
 
     if (!object) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Objet non trouvé' },
+        { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
@@ -47,7 +51,7 @@ export async function GET(
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'objet:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -60,14 +64,20 @@ export async function PUT(
 ) {
   try {
     const { id } = await context.params;
-    const body: ObjectUpdateInput = await request.json();
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(objectUpdateSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
+    }
     
     const objects = await readObjects();
     const objectIndex = objects.findIndex(obj => obj.id === id);
 
     if (objectIndex === -1) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Objet non trouvé' },
+        { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
@@ -75,13 +85,17 @@ export async function PUT(
     // Mettre à jour l'objet
     const updatedObject: ObjectData = {
       ...objects[objectIndex],
-      ...body,
+      ...validation.data,
       id, // Garantir que l'ID ne change pas
       updatedAt: new Date().toISOString(),
     };
 
     objects[objectIndex] = updatedObject;
     await writeObjects(objects);
+
+    // Revalider le cache
+    revalidatePath('/objects', 'page');
+    revalidatePath(`/objects/${id}`, 'page');
 
     return NextResponse.json<SuccessResponse<ObjectData>>(
       { message: 'Objet mis à jour avec succès', data: updatedObject },
@@ -90,7 +104,7 @@ export async function PUT(
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'objet:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -108,12 +122,16 @@ export async function DELETE(
 
     if (objects.length === filteredObjects.length) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Objet non trouvé' },
+        { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
 
     await writeObjects(filteredObjects);
+
+    // Revalider le cache
+    revalidatePath('/objects', 'page');
+    revalidatePath(`/objects/${id}`, 'page');
 
     return NextResponse.json<SuccessResponse>(
       { message: 'Objet supprimé avec succès' },
@@ -122,7 +140,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Erreur lors de la suppression de l\'objet:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }

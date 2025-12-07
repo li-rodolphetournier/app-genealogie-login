@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, UserUpdateInput, UserResponse } from '@/types/user';
+import bcrypt from 'bcrypt';
+import { userUpdateSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import { getErrorMessage } from '@/lib/errors/messages';
+import type { User, UserResponse } from '@/types/user';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const usersPath = path.join(process.cwd(), 'src/data/users.json');
@@ -38,7 +43,7 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Utilisateur non trouvé' },
+        { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
@@ -48,7 +53,7 @@ export async function GET(
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -61,28 +66,45 @@ export async function PUT(
 ) {
   try {
     const { login } = await context.params;
-    const body: UserUpdateInput = await request.json();
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(userUpdateSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
+    }
     
     const users = await readUsers();
     const userIndex = users.findIndex(u => u.login === login);
 
     if (userIndex === -1) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Utilisateur non trouvé' },
+        { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
 
     // Mettre à jour l'utilisateur
+    const updateData: any = { ...validation.data };
+    
+    // Hasher le mot de passe si fourni
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+    
     const updatedUser = {
       ...users[userIndex],
-      ...body,
+      ...updateData,
       login, // Garantir que le login ne change pas
       updatedAt: new Date().toISOString(),
     };
 
     users[userIndex] = updatedUser;
     await writeUsers(users);
+
+    // Revalider le cache
+    revalidatePath('/users', 'page');
+    revalidatePath(`/users/${login}`, 'page');
 
     const { password: _, ...userWithoutPassword } = updatedUser;
 
@@ -93,7 +115,7 @@ export async function PUT(
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -111,12 +133,16 @@ export async function DELETE(
 
     if (users.length === filteredUsers.length) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Utilisateur non trouvé' },
+        { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
 
     await writeUsers(filteredUsers);
+
+    // Revalider le cache
+    revalidatePath('/users', 'page');
+    revalidatePath(`/users/${login}`, 'page');
 
     return NextResponse.json<SuccessResponse>(
       { message: 'Utilisateur supprimé avec succès' },
@@ -125,7 +151,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Erreur lors de la suppression de l\'utilisateur:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }

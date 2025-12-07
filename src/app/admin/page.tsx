@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 type User = {
   login: string;
@@ -30,26 +31,29 @@ export default function EditProfile() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) {
-      router.push('/');
-      return;
-    }
+  const { user: authUser, isLoading } = useAuth({
+    redirectIfUnauthenticated: true,
+    redirectTo: '/',
+  });
 
-    const userData = JSON.parse(currentUser);
-    setUser(userData);
-    setFormData(prev => ({
-      ...prev,
-      email: userData.email || '',
-      description: userData.description || '',
-      detail: userData.detail || '',
-      profileImage: userData.profileImage || ''
-    }));
-  }, [router]);
+  useEffect(() => {
+    if (authUser) {
+      setUser(authUser);
+      setFormData(prev => ({
+        ...prev,
+        email: authUser.email || '',
+        description: authUser.description || '',
+        detail: authUser.detail || '',
+        profileImage: authUser.profileImage || ''
+      }));
+    }
+  }, [authUser]);
+
+  if (isLoading || !authUser) {
+    return <div>Chargement...</div>;
+  }
 
   const handleImageUploadSuccess = (imageUrl: string) => {
-    console.log('DEBUG: Nouvelle image de profil sélectionnée:', imageUrl);
     setFormData(prev => ({
       ...prev,
       profileImage: imageUrl
@@ -106,7 +110,7 @@ export default function EditProfile() {
       if (response.ok) {
         const updatedUser = await response.json();
         const fullUserForStorage = { ...user, ...updatedUser };
-        localStorage.setItem('currentUser', JSON.stringify(fullUserForStorage));
+        // Supabase Auth gère maintenant les sessions, plus besoin de localStorage
         setUser(fullUserForStorage);
         setSuccess('Profil mis à jour avec succès');
         setFormData(prev => ({

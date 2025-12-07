@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -12,8 +13,7 @@ export const ImageResizer: React.FC<ImageResizerProps> = React.memo(({ file, onR
   const [isResizing, setIsResizing] = useState(false);
 
   const resizeImage = useCallback(async (file: File): Promise<File> => {
-    console.log(`Début du redimensionnement de l'image: ${file.name}`);
-    console.log(`Taille originale: ${file.size} bytes`);
+    logger.debug(`Début du redimensionnement de l'image: ${file.name}`, `Taille originale: ${file.size} bytes`);
 
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -25,13 +25,11 @@ export const ImageResizer: React.FC<ImageResizerProps> = React.memo(({ file, onR
           let height = img.height;
           let quality = 0.7;
 
-          console.log(`Dimensions originales: ${width}x${height}`);
-
           if (width > 1920 || height > 1080) {
             const ratio = Math.min(1920 / width, 1080 / height);
             width *= ratio;
             height *= ratio;
-            console.log(`Nouvelles dimensions: ${width}x${height}`);
+            logger.debug(`Redimensionnement: ${img.width}x${img.height} -> ${width}x${height}`);
           }
 
           canvas.width = width;
@@ -43,7 +41,6 @@ export const ImageResizer: React.FC<ImageResizerProps> = React.memo(({ file, onR
             canvas.toBlob(
               (blob) => {
                 if (blob) {
-                  console.log(`Taille après compression (qualité ${quality}): ${blob.size} bytes`);
                   if (blob.size > MAX_FILE_SIZE && quality > 0.1) {
                     quality -= 0.1;
                     reduceQuality();
@@ -52,7 +49,7 @@ export const ImageResizer: React.FC<ImageResizerProps> = React.memo(({ file, onR
                       type: file.type,
                       lastModified: Date.now(),
                     });
-                    console.log(`Redimensionnement terminé. Nouvelle taille: ${newFile.size} bytes`);
+                    logger.debug(`Redimensionnement terminé: ${file.size} bytes -> ${newFile.size} bytes`);
                     resolve(newFile);
                   }
                 }
@@ -79,7 +76,7 @@ export const ImageResizer: React.FC<ImageResizerProps> = React.memo(({ file, onR
         const resizedFile = await resizeImage(file);
         onResize(resizedFile);
       } catch (error) {
-        console.error('Erreur lors du redimensionnement de l\'image:', error);
+        logger.error('Erreur lors du redimensionnement de l\'image:', error);
         onError('Une erreur s\'est produite lors du traitement de l\'image. Veuillez réessayer.');
       } finally {
         setIsResizing(false);

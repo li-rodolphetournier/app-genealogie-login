@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
-import type { ObjectData, ObjectCreateInput } from '@/types/objects';
+import { objectCreateSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import { getErrorMessage } from '@/lib/errors/messages';
+import type { ObjectData } from '@/types/objects';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
@@ -36,7 +40,7 @@ export async function GET() {
   } catch (error) {
     console.error('Erreur lors de la récupération des objets:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur lors de la récupération des objets' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -45,16 +49,15 @@ export async function GET() {
 // POST - Créer un nouvel objet
 export async function POST(request: Request) {
   try {
-    const body: ObjectCreateInput = await request.json();
-    const { nom, type, status, utilisateur, description, longDescription, photos } = body;
-
-    // Validation
-    if (!nom || !type || !status || !utilisateur) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Champs obligatoires (nom, type, status, utilisateur) manquants' },
-        { status: 400 }
-      );
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(objectCreateSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
     }
+    
+    const { nom, type, status, utilisateur, description, longDescription, photos } = validation.data;
 
     const objects = await readObjects();
 
@@ -75,6 +78,10 @@ export async function POST(request: Request) {
     objects.push(newObject);
     await writeObjects(objects);
 
+    // Revalider le cache
+    revalidatePath('/objects', 'page');
+    revalidatePath(`/objects/${newObject.id}`, 'page');
+
     return NextResponse.json<SuccessResponse<ObjectData>>(
       { message: 'Objet créé avec succès', data: newObject },
       { status: 201 }
@@ -82,7 +89,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Erreur lors de la création de l\'objet:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: error instanceof Error ? error.message : 'Erreur interne du serveur' },
+      { error: error instanceof Error ? error.message : getErrorMessage('OBJECT_CREATE_FAILED') },
       { status: 500 }
     );
   }

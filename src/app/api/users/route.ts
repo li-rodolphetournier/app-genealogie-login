@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, UserCreateInput, UserResponse } from '@/types/user';
+import bcrypt from 'bcrypt';
+import { userCreateSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import type { User, UserResponse } from '@/types/user';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const usersPath = path.join(process.cwd(), 'src/data/users.json');
@@ -40,7 +44,7 @@ export async function GET() {
   } catch (error) {
     console.error('Erreur lors de la récupération des utilisateurs:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur lors de la récupération des utilisateurs' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -49,23 +53,15 @@ export async function GET() {
 // POST - Créer un nouvel utilisateur
 export async function POST(request: Request) {
   try {
-    const body: UserCreateInput = await request.json();
-    const { login, email, password, status, nom, prenom, description, profileImage } = body;
-
-    // Validation
-    if (!login || !email || !password || !status) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Champs obligatoires (login, email, password, status) manquants' },
-        { status: 400 }
-      );
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(userCreateSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
     }
-
-    if (password.length < 6) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Le mot de passe doit faire au moins 6 caractères' },
-        { status: 400 }
-      );
-    }
+    
+    const { login, email, password, status, nom, prenom, description, profileImage } = validation.data;
 
     const users = await readUsers();
 
@@ -93,12 +89,16 @@ export async function POST(request: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    // TODO: Hasher le mot de passe avec bcrypt avant de l'ajouter
-    // Pour l'instant, on stocke en clair (migration progressive)
-    const userWithPassword = { ...newUser, password };
+    // Hasher le mot de passe avec bcrypt
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userWithPassword = { ...newUser, password: passwordHash } as User & { password: string };
 
     users.push(userWithPassword as User & { password: string });
     await writeUsers(users as User[]);
+
+    // Revalider le cache pour les pages utilisateurs
+    revalidatePath('/users', 'page');
+    revalidatePath('/users/[login]', 'page');
 
     const { password: _, ...userWithoutPassword } = userWithPassword;
 
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Erreur API create-user:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: error instanceof Error ? error.message : 'Erreur interne du serveur' },
+      { error: error instanceof Error ? error.message : getErrorMessage('USER_CREATE_FAILED') },
       { status: 500 }
     );
   }

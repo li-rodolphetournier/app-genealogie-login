@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 
 // Interface pour les props du composant
 interface LoadingIndicatorProps {
@@ -11,7 +11,7 @@ interface LoadingIndicatorProps {
 }
 
 // Le composant LoadingIndicator
-const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
+const LoadingIndicator: React.FC<LoadingIndicatorProps> = memo(({
   text = 'Chargement...', // Texte par défaut
   className = '',
   spinnerClassName = 'w-16 h-16', // Taille par défaut du spinner
@@ -47,6 +47,8 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
       <span className="sr-only">{text || 'Chargement en cours'}</span>
     </div>
   );
-};
+});
+
+LoadingIndicator.displayName = 'LoadingIndicator';
 
 export default LoadingIndicator;

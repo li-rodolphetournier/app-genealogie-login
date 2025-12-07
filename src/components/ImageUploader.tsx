@@ -6,6 +6,7 @@ interface ImageUploaderProps {
   onError?: (errorMessage: string) => void; // Callback en cas d'erreur
   onUploadStart?: () => void; // Callback au début de l'upload
   uploadUrl?: string; // URL de l'API pour l'upload (optionnel, défaut: /api/upload)
+  folder?: string; // Dossier/bucket pour l'upload (optionnel, ex: 'messages', 'users', 'objects')
   acceptedFileTypes?: string; // Types de fichiers acceptés (optionnel, défaut: image/*)
   children: React.ReactElement; // L'élément qui déclenchera l'ouverture du sélecteur de fichier
   maxFileSizeMB?: number; // Taille maximale en MB (optionnel)
@@ -16,6 +17,7 @@ const GenericImageUploader: React.FC<ImageUploaderProps> = ({
   onError,
   onUploadStart,
   uploadUrl = '/api/upload', // Valeur par défaut pour l'URL
+  folder, // Dossier/bucket pour l'upload
   acceptedFileTypes = 'image/*', // Valeur par défaut pour les types de fichiers
   children,
   maxFileSizeMB = 5, // Taille max par défaut (ex: 5MB)
@@ -61,6 +63,11 @@ const GenericImageUploader: React.FC<ImageUploaderProps> = ({
 
     const formData = new FormData();
     formData.append('file', file);
+    
+    // Ajouter le dossier si spécifié (pour Supabase Storage)
+    if (folder) {
+      formData.append('folder', folder);
+    }
 
     try {
       const response = await fetch(uploadUrl, {

@@ -2,11 +2,20 @@
 
 import { ArcElement, Chart as ChartJS, ChartOptions, Legend, Tooltip, TooltipItem } from 'chart.js';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 
 import Link from 'next/link';
-import { Doughnut } from 'react-chartjs-2';
 import LoadingIndicator from '../../components/LoadingIndicator';
 import { ObjectData } from '../../types/objects';
+
+// Lazy loading du composant Doughnut (lourd ~80KB)
+const Doughnut = dynamic(
+  () => import('react-chartjs-2').then((mod) => mod.Doughnut),
+  {
+    ssr: false,
+    loading: () => <LoadingIndicator />,
+  }
+);
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

@@ -1,79 +1,90 @@
+/**
+ * Route API de login avec Supabase Auth
+ * Utilise Supabase Auth pour une authentification sécurisée
+ */
+
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import bcrypt from 'bcrypt';
+import { createClient } from '@/lib/supabase/server';
+import { loginSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import type { LoginRequest, LoginResponse, ErrorResponse } from '@/types/api/requests';
 import type { User } from '@/types/user';
 
-const usersPath = path.join(process.cwd(), 'src/data/users.json');
-
-async function readUsers(): Promise<User[]> {
-  try {
-    const data = fs.readFileSync(usersPath, 'utf8');
-    return JSON.parse(data) as User[];
-  } catch (error) {
-    console.error('Erreur lecture users.json:', error);
-    return [];
-  }
-}
-
 export async function POST(request: Request) {
   try {
-    const body: LoginRequest = await request.json();
-    const { login, password } = body;
-
-    if (!login || !password) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Login et mot de passe requis' },
-        { status: 400 }
-      );
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(loginSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
     }
+    
+    const { login, password } = validation.data;
+    const supabase = await createClient();
 
-    const users = await readUsers();
-    const user = users.find(u => u.login === login);
+    // Tentative 1 : Essayer avec l'email
+    let authResult = await supabase.auth.signInWithPassword({
+      email: login,
+      password,
+    });
 
-    if (!user) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Identifiants incorrects' },
-        { status: 401 }
-      );
-    }
+    // Tentative 2 : Si échec, chercher par login dans la table users
+    if (authResult.error) {
+      const { data: userByLogin } = await supabase
+        .from('users')
+        .select('email')
+        .eq('login', login)
+        .single();
 
-    // Vérifier le mot de passe
-    // Note: Si les mots de passe sont en clair dans le JSON, on les compare directement
-    // Sinon, on utilise bcrypt.compare
-    const userWithPassword = user as User & { password?: string };
-    let passwordValid = false;
-
-    if (userWithPassword.password) {
-      // Si le mot de passe est hashé, utiliser bcrypt
-      if (userWithPassword.password.startsWith('$2')) {
-        passwordValid = await bcrypt.compare(password, userWithPassword.password);
-      } else {
-        // Sinon, comparer en clair (pour migration progressive)
-        passwordValid = userWithPassword.password === password;
+      if (userByLogin?.email) {
+        authResult = await supabase.auth.signInWithPassword({
+          email: userByLogin.email,
+          password,
+        });
       }
     }
 
-    if (!passwordValid) {
+    if (authResult.error || !authResult.data.user) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Identifiants incorrects' },
         { status: 401 }
       );
     }
 
-    // Omettre le mot de passe de la réponse
-    const { password: _, ...userWithoutPassword } = userWithPassword;
+    // Récupérer le profil utilisateur depuis la table users
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authResult.data.user.id)
+      .single();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, ce qui est normal si le profil n'existe pas encore
+      console.error('Erreur lors de la récupération du profil:', profileError);
+    }
+
+    // Construire l'objet utilisateur
+    const user: User = {
+      id: authResult.data.user.id,
+      login: profile?.login || login,
+      email: authResult.data.user.email || profile?.email || '',
+      status: (profile?.status as User['status']) || 'utilisateur',
+      description: profile?.description || null,
+      profileImage: profile?.profile_image || null,
+      createdAt: profile?.created_at || new Date().toISOString(),
+      updatedAt: profile?.updated_at || new Date().toISOString(),
+    };
 
     const response: LoginResponse = {
-      user: userWithoutPassword,
+      user,
     };
 
     return NextResponse.json<LoginResponse>(response, { status: 200 });
   } catch (error) {
     console.error('Erreur de connexion:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur serveur' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }

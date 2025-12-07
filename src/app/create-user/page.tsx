@@ -64,12 +64,26 @@ export default function CreateUser() {
     }
 
     try {
-      const response = await fetch('/api/create-user', {
+      // Upload de l'image si présente
+      let profileImageUrl: string | undefined = formData.profileImage;
+      if (!profileImageUrl && formData.profileImage) {
+        // Si l'image n'a pas été uploadée via GenericImageUploader, on la garde telle quelle
+        profileImageUrl = formData.profileImage;
+      }
+
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          login: formData.login,
+          email: formData.email,
+          password: formData.password,
+          status: formData.status,
+          description: formData.description,
+          profileImage: profileImageUrl,
+        }),
       });
 
       if (response.ok) {
@@ -77,7 +91,7 @@ export default function CreateUser() {
         setTimeout(() => router.push('/users'), 1500);
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de la création de l utilisateur');
+        throw new Error(errorData.error || errorData.message || 'Erreur lors de la création de l utilisateur');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur inconnue est survenue.';

@@ -1,18 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-  login: string;
-  status: 'administrateur' | 'utilisateur';
-}
+import { useAuth } from '@/hooks/use-auth';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // Taille maximale de fichier en octets (2 Mo)
 
 export default function CreateObject() {
   const router = useRouter();
+  const { user, isLoading } = useAuth({
+    redirectIfUnauthenticated: true,
+    redirectTo: '/',
+  });
+  
   const [nom, setNom] = useState('');
   const [type, setType] = useState('');
   const [status, setStatus] = useState<'brouillon' | 'publie'>('brouillon');
@@ -20,19 +20,11 @@ export default function CreateObject() {
   const [longDescription, setLongDescription] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Récupérer l'utilisateur connecté depuis le localStorage
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      setUser(JSON.parse(currentUser));
-    } else {
-      // Rediriger vers la page de connexion si aucun utilisateur n'est connecté
-      router.push('/');
-    }
-  }, [router]);
+  if (isLoading || !user) {
+    return <div>Chargement...</div>;
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

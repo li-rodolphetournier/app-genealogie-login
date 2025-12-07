@@ -6,7 +6,11 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   rules: {
-    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', { 
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_',
+      ignoreRestSiblings: true
+    }],
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-types': 'off',
     '@next/next/no-img-element': 'off',
@@ -28,7 +32,11 @@ module.exports = {
     '@typescript-eslint/restrict-plus-operands': 'off',
     '@typescript-eslint/no-base-to-string': 'off',
     '@typescript-eslint/unbound-method': 'off',
-    '@typescript-eslint/no-misused-promises': 'off'
+    '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/consistent-type-imports': ['warn', {
+      prefer: 'type-imports',
+      fixStyle: 'inline-type-imports'
+    }]
   },
   ignorePatterns: [
     'pages/api/login.ts',

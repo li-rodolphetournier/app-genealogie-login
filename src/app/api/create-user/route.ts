@@ -2,6 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 
 import { NextResponse } from "next/server";
 import path from "path";
+import { getErrorMessage } from '@/lib/errors/messages';
 
 // Supprimer les imports Prisma et bcrypt
 // import { Prisma } from "@prisma/client";
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Erreur interne du serveur lors de la création de l utilisateur.";
+        : getErrorMessage('USER_CREATE_FAILED');
     return NextResponse.json({ message }, { status: 500 });
   }
 }

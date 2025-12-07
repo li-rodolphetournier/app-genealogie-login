@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import fs from 'fs/promises';
 import path from 'path';
-import type { Message, MessageCreateInput, MessageUpdateInput } from '@/types/message';
+import { messageCreateSchema, messageUpdateSchema } from '@/lib/validations';
+import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import { getErrorMessage } from '@/lib/errors/messages';
+import type { Message } from '@/types/message';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const messagesFile = path.join(process.cwd(), 'src/data/messages.json');
@@ -39,7 +43,7 @@ export async function GET() {
   } catch (error) {
     console.error('Erreur lors de la lecture des messages:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur lors de la lecture des messages' },
+      { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
     );
   }
@@ -48,16 +52,15 @@ export async function GET() {
 // POST - Créer un nouveau message
 export async function POST(request: Request) {
   try {
-    const body: MessageCreateInput = await request.json();
-    const { title, content, images, userId, userName } = body;
-
-    // Validation
-    if (!title || !content || !userId || !userName) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Champs obligatoires (title, content, userId, userName) manquants' },
-        { status: 400 }
-      );
+    const body = await request.json();
+    
+    // Validation Zod
+    const validation = validateWithSchema(messageCreateSchema, body);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
     }
+    
+    const { title, content, images, userId, userName } = validation.data;
 
     const messages = await readMessages();
     
@@ -77,6 +80,10 @@ export async function POST(request: Request) {
     messages.push(newMessage);
     await writeMessages(messages);
     
+    // Revalider le cache (messages et page d'accueil qui affiche le dernier message)
+    revalidatePath('/messages', 'page');
+    revalidatePath('/accueil', 'page');
+    
     return NextResponse.json<SuccessResponse<Message>>(
       { message: 'Message enregistré avec succès', data: newMessage },
       { status: 201 }
@@ -84,7 +91,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Erreur lors de la création du message:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur lors de la création du message' },
+      { error: getErrorMessage('MESSAGE_CREATE_FAILED') },
       { status: 500 }
     );
   }
@@ -93,14 +100,20 @@ export async function POST(request: Request) {
 // PUT - Modifier un message
 export async function PUT(request: Request) {
   try {
-    const body: MessageUpdateInput & { id: string } = await request.json();
+    const body = await request.json();
     const { id, ...updateData } = body;
 
     if (!id) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'ID du message manquant' },
+        { error: getErrorMessage('VALIDATION_ERROR') },
         { status: 400 }
       );
+    }
+
+    // Validation Zod pour les données de mise à jour
+    const validation = validateWithSchema(messageUpdateSchema, updateData);
+    if (!validation.success) {
+      return createValidationErrorResponse(validation.error);
     }
 
     const messages = await readMessages();
@@ -108,7 +121,7 @@ export async function PUT(request: Request) {
     
     if (messageIndex === -1) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Message non trouvé' },
+        { error: getErrorMessage('MESSAGE_NOT_FOUND') },
         { status: 404 }
       );
     }
@@ -116,12 +129,16 @@ export async function PUT(request: Request) {
     // Mettre à jour le message
     const updatedMessage: Message = {
       ...messages[messageIndex],
-      ...updateData,
+      ...validation.data,
       updated_at: new Date().toISOString(),
     };
     
     messages[messageIndex] = updatedMessage;
     await writeMessages(messages);
+    
+    // Revalider le cache
+    revalidatePath('/messages', 'page');
+    revalidatePath('/accueil', 'page');
     
     return NextResponse.json<SuccessResponse<Message>>(
       { message: 'Message modifié avec succès', data: updatedMessage },
@@ -130,7 +147,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error('Erreur lors de la modification du message:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur lors de la modification du message' },
+      { error: getErrorMessage('MESSAGE_UPDATE_FAILED') },
       { status: 500 }
     );
   }
@@ -144,7 +161,7 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'ID du message manquant' },
+        { error: getErrorMessage('VALIDATION_ERROR') },
         { status: 400 }
       );
     }
@@ -154,12 +171,16 @@ export async function DELETE(request: Request) {
 
     if (messages.length === filteredMessages.length) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Message non trouvé' },
+        { error: getErrorMessage('MESSAGE_NOT_FOUND') },
         { status: 404 }
       );
     }
 
     await writeMessages(filteredMessages);
+
+    // Revalider le cache
+    revalidatePath('/messages', 'page');
+    revalidatePath('/accueil', 'page');
 
     return NextResponse.json<SuccessResponse>(
       { message: 'Message supprimé avec succès' },
@@ -168,7 +189,7 @@ export async function DELETE(request: Request) {
   } catch (error) {
     console.error('Erreur lors de la suppression du message:', error);
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur lors de la suppression du message' },
+      { error: getErrorMessage('MESSAGE_DELETE_FAILED') },
       { status: 500 }
     );
   }

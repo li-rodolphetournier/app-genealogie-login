@@ -3,9 +3,11 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Login() {
   const router = useRouter();
+  const supabase = createClient();
   const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({
     login: '',
@@ -14,9 +16,29 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLogo, setHasLogo] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Vérifier si l'utilisateur est déjà connecté
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Utilisateur déjà connecté, rediriger vers l'accueil
+          router.push('/accueil');
+          return;
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'authentification:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    
+    void checkAuth();
+    
     // Vérifier si l'image existe
     const checkLogo = async () => {
       try {
@@ -27,7 +49,7 @@ export default function Login() {
       }
     };
     void checkLogo();
-  }, []);
+  }, [router, supabase]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,26 +62,56 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.login.trim() || !formData.password.trim()) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      // Tentative 1 : Essayer avec le login comme email
+      let authResult = await supabase.auth.signInWithPassword({
+        email: formData.login.trim(),
+        password: formData.password,
       });
 
-      const data = await response.json();
+      // Tentative 2 : Si échec, chercher par login dans la table users via l'API
+      if (authResult.error) {
+        const response = await fetch('/api/auth/get-email-by-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login: formData.login }),
+        });
 
-      if (response.ok) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        if (response.ok) {
+          const { email } = await response.json();
+          if (email) {
+            authResult = await supabase.auth.signInWithPassword({
+              email,
+              password: formData.password,
+            });
+          }
+        }
+      }
+
+      if (authResult.error) {
+        setError(authResult.error.message || 'Identifiants incorrects');
+        setIsLoading(false);
+        return;
+      }
+
+      if (authResult.data.user) {
+        // Connexion réussie, rediriger vers l'accueil
         router.push('/accueil');
+        router.refresh();
       } else {
-        setError(data.message || 'Identifiants incorrects');
+        setError('Erreur de connexion. Veuillez réessayer.');
       }
     } catch (error) {
       console.error('Erreur de connexion:', error);
@@ -69,8 +121,15 @@ export default function Login() {
     }
   };
 
-  if (!mounted) {
-    return null;
+  if (!mounted || checkingAuth) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Vérification...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

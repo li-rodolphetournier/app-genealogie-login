@@ -1,11 +1,12 @@
 'use client';
 
-import { ObjectData, Photo } from '../../../types/objects';
+import { ObjectData, ObjectPhoto } from '../../../types/objects';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 import Image from 'next/image';
-import LoadingIndicator from '../../../share-components/LoadingIndicator';
+import LoadingIndicator from '@/components/LoadingIndicator';
 import { User } from '../../../types/user';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
@@ -26,16 +27,10 @@ export default function EditObject() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      setUser(JSON.parse(currentUser));
-    } else {
-      router.push('/');
-    }
-  }, [router]);
+  const { user } = useAuth({
+    redirectIfUnauthenticated: true,
+    redirectTo: '/',
+  });
 
   useEffect(() => {
     if (objectId) {
@@ -99,7 +94,7 @@ export default function EditObject() {
       formData.append('status', object.status);
       formData.append('utilisateur', object.utilisateur);
 
-      const existingPhotos = object.photos?.filter((p: Photo) => !removedPhotos.includes(p.url)).map((p: Photo) => JSON.stringify(p)) || [];
+      const existingPhotos = object.photos?.filter((p: ObjectPhoto) => !removedPhotos.includes(p.url)).map((p: ObjectPhoto) => JSON.stringify(p)) || [];
       existingPhotos.forEach((photo: string) => formData.append('existingPhotosJson', photo));
 
       newImages.forEach(file => {
@@ -245,7 +240,7 @@ export default function EditObject() {
                       <button
                         type="button"
                         onClick={() => {
-                          const isExisting = object.photos?.some((p: Photo) => p.url === previewUrl);
+                          const isExisting = object.photos?.some((p: ObjectPhoto) => p.url === previewUrl);
                           if (isExisting) {
                             handleRemoveExistingPhoto(previewUrl);
                           } else {

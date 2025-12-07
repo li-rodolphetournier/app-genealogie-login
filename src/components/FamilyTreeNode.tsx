@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 type NodeDatum = {
   name: string;
@@ -27,7 +27,7 @@ type FamilyTreeNodeProps = {
 const foreignObjectWidth = 250;
 const foreignObjectHeight = 100;
 
-const FamilyTreeNode: React.FC<FamilyTreeNodeProps> = ({ nodeDatum, foreignObjectProps, onNodeClick }) => {
+const FamilyTreeNode: React.FC<FamilyTreeNodeProps> = memo(({ nodeDatum, foreignObjectProps, onNodeClick }) => {
   const foProps = {
     width: foreignObjectWidth,
     height: foreignObjectHeight,
@@ -125,6 +125,8 @@ const FamilyTreeNode: React.FC<FamilyTreeNodeProps> = ({ nodeDatum, foreignObjec
       </foreignObject>
     </g>
   );
-};
+});
+
+FamilyTreeNode.displayName = 'FamilyTreeNode';
 
 export default FamilyTreeNode;
