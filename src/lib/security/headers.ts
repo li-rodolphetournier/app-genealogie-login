@@ -55,7 +55,10 @@ export function createSecureResponse(
 export function getApiSecurityHeaders(): Record<string, string> {
   return {
     ...securityHeaders,
-    'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || '*',
+    // Ne jamais utiliser wildcard en production
+    // Utiliser l'URL de l'application ou un domaine spécifique
+    'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
