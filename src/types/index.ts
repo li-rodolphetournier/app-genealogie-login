@@ -1,26 +1,29 @@
-export interface User {
-  id: string;
-  login: string;
-  status: 'administrateur' | 'utilisateur';
-}
+/**
+ * Export centralisé de tous les types
+ */
 
-export interface Message {
-  id: string;
-  title: string;
-  content: string;
-  images: string[];
-  date: string;
-  userId: string;
-  userName: string;
-}
+// Types utilisateur
+export type {
+  User,
+  UserCreateInput,
+  UserUpdateInput,
+  UserResponse,
+} from './user';
 
-export interface ObjectData {
-  id: string;
-  nom: string;
-  type: string;
-  description?: string;
-  status: 'publie' | 'brouillon';
-  utilisateur: string;
-  images?: string[];
-  photos?: Array<{ url: string; description: string[] }>;
-} 
+// Types objets
+export type {
+  ObjectData,
+  ObjectPhoto,
+  ObjectCreateInput,
+  ObjectUpdateInput,
+} from './objects';
+
+// Types messages
+export type {
+  Message,
+  MessageCreateInput,
+  MessageUpdateInput,
+} from './message';
+
+// Types généalogie
+export type { Person } from './genealogy'; 

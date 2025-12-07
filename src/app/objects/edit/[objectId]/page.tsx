@@ -1,8 +1,8 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
 import { ObjectData, Photo } from '../../../types/objects';
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
 import Image from 'next/image';
 import LoadingIndicator from '../../../share-components/LoadingIndicator';

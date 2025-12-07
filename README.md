@@ -19,6 +19,55 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## 📚 Documentation
+
+Toute la documentation du projet est disponible dans le dossier [`documentation/`](./documentation/).
+
+### Documentation des Technologies
+
+Une documentation complète de toutes les technologies utilisées dans ce projet a été générée via Context7 MCP. Consultez [DOCUMENTATION_TECHNOLOGIES.md](./documentation/DOCUMENTATION_TECHNOLOGIES.md) pour accéder à :
+
+- Next.js 15 (App Router, Server Components)
+- React 18 (hooks, composants)
+- TypeScript 5
+- TailwindCSS 3.4
+- Prisma 6.5
+- Vercel Blob
+- Chart.js & React-ChartJS-2
+- Recharts
+- bcrypt
+
+### Migration vers Supabase
+
+Ce projet peut être migré de fichiers JSON vers Supabase pour une gestion de base de données plus robuste. Tous les fichiers nécessaires pour la migration ont été préparés :
+
+- 📋 **Plan de migration** : [PLAN_MIGRATION_SUPABASE.md](./documentation/PLAN_MIGRATION_SUPABASE.md)
+- 📖 **Guide étape par étape** : [MIGRATION_GUIDE.md](./documentation/MIGRATION_GUIDE.md)
+- 📦 **Fichiers créés** : [README_MIGRATION.md](./documentation/README_MIGRATION.md)
+- 📚 **Index de la documentation** : [documentation/README.md](./documentation/README.md)
+
+### Fichiers inclus pour la migration
+
+- `supabase/schema.sql` - Schéma complet de la base de données
+- `scripts/migrate-to-supabase.ts` - Script de migration automatique
+- `lib/supabase/` - Clients Supabase pour serveur et client
+- `examples/api-routes-supabase.ts` - Exemples de migration des API routes
+
+Pour commencer la migration, consultez le [Guide de migration](./documentation/MIGRATION_GUIDE.md).
+
+### Refactorisation et Best Practices
+
+Un plan complet de refactorisation a été préparé pour améliorer le code selon les meilleures pratiques de Next.js 15 :
+
+- 📋 **Plan de refactorisation** : [PLAN_REFACTORISATION.md](./documentation/PLAN_REFACTORISATION.md)
+
+Ce plan inclut :
+- Unification des routes API vers App Router
+- Migration vers Server Components
+- Implémentation de Server Actions
+- Amélioration de la sécurité et validation
+- Optimisations de performance
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

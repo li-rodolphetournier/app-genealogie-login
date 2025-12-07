@@ -7,10 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "vercel-build": "next build && next export"
+    "vercel-build": "next build && next export",
+    "migrate:supabase": "tsx scripts/migrate-to-supabase.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.86.2",
     "@vercel/blob": "^0.26.0",
     "bcrypt": "^5.1.1",
     "chart.js": "^4.4.6",
@@ -33,10 +36,12 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
     "eslint-config-next": "15.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   },
   "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
