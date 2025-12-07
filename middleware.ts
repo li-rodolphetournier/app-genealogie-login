@@ -113,7 +113,7 @@ export async function middleware(request: NextRequest) {
     
     // Rate limiting spécial pour le login
     if (pathname === '/api/auth/login') {
-      const rateLimit = checkRateLimit(identifier, rateLimitConfigs.login);
+      const rateLimit = await checkRateLimit(identifier, rateLimitConfigs.login);
       
       if (!rateLimit.allowed) {
         return NextResponse.json(
@@ -127,7 +127,7 @@ export async function middleware(request: NextRequest) {
       response.headers.set('X-RateLimit-Reset', new Date(rateLimit.resetAt).toISOString());
     } else {
       // Rate limiting général pour les API
-      const rateLimit = checkRateLimit(identifier, rateLimitConfigs.api);
+      const rateLimit = await checkRateLimit(identifier, rateLimitConfigs.api);
       
       if (!rateLimit.allowed) {
         return NextResponse.json(
