@@ -14,7 +14,7 @@ describe('UserCard', () => {
     email: 'test@example.com',
     status: 'utilisateur',
     description: 'Test description',
-    profileImage: null,
+    profileImage: undefined,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

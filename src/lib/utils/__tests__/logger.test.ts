@@ -15,10 +15,12 @@ describe('logger', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NODE_ENV = originalEnv;
+    // @ts-expect-error - NODE_ENV doit être modifiable dans les tests
+    process.env.NODE_ENV = originalEnv || 'test';
   });
 
   afterEach(() => {
+    // @ts-expect-error - NODE_ENV doit être modifiable dans les tests
     process.env.NODE_ENV = originalEnv;
     console.log = originalConsoleLog;
     console.error = originalConsoleError;
@@ -29,6 +31,7 @@ describe('logger', () => {
 
   describe('en développement', () => {
     beforeEach(() => {
+      // @ts-expect-error - NODE_ENV doit être modifiable dans les tests
       process.env.NODE_ENV = 'development';
     });
 
@@ -53,6 +56,7 @@ describe('logger', () => {
 
   describe('en production', () => {
     beforeEach(() => {
+      // @ts-expect-error - NODE_ENV doit être modifiable dans les tests
       process.env.NODE_ENV = 'production';
     });
 

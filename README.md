@@ -113,6 +113,17 @@ Ce plan inclut :
 - Amélioration de la sécurité et validation
 - Optimisations de performance
 
+## ⚠️ Note sur ESLint
+
+Le linting via `npm run lint` est actuellement désactivé à cause d'un bug connu de Next.js 16.0.7 qui ne trouve pas le répertoire `app` dans la structure `src/app`. 
+
+**Alternatives** :
+- Utilisez le linting intégré de votre IDE (VS Code, WebStorm, etc.)
+- Le build Next.js inclut déjà la vérification TypeScript qui est suffisante
+- Le script `npm run scan-build` vérifie TypeScript et le build
+
+Ce problème n'affecte pas le fonctionnement de l'application ni le build de production.
+
 ## 🛠️ Technologies Utilisées
 
 - **Framework** : [Next.js 16](https://nextjs.org/) avec App Router

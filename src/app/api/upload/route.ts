@@ -3,6 +3,8 @@
  * Remplace l'ancien système de stockage local
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { uploadFile, STORAGE_BUCKETS, ensureBucketExists, type StorageBucket } from '@/lib/supabase/storage';
 import { createClient } from '@/lib/supabase/server';

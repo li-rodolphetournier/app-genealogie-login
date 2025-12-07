@@ -5,16 +5,40 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+/**
+ * Récupère le client Supabase avec service role key
+ * Création paresseuse pour éviter les erreurs lors du build si les variables d'environnement ne sont pas définies
+ */
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Client avec service role key pour les opérations serveur
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error(
+      'Variables d\'environnement Supabase manquantes. Assurez-vous que NEXT_PUBLIC_SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont définies.'
+    );
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+// Variable pour stocker le client (création paresseuse)
+let supabaseClient: ReturnType<typeof getSupabaseClient> | null = null;
+
+/**
+ * Récupère ou crée le client Supabase
+ */
+function getSupabase() {
+  if (!supabaseClient) {
+    supabaseClient = getSupabaseClient();
+  }
+  return supabaseClient;
+}
 
 /**
  * Types de buckets disponibles
@@ -71,6 +95,7 @@ export async function uploadFile(
   }
 
   // Upload vers Supabase Storage
+  const supabase = getSupabase();
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(filePath, buffer, {
@@ -100,6 +125,7 @@ export async function deleteFile(
   bucket: StorageBucket,
   filePath: string
 ): Promise<void> {
+  const supabase = getSupabase();
   const { error } = await supabase.storage.from(bucket).remove([filePath]);
 
   if (error) {
@@ -111,6 +137,7 @@ export async function deleteFile(
  * Obtenir l'URL publique d'un fichier
  */
 export function getPublicUrl(bucket: StorageBucket, filePath: string): string {
+  const supabase = getSupabase();
   const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
   return data.publicUrl;
 }
@@ -119,6 +146,7 @@ export function getPublicUrl(bucket: StorageBucket, filePath: string): string {
  * Vérifier si un bucket existe, sinon le créer
  */
 export async function ensureBucketExists(bucket: StorageBucket, isPublic = true): Promise<void> {
+  const supabase = getSupabase();
   // Vérifier si le bucket existe
   const { data: buckets, error: listError } = await supabase.storage.listBuckets();
 
