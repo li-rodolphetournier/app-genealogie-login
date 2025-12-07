@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "echo '⚠ ESLint désactivé: bug connu Next.js 16.0.7 avec structure src/app. Utilisez votre IDE pour le linting.' && exit 0",
-    "vercel-build": "next build && next export",
+    "vercel-build": "next build",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
