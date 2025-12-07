@@ -82,7 +82,7 @@ async function checkAuth(request: NextRequest) {
           getAll() {
             return request.cookies.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
             cookiesToSet.forEach(({ name, value, options }) => {
               request.cookies.set(name, value);
               response.cookies.set(name, value, options);
@@ -174,7 +174,7 @@ export async function middleware(request: NextRequest) {
             getAll() {
               return request.cookies.getAll();
             },
-            setAll() {
+            setAll(_cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
               // Ignorer les modifications de cookies dans le middleware
             },
           },

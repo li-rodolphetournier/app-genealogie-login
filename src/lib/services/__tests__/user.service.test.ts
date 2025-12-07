@@ -4,67 +4,63 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { UserService } from '../user.service';
-import { createServerClient } from '@/lib/supabase/server';
+import fs from 'fs/promises';
+import path from 'path';
 
-// Mock du client Supabase
-vi.mock('@/lib/supabase/server', () => ({
-  createServerClient: vi.fn(),
+// Mock du système de fichiers
+vi.mock('fs/promises', () => ({
+  default: {
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+  },
+}));
+
+// Mock de path
+vi.mock('path', () => ({
+  default: {
+    join: vi.fn(() => '/test/users.json'),
+  },
 }));
 
 describe('UserService', () => {
-  const mockSupabaseClient = {
-    from: vi.fn(),
-    auth: {
-      admin: {
-        createUser: vi.fn(),
-        updateUserById: vi.fn(),
-        deleteUser: vi.fn(),
-      },
+  const mockUsers = [
+    {
+      id: '1',
+      login: 'user1',
+      email: 'user1@example.com',
+      status: 'utilisateur' as const,
+      password: 'hashed1',
     },
-  };
+    {
+      id: '2',
+      login: 'user2',
+      email: 'user2@example.com',
+      status: 'administrateur' as const,
+      password: 'hashed2',
+    },
+  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (createServerClient as any).mockResolvedValue(mockSupabaseClient);
   });
 
   describe('findAll', () => {
     it('devrait retourner tous les utilisateurs', async () => {
-      const mockUsers = [
-        {
-          id: '1',
-          login: 'user1',
-          email: 'user1@example.com',
-          status: 'utilisateur',
-        },
-        {
-          id: '2',
-          login: 'user2',
-          email: 'user2@example.com',
-          status: 'administrateur',
-        },
-      ];
-
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          data: mockUsers,
-          error: null,
-        }),
-      });
+      (fs.readFile as any).mockResolvedValue(JSON.stringify(mockUsers));
 
       const users = await UserService.findAll();
 
-      expect(users).toEqual(mockUsers);
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('users');
+      expect(users).toHaveLength(2);
+      expect(users[0]).not.toHaveProperty('password');
+      expect(users[1]).not.toHaveProperty('password');
+      expect(users[0].login).toBe('user1');
+      expect(users[1].login).toBe('user2');
     });
 
-    it('devrait retourner un tableau vide en cas d\'erreur', async () => {
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          data: null,
-          error: { message: 'Database error' },
-        }),
-      });
+    it('devrait retourner un tableau vide si le fichier n\'existe pas', async () => {
+      const error: any = new Error('File not found');
+      error.code = 'ENOENT';
+      (fs.readFile as any).mockRejectedValue(error);
 
       const users = await UserService.findAll();
 
@@ -74,41 +70,17 @@ describe('UserService', () => {
 
   describe('findByLogin', () => {
     it('devrait retourner un utilisateur par login', async () => {
-      const mockUser = {
-        id: '1',
-        login: 'testuser',
-        email: 'test@example.com',
-        status: 'utilisateur',
-      };
+      (fs.readFile as any).mockResolvedValue(JSON.stringify(mockUsers));
 
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: mockUser,
-              error: null,
-            }),
-          }),
-        }),
-      });
+      const user = await UserService.findByLogin('user1');
 
-      const user = await UserService.findByLogin('testuser');
-
-      expect(user).toEqual(mockUser);
-      expect(mockSupabaseClient.from).toHaveBeenCalledWith('users');
+      expect(user).not.toBeNull();
+      expect(user?.login).toBe('user1');
+      expect(user).not.toHaveProperty('password');
     });
 
     it('devrait retourner null si l\'utilisateur n\'existe pas', async () => {
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { code: 'PGRST116' }, // Not found
-            }),
-          }),
-        }),
-      });
+      (fs.readFile as any).mockResolvedValue(JSON.stringify(mockUsers));
 
       const user = await UserService.findByLogin('nonexistent');
 

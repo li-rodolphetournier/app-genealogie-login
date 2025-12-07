@@ -6,9 +6,11 @@
 import { MessageService } from '@/lib/services';
 import { MessagesClient } from './messages-client';
 
+import type { Message } from '@/types/message';
+
 export default async function MessagesAdministration() {
   // Récupération des messages initiaux côté serveur (triés par date décroissante)
-  let messages = [];
+  let messages: Message[] = [];
   try {
     const allMessages = await MessageService.findAll();
     // Trier les messages par date (plus récent en premier)

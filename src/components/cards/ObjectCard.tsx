@@ -7,7 +7,7 @@
 import React, { useCallback } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/ImageWithFallback';
-import type { ObjectData } from '@/types/object';
+import type { ObjectData } from '@/types/objects';
 
 type ObjectCardProps = {
   object: ObjectData;

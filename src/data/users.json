@@ -48,5 +48,16 @@
     "detail": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
     "status": "administrateur",
     "profileImage": "/uploads/1743888037837-155544476-buffet-2-portes-2-tiroirs-noirs-et-imprime-perroquets-1000-14-10-186232-4.avif"
+  },
+  {
+    "id": "1765128941922",
+    "login": "test",
+    "email": "rtournier@gmail.com",
+    "status": "utilisateur",
+    "description": "TEST",
+    "profileImage": "https://etrameteinczkfuponai.supabase.co/storage/v1/object/public/uploads/1765128937997-1447510-Blason-de-Poufsouffle.webp",
+    "createdAt": "2025-12-07T17:35:41.923Z",
+    "updatedAt": "2025-12-07T17:35:41.923Z",
+    "password": "$2b$10$6A1a.GFWwK/UI.r0yWb.R.TzsU5yNSoI8f6yXROTD8Ot92APFh1DS"
   }
 ]

@@ -8,7 +8,7 @@ import { uploadFile, STORAGE_BUCKETS, ensureBucketExists, type StorageBucket } f
 import { createClient } from '@/lib/supabase/server';
 import { logError } from '@/lib/errors/error-handler';
 import { getErrorMessage } from '@/lib/errors/messages';
-import type { ErrorResponse } from '@/types/api/requests';
+import type { ErrorResponse } from '@/types/api/responses';
 
 // Définir la taille maximale (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB en bytes

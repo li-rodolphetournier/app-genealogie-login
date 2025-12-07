@@ -21,6 +21,7 @@ export type ErrorResponse = {
   error: string;
   message?: string;
   code?: string;
+  details?: Record<string, any>;
 };
 
 /**

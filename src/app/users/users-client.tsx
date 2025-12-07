@@ -233,7 +233,6 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
           setUserToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Supprimer l'utilisateur"
         message={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${userToDelete} ?`}
       />
     </div>

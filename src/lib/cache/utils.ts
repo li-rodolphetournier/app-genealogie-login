@@ -39,9 +39,10 @@ export function revalidateResource(resource: 'users' | 'objects' | 'messages' | 
 
 /**
  * Revalide par tag (pour cache distribué)
+ * Next.js 16 : revalidateTag nécessite un deuxième paramètre (type)
  */
-export function revalidateByTag(tag: string) {
-  revalidateTag(tag);
+export async function revalidateByTag(tag: string, type: 'layout' | 'page' = 'page') {
+  await revalidateTag(tag, type);
 }
 
 /**

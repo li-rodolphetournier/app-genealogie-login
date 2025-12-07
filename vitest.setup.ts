@@ -28,7 +28,11 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/image', () => ({
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
+    // eslint-disable-next-line react/react-in-jsx-scope
+    return React.createElement('img', props);
   },
 }));
+
+// Import React pour React.createElement
+import React from 'react';
 

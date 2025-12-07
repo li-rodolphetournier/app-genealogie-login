@@ -7,7 +7,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
-import type { LoginRequest, LoginResponse, ErrorResponse } from '@/types/api/requests';
+import { getErrorMessage } from '@/lib/errors/messages';
+import { logError } from '@/lib/errors/error-handler';
+import type { LoginRequest } from '@/types/api/requests';
+import type { LoginResponse, ErrorResponse } from '@/types/api/responses';
 import type { User } from '@/types/user';
 
 export async function POST(request: Request) {

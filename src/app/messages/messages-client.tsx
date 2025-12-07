@@ -107,7 +107,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     e.preventDefault();
     if (!user) return;
     
-    setIsLoading(true);
+    setIsLoadingMessages(true);
 
     try {
       const messageData = {

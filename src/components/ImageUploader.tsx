@@ -107,9 +107,9 @@ const GenericImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   // Clone l'élément enfant pour y attacher le gestionnaire de clic
-  const triggerElement = React.cloneElement(children, {
+  const triggerElement = React.cloneElement(children as React.ReactElement<any>, {
     onClick: handleTriggerClick,
-    disabled: isUploading || children.props.disabled, // Désactiver pendant l'upload
+    disabled: isUploading || (children as React.ReactElement<any>).props?.disabled, // Désactiver pendant l'upload
   });
 
   return (

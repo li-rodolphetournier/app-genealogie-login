@@ -6,9 +6,11 @@
 import { GenealogyService } from '@/lib/services';
 import { GenealogieClient } from './genealogie-client';
 
+import type { Person } from '@/types/genealogy';
+
 export default async function Genealogie() {
   // Récupération des données initiales côté serveur
-  let persons = [];
+  let persons: Person[] = [];
   try {
     persons = await GenealogyService.findAll();
   } catch (error) {

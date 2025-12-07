@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import type { Request } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { verifyCsrfToken } from '@/lib/security/csrf';
 
 /**
@@ -13,10 +13,10 @@ import { verifyCsrfToken } from '@/lib/security/csrf';
  * @param requireCsrf - Si true, exige CSRF (défaut: true pour POST/PUT/DELETE)
  */
 export function withCsrfProtection<T = any>(
-  handler: (request: Request) => Promise<NextResponse<T>> | NextResponse<T>,
+  handler: (request: NextRequest) => Promise<NextResponse<T>> | NextResponse<T>,
   requireCsrf: boolean = true
 ) {
-  return async (request: Request): Promise<NextResponse<T>> => {
+  return async (request: NextRequest): Promise<NextResponse<T>> => {
     // Les méthodes GET et OPTIONS n'ont pas besoin de CSRF
     if (!requireCsrf || request.method === 'GET' || request.method === 'OPTIONS') {
       return handler(request);

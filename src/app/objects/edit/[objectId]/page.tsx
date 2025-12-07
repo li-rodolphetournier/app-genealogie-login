@@ -1,13 +1,13 @@
 'use client';
 
-import { ObjectData, ObjectPhoto } from '../../../types/objects';
+import type { ObjectData, ObjectPhoto } from '@/types/objects';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
 import Image from 'next/image';
 import LoadingIndicator from '@/components/LoadingIndicator';
-import { User } from '../../../types/user';
+import type { User } from '@/types/user';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
 

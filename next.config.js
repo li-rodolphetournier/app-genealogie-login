@@ -28,13 +28,16 @@ const nextConfig = {
       },
     ],
   },
-  // serverRuntimeConfig est déprécié et sera supprimé dans Next.js 16
-  // Utiliser des variables d'environnement à la place
+  // Next.js 16 : serverActions reste dans experimental mais avec nouvelles options
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", "localhost:3002", "*.vercel.app"],
       bodySizeLimit: "2mb",
     },
+  },
+  typescript: {
+    // ✅ Bug corrigé dans Next.js 16 : les types générés utilisent maintenant des chemins corrects
+    ignoreBuildErrors: false,
   },
 };
 

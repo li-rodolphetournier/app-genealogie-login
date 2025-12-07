@@ -22,8 +22,8 @@ export const objectCreateSchema = z.object({
   type: z.string().min(1, 'Le type est requis').max(100, 'Le type ne peut pas dépasser 100 caractères'),
   description: z.string().optional(),
   longDescription: z.string().optional(),
-  status: z.enum(['publie', 'brouillon'], {
-    errorMap: () => ({ message: 'Le statut doit être publie ou brouillon' })
+  status: z.enum(['publie', 'brouillon'] as const, {
+    message: 'Le statut doit être publie ou brouillon'
   }).default('brouillon'),
   utilisateur: z.string().min(1, 'L\'utilisateur est requis'),
   utilisateur_id: z.string().optional(),
@@ -38,7 +38,7 @@ export const objectUpdateSchema = z.object({
   type: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
   longDescription: z.string().optional(),
-  status: z.enum(['publie', 'brouillon']).optional(),
+  status: z.enum(['publie', 'brouillon'] as const).optional(),
   utilisateur: z.string().min(1).optional(),
   utilisateur_id: z.string().optional(),
   photos: z.array(objectPhotoSchema).optional(),

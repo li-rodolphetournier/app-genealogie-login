@@ -5,12 +5,16 @@ import path from 'path';
 import bcrypt from 'bcrypt';
 import { userCreateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
+import { getErrorMessage } from '@/lib/errors/messages';
+import { logError } from '@/lib/errors/error-handler';
 import type { User, UserResponse } from '@/types/user';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const usersPath = path.join(process.cwd(), 'src/data/users.json');
 
-async function readUsers(): Promise<User[]> {
+type UserWithPassword = User & { password?: string };
+
+async function readUsers(): Promise<UserWithPassword[]> {
   try {
     const data = await fs.readFile(usersPath, 'utf-8');
     return JSON.parse(data) as User[];
@@ -23,7 +27,7 @@ async function readUsers(): Promise<User[]> {
   }
 }
 
-async function writeUsers(users: User[]): Promise<void> {
+async function writeUsers(users: UserWithPassword[]): Promise<void> {
   try {
     await fs.writeFile(usersPath, JSON.stringify(users, null, 2), 'utf-8');
   } catch (error) {
@@ -38,7 +42,10 @@ export async function GET() {
     const users = await readUsers();
     
     // Retirer les mots de passe avant d'envoyer
-    const sanitizedUsers: UserResponse[] = users.map(({ password: _, ...user }) => user);
+    const sanitizedUsers: UserResponse[] = users.map((user) => {
+      const { password, ...userWithoutPassword } = user as UserWithPassword;
+      return userWithoutPassword;
+    });
     
     return NextResponse.json<UserResponse[]>(sanitizedUsers, { status: 200 });
   } catch (error) {
@@ -93,8 +100,8 @@ export async function POST(request: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
     const userWithPassword = { ...newUser, password: passwordHash } as User & { password: string };
 
-    users.push(userWithPassword as User & { password: string });
-    await writeUsers(users as User[]);
+    users.push(userWithPassword);
+    await writeUsers(users);
 
     // Revalider le cache pour les pages utilisateurs
     revalidatePath('/users', 'page');

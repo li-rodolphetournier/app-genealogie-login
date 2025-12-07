@@ -10,8 +10,8 @@ import { z } from 'zod';
 export const personCreateSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis').max(100, 'Le nom ne peut pas dépasser 100 caractères'),
   prenom: z.string().min(1, 'Le prénom est requis').max(100, 'Le prénom ne peut pas dépasser 100 caractères'),
-  genre: z.enum(['homme', 'femme'], {
-    errorMap: () => ({ message: 'Le genre doit être homme ou femme' })
+  genre: z.enum(['homme', 'femme'] as const, {
+    message: 'Le genre doit être homme ou femme'
   }),
   description: z.string().optional().default(''),
   mere: z.string().nullable().optional(),
@@ -28,7 +28,7 @@ export const personCreateSchema = z.object({
 export const personUpdateSchema = z.object({
   nom: z.string().min(1).max(100).optional(),
   prenom: z.string().min(1).max(100).optional(),
-  genre: z.enum(['homme', 'femme']).optional(),
+  genre: z.enum(['homme', 'femme'] as const).optional(),
   description: z.string().min(1).optional(),
   mere: z.string().nullable().optional(),
   pere: z.string().nullable().optional(),

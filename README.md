@@ -19,6 +19,53 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## 🧪 Tests
+
+Le projet utilise une infrastructure de tests complète avec Vitest pour les tests unitaires et Playwright pour les tests E2E.
+
+### Tests Unitaires
+
+```bash
+# Lancer tous les tests en mode watch
+npm test
+
+# Interface UI interactive
+npm run test:ui
+
+# Rapport de couverture
+npm run test:coverage
+
+# Mode one-shot (pour CI)
+npm test -- --run
+```
+
+**Couverture actuelle** :
+- ✅ 17 fichiers de tests
+- ✅ ~67 tests unitaires
+- ✅ Composants, hooks, services, utilitaires
+
+### Tests E2E
+
+```bash
+# Lancer tous les tests E2E
+npm run test:e2e
+
+# Interface UI Playwright
+npm run test:e2e:ui
+
+# Mode debug
+npm run test:e2e:debug
+```
+
+**Tests E2E disponibles** :
+- ✅ Authentification
+- ✅ Navigation
+- ✅ Workflows utilisateur
+
+📖 **Documentation complète** : [documentation/TESTS_COMPLETS.md](./documentation/TESTS_COMPLETS.md)
+
+---
+
 ## 📚 Documentation
 
 Toute la documentation du projet est disponible dans le dossier [`documentation/`](./documentation/).
@@ -27,15 +74,13 @@ Toute la documentation du projet est disponible dans le dossier [`documentation/
 
 Une documentation complète de toutes les technologies utilisées dans ce projet a été générée via Context7 MCP. Consultez [DOCUMENTATION_TECHNOLOGIES.md](./documentation/DOCUMENTATION_TECHNOLOGIES.md) pour accéder à :
 
-- Next.js 15 (App Router, Server Components)
-- React 18 (hooks, composants)
+- Next.js 16 (App Router, Server Components)
+- React 19 (hooks, composants)
 - TypeScript 5
 - TailwindCSS 3.4
-- Prisma 6.5
-- Vercel Blob
+- Supabase (Auth, Storage, Database)
 - Chart.js & React-ChartJS-2
-- Recharts
-- bcrypt
+- bcrypt 6
 
 ### Migration vers Supabase
 
@@ -68,16 +113,26 @@ Ce plan inclut :
 - Amélioration de la sécurité et validation
 - Optimisations de performance
 
-## Learn More
+## 🛠️ Technologies Utilisées
+
+- **Framework** : [Next.js 16](https://nextjs.org/) avec App Router
+- **UI** : [React 19](https://react.dev/), [TailwindCSS 3.4](https://tailwindcss.com/)
+- **Base de données** : [Supabase](https://supabase.com/) (Auth, Storage, Database)
+- **Validation** : [Zod 4](https://zod.dev/)
+- **Tests** : [Vitest](https://vitest.dev/), [Playwright](https://playwright.dev/)
+- **TypeScript** : 5.x
+
+## 📖 Learn More
 
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [React Documentation](https://react.dev/) - learn about React features.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 🚀 Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 

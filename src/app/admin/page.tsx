@@ -6,15 +6,7 @@ import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-
-type User = {
-  login: string;
-  email: string;
-  description: string;
-  detail?: string;
-  status: string;
-  profileImage?: string;
-};
+import type { User } from '@/types/user';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -42,9 +34,9 @@ export default function EditProfile() {
       setFormData(prev => ({
         ...prev,
         email: authUser.email || '',
-        description: authUser.description || '',
-        detail: authUser.detail || '',
-        profileImage: authUser.profileImage || ''
+        description: authUser.description ?? '',
+        detail: authUser.detail ?? '',
+        profileImage: authUser.profileImage ?? ''
       }));
     }
   }, [authUser]);

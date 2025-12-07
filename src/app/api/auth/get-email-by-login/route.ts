@@ -4,7 +4,8 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ErrorResponse } from '@/types/api/requests';
+import { getErrorMessage } from '@/lib/errors/messages';
+import type { ErrorResponse } from '@/types/api/responses';
 
 export async function POST(request: Request) {
   try {
