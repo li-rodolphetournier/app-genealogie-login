@@ -86,7 +86,7 @@ export default function EditProfile() {
     }
 
     try {
-      const response = await fetch(`/api/users/${user?.login}/update`, {
+      const response = await fetch(`/api/users/${user?.login}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -100,11 +100,13 @@ export default function EditProfile() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
+        const responseData = await response.json();
+        // L'API retourne { message: '...', data: userWithoutPassword }
+        const updatedUser = responseData.data || responseData;
         const fullUserForStorage = { ...user, ...updatedUser };
         // Supabase Auth gère maintenant les sessions, plus besoin de localStorage
         setUser(fullUserForStorage);
-        setSuccess('Profil mis à jour avec succès');
+        setSuccess(responseData.message || 'Profil mis à jour avec succès');
         setFormData(prev => ({
           ...prev,
           email: updatedUser.email || '',
@@ -116,8 +118,15 @@ export default function EditProfile() {
           confirmPassword: ''
         }));
       } else {
-        const data = await response.json();
-        setError(data.message || 'Erreur lors de la mise à jour du profil');
+        let errorMessage = 'Erreur lors de la mise à jour du profil';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (jsonError) {
+          // Si la réponse n'est pas du JSON valide, utiliser le message par défaut
+          errorMessage = `Erreur serveur (${response.status})`;
+        }
+        setError(errorMessage);
       }
     } catch (error) {
       setError('Erreur lors de la mise à jour du profil');
@@ -242,6 +251,7 @@ export default function EditProfile() {
                 <GenericImageUploader
                   onUploadSuccess={handleImageUploadSuccess}
                   onError={handleImageUploadError}
+                  folder="users"
                 >
                   <button type="button" className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Modifier l'image

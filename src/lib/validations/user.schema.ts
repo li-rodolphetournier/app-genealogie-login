@@ -34,6 +34,7 @@ export const userUpdateSchema = z.object({
   dateNaissance: z.string().optional(),
   profileImage: z.string().url().optional().or(z.literal('')),
   description: z.string().optional(),
+  detail: z.string().optional(),
 });
 
 /**
