@@ -3,7 +3,7 @@
  * Fallback en mémoire si Upstash n'est pas configuré (développement)
  */
 
-import { Ratelimit } from '@upstash/ratelimit';
+import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 /**
@@ -54,17 +54,17 @@ const rateLimitStore: RateLimitStore = new Map();
 /**
  * Convertit windowMs en format Upstash (ex: '15 m', '1 h')
  */
-function formatUpstashWindow(windowMs: number): string {
+function formatUpstashWindow(windowMs: number): Duration {
   const seconds = Math.floor(windowMs / 1000);
   
   if (seconds < 60) {
-    return `${seconds} s`;
+    return `${seconds} s` as Duration;
   } else if (seconds < 3600) {
     const minutes = Math.floor(seconds / 60);
-    return `${minutes} m`;
+    return `${minutes} m` as Duration;
   } else {
     const hours = Math.floor(seconds / 3600);
-    return `${hours} h`;
+    return `${hours} h` as Duration;
   }
 }
 
