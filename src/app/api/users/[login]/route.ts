@@ -96,9 +96,6 @@ export async function PUT(
     if (validation.data.description !== undefined) {
       updateData.description = validation.data.description || null;
     }
-    if (validation.data.detail !== undefined) {
-      updateData.detail = validation.data.detail || null;
-    }
     if (validation.data.profileImage !== undefined) {
       updateData.profile_image = validation.data.profileImage || null;
     }

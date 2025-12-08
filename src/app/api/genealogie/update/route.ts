@@ -1,30 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import fs from 'fs/promises';
-import path from 'path';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { personUpdateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
 import type { Person } from '@/types/genealogy';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
-
-const genealogiePath = path.join(process.cwd(), 'src/data/genealogie.json');
-
-async function readPersons(): Promise<Person[]> {
-  try {
-    const data = await fs.readFile(genealogiePath, 'utf-8');
-    return JSON.parse(data) as Person[];
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writePersons(persons: Person[]): Promise<void> {
-  await fs.writeFile(genealogiePath, JSON.stringify(persons, null, 2), 'utf-8');
-}
 
 // PUT - Mettre à jour une personne
 export async function PUT(request: Request) {
@@ -45,31 +26,72 @@ export async function PUT(request: Request) {
       return createValidationErrorResponse(validation.error);
     }
 
-    const persons = await readPersons();
-    const personIndex = persons.findIndex(p => p.id === id);
+    const supabase = await createServiceRoleClient();
 
-    if (personIndex === -1) {
+    // Vérifier que la personne existe
+    const { data: existingPerson } = await supabase
+      .from('persons')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existingPerson) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Personne non trouvée' },
         { status: 404 }
       );
     }
 
-    // Mettre à jour la personne
-    const updatedPerson: Person = {
-      ...persons[personIndex],
-      ...validation.data,
-      id, // Garantir que l'ID ne change pas
-    };
+    // Préparer les données de mise à jour
+    const updateFields: Record<string, any> = {};
+    
+    if (validation.data.nom !== undefined) updateFields.nom = validation.data.nom;
+    if (validation.data.prenom !== undefined) updateFields.prenom = validation.data.prenom;
+    if (validation.data.genre !== undefined) updateFields.genre = validation.data.genre;
+    if (validation.data.description !== undefined) updateFields.description = validation.data.description || '';
+    if (validation.data.mere !== undefined) updateFields.mere_id = validation.data.mere || null;
+    if (validation.data.pere !== undefined) updateFields.pere_id = validation.data.pere || null;
+    if (validation.data.ordreNaissance !== undefined) updateFields.ordre_naissance = validation.data.ordreNaissance;
+    if (validation.data.dateNaissance !== undefined) updateFields.date_naissance = validation.data.dateNaissance || null;
+    if (validation.data.dateDeces !== undefined) updateFields.date_deces = validation.data.dateDeces || null;
+    if (validation.data.image !== undefined) updateFields.image = validation.data.image || null;
 
-    persons[personIndex] = updatedPerson;
-    await writePersons(persons);
+    // Mettre à jour la personne
+    const { data: updatedPerson, error: updateError } = await supabase
+      .from('persons')
+      .update(updateFields)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError || !updatedPerson) {
+      console.error('Erreur mise à jour personne:', updateError);
+      return NextResponse.json<ErrorResponse>(
+        { error: getErrorMessage('GENEALOGY_PERSON_UPDATE_FAILED') },
+        { status: 500 }
+      );
+    }
+
+    // Mapper vers Person
+    const personData: Person = {
+      id: updatedPerson.id,
+      nom: updatedPerson.nom,
+      prenom: updatedPerson.prenom,
+      genre: updatedPerson.genre as Person['genre'],
+      description: updatedPerson.description || '',
+      mere: updatedPerson.mere_id || null,
+      pere: updatedPerson.pere_id || null,
+      ordreNaissance: updatedPerson.ordre_naissance || 1,
+      dateNaissance: updatedPerson.date_naissance || '',
+      dateDeces: updatedPerson.date_deces || null,
+      image: updatedPerson.image || null,
+    };
 
     // Revalider le cache
     revalidatePath('/genealogie', 'page');
 
     return NextResponse.json<SuccessResponse<Person>>(
-      { message: 'Personne mise à jour avec succès', data: updatedPerson },
+      { message: 'Personne mise à jour avec succès', data: personData },
       { status: 200 }
     );
   } catch (error: any) {
@@ -80,4 +102,3 @@ export async function PUT(request: Request) {
     );
   }
 }
-

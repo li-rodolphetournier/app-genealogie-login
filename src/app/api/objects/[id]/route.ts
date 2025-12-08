@@ -1,30 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import fs from 'fs/promises';
-import path from 'path';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { objectUpdateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
-import type { ObjectData } from '@/types/objects';
+import type { ObjectData, ObjectPhoto } from '@/types/objects';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
-
-const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-
-async function readObjects(): Promise<ObjectData[]> {
-  try {
-    const data = await fs.readFile(objectsPath, 'utf-8');
-    return JSON.parse(data) as ObjectData[];
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writeObjects(objects: ObjectData[]): Promise<void> {
-  await fs.writeFile(objectsPath, JSON.stringify(objects, null, 2), 'utf-8');
-}
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -37,17 +18,52 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const objects = await readObjects();
-    const object = objects.find(obj => obj.id === id);
+    const supabase = await createServiceRoleClient();
 
-    if (!object) {
+    const { data: object, error } = await supabase
+      .from('objects')
+      .select(`
+        *,
+        object_photos (
+          id,
+          url,
+          description,
+          display_order
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !object) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    return NextResponse.json<ObjectData>(object, { status: 200 });
+    // Mapper vers ObjectData
+    const photos: ObjectPhoto[] = (object.object_photos || []).map((photo: any) => ({
+      id: photo.id,
+      url: photo.url,
+      description: photo.description || [],
+      display_order: photo.display_order || 0,
+    })).sort((a: ObjectPhoto, b: ObjectPhoto) => (a.display_order || 0) - (b.display_order || 0));
+
+    const objectData: ObjectData = {
+      id: object.id,
+      nom: object.nom,
+      type: object.type,
+      status: object.status as ObjectData['status'],
+      description: object.description || undefined,
+      longDescription: object.long_description || undefined,
+      utilisateur: object.utilisateur_id || '',
+      utilisateur_id: object.utilisateur_id || undefined,
+      photos: photos.length > 0 ? photos : undefined,
+      createdAt: object.created_at,
+      updatedAt: object.updated_at,
+    };
+
+    return NextResponse.json<ObjectData>(objectData, { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'objet:', error);
     return NextResponse.json<ErrorResponse>(
@@ -72,33 +88,126 @@ export async function PUT(
       return createValidationErrorResponse(validation.error);
     }
     
-    const objects = await readObjects();
-    const objectIndex = objects.findIndex(obj => obj.id === id);
+    const supabase = await createServiceRoleClient();
 
-    if (objectIndex === -1) {
+    // Vérifier que l'objet existe
+    const { data: existingObject } = await supabase
+      .from('objects')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existingObject) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    // Mettre à jour l'objet
-    const updatedObject: ObjectData = {
-      ...objects[objectIndex],
-      ...validation.data,
-      id, // Garantir que l'ID ne change pas
-      updatedAt: new Date().toISOString(),
-    };
+    // Préparer les données de mise à jour
+    const updateData: Record<string, any> = {};
+    
+    if (validation.data.nom !== undefined) updateData.nom = validation.data.nom;
+    if (validation.data.type !== undefined) updateData.type = validation.data.type;
+    if (validation.data.status !== undefined) updateData.status = validation.data.status;
+    if (validation.data.description !== undefined) updateData.description = validation.data.description || null;
+    if (validation.data.longDescription !== undefined) updateData.long_description = validation.data.longDescription || null;
+    if (validation.data.utilisateur !== undefined) {
+      // Récupérer l'ID utilisateur depuis le login
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('login', validation.data.utilisateur)
+        .single();
+      updateData.utilisateur_id = user?.id || null;
+    }
 
-    objects[objectIndex] = updatedObject;
-    await writeObjects(objects);
+    // Mettre à jour l'objet
+    const { data: updatedObject, error: updateError } = await supabase
+      .from('objects')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError || !updatedObject) {
+      console.error('Erreur mise à jour objet:', updateError);
+      return NextResponse.json<ErrorResponse>(
+        { error: getErrorMessage('SERVER_ERROR') },
+        { status: 500 }
+      );
+    }
+
+    // Mettre à jour les photos si présentes
+    if (validation.data.photos !== undefined) {
+      // Supprimer les anciennes photos
+      await supabase
+        .from('object_photos')
+        .delete()
+        .eq('object_id', id);
+
+      // Insérer les nouvelles photos
+      if (validation.data.photos.length > 0) {
+        const photosToInsert = validation.data.photos.map((photo, index) => ({
+          object_id: id,
+          url: photo.url,
+          description: photo.description || [],
+          display_order: photo.display_order || index,
+        }));
+
+        const { error: photosError } = await supabase
+          .from('object_photos')
+          .insert(photosToInsert);
+
+        if (photosError) {
+          console.error('Erreur mise à jour photos:', photosError);
+        }
+      }
+    }
+
+    // Récupérer l'objet complet avec photos
+    const { data: completeObject } = await supabase
+      .from('objects')
+      .select(`
+        *,
+        object_photos (
+          id,
+          url,
+          description,
+          display_order
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    // Mapper vers ObjectData
+    const photos: ObjectPhoto[] = (completeObject!.object_photos || []).map((photo: any) => ({
+      id: photo.id,
+      url: photo.url,
+      description: photo.description || [],
+      display_order: photo.display_order || 0,
+    })).sort((a: ObjectPhoto, b: ObjectPhoto) => (a.display_order || 0) - (b.display_order || 0));
+
+    const objectData: ObjectData = {
+      id: completeObject!.id,
+      nom: completeObject!.nom,
+      type: completeObject!.type,
+      status: completeObject!.status as ObjectData['status'],
+      description: completeObject!.description || undefined,
+      longDescription: completeObject!.long_description || undefined,
+      utilisateur: validation.data.utilisateur || '',
+      utilisateur_id: completeObject!.utilisateur_id || undefined,
+      photos: photos.length > 0 ? photos : undefined,
+      createdAt: completeObject!.created_at,
+      updatedAt: completeObject!.updated_at,
+    };
 
     // Revalider le cache
     revalidatePath('/objects', 'page');
     revalidatePath(`/objects/${id}`, 'page');
 
     return NextResponse.json<SuccessResponse<ObjectData>>(
-      { message: 'Objet mis à jour avec succès', data: updatedObject },
+      { message: 'Objet mis à jour avec succès', data: objectData },
       { status: 200 }
     );
   } catch (error) {
@@ -117,17 +226,35 @@ export async function DELETE(
 ) {
   try {
     const { id } = await context.params;
-    const objects = await readObjects();
-    const filteredObjects = objects.filter(obj => obj.id !== id);
+    const supabase = await createServiceRoleClient();
 
-    if (objects.length === filteredObjects.length) {
+    // Vérifier que l'objet existe
+    const { data: existingObject } = await supabase
+      .from('objects')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existingObject) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('OBJECT_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    await writeObjects(filteredObjects);
+    // Supprimer l'objet (les photos seront supprimées automatiquement grâce à CASCADE)
+    const { error: deleteError } = await supabase
+      .from('objects')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Erreur suppression objet:', deleteError);
+      return NextResponse.json<ErrorResponse>(
+        { error: getErrorMessage('SERVER_ERROR') },
+        { status: 500 }
+      );
+    }
 
     // Revalider le cache
     revalidatePath('/objects', 'page');
@@ -145,4 +272,3 @@ export async function DELETE(
     );
   }
 }
-

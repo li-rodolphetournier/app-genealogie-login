@@ -3,12 +3,29 @@
  */
 
 import '@testing-library/jest-dom';
-import { afterEach, vi } from 'vitest';
+import { afterEach, vi, beforeEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-// Nettoyer après chaque test
+// Supprimer les console.error dans les tests (sauf si explicitement testés)
+const originalError = console.error;
+beforeEach(() => {
+  console.error = (...args: unknown[]) => {
+    // Ne pas logger les erreurs dans les tests sauf si c'est une assertion
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('Warning:') || args[0].includes('Error:'))
+    ) {
+      // Ignorer les warnings React et erreurs attendues dans les tests
+      return;
+    }
+    originalError(...args);
+  };
+});
+
 afterEach(() => {
   cleanup();
+  // Restaurer console.error
+  console.error = originalError;
 });
 
 // Mock pour Next.js router

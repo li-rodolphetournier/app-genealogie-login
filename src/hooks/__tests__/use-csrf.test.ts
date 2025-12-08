@@ -43,6 +43,10 @@ describe('useCsrfToken', () => {
   it('devrait gérer les erreurs de récupération du token', async () => {
     // Réinitialiser le module pour avoir un cache vide
     vi.resetModules();
+    
+    // Supprimer console.error pour ce test
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     const { useCsrfToken } = await import('../use-csrf');
@@ -53,6 +57,8 @@ describe('useCsrfToken', () => {
     }, { timeout: 2000 });
 
     expect(result.current.token).toBeNull();
+    
+    consoleSpy.mockRestore();
   });
 
   it('devrait utiliser le cache si le token est déjà en cache', async () => {
@@ -115,6 +121,10 @@ describe('fetchWithCsrf', () => {
 
   it('devrait fonctionner sans token CSRF si la récupération échoue', async () => {
     vi.resetModules();
+    
+    // Supprimer console.error pour ce test
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    
     mockFetch
       .mockRejectedValueOnce(new Error('Failed to fetch token'))
       .mockResolvedValueOnce({
@@ -132,6 +142,8 @@ describe('fetchWithCsrf', () => {
 
     // Le fetch devrait être appelé au moins une fois
     expect(mockFetch).toHaveBeenCalled();
+    
+    consoleSpy.mockRestore();
   });
 });
 

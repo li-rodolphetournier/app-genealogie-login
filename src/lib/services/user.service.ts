@@ -1,131 +1,219 @@
 /**
  * Service pour la gestion des utilisateurs
- * Couche d'accès aux données (DAL)
+ * Couche d'accès aux données (DAL) - Utilise Supabase
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { cache } from 'react';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { User, UserCreateInput, UserUpdateInput } from '@/types/user';
-
-const usersPath = path.join(process.cwd(), 'src/data/users.json');
-
-// Fonction de lecture des utilisateurs
-async function readUsers(): Promise<(User & { password?: string })[]> {
-  try {
-    const data = await fs.readFile(usersPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writeUsers(users: (User & { password?: string })[]): Promise<void> {
-  await fs.writeFile(usersPath, JSON.stringify(users, null, 2), 'utf-8');
-}
 
 export class UserService {
   /**
    * Récupérer tous les utilisateurs
    */
   static async findAll(): Promise<User[]> {
-    const users = await readUsers();
-    return users.map(({ password: _, ...user }) => user);
+    const supabase = await createServiceRoleClient();
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error.message}`);
+    }
+
+    return (users || []).map((user) => ({
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      status: user.status as User['status'],
+      profileImage: user.profile_image || undefined,
+      description: user.description || undefined,
+      detail: user.detail || undefined,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+    }));
   }
 
   /**
    * Récupérer un utilisateur par login
    */
   static async findByLogin(login: string): Promise<User | null> {
-    const users = await readUsers();
-    const user = users.find(u => u.login === login);
-    if (!user) return null;
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    const supabase = await createServiceRoleClient();
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('login', login)
+      .single();
+
+    if (error || !user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      status: user.status as User['status'],
+      profileImage: user.profile_image || undefined,
+      description: user.description || undefined,
+      detail: user.detail || undefined,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+    };
   }
 
   /**
    * Récupérer un utilisateur avec mot de passe (pour authentification)
+   * Note: Avec Supabase Auth, les mots de passe sont gérés par auth.users
+   * Cette méthode retourne null car les mots de passe ne sont plus dans public.users
    */
   static async findByLoginWithPassword(login: string): Promise<(User & { password: string }) | null> {
-    const users = await readUsers();
-    return users.find(u => u.login === login) as (User & { password: string }) | null || null;
+    // Avec Supabase Auth, l'authentification se fait via auth.users
+    // Cette méthode est conservée pour compatibilité mais retourne null
+    // L'authentification doit utiliser Supabase Auth directement
+    return null;
   }
 
   /**
    * Créer un utilisateur
+   * Note: Nécessite la création dans auth.users d'abord via Supabase Auth
    */
   static async create(input: UserCreateInput & { password: string }): Promise<User> {
-    const users = await readUsers();
+    const supabase = await createServiceRoleClient();
     
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = users.find(u => u.login === input.login || u.email === input.email);
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('login, email')
+      .or(`login.eq.${input.login},email.eq.${input.email}`)
+      .limit(1)
+      .single();
+
     if (existingUser) {
       throw new Error('Utilisateur ou email déjà utilisé');
     }
 
-    const newUser: User & { password: string } = {
-      id: Date.now().toString(),
-      login: input.login,
+    // Créer l'utilisateur dans Supabase Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: input.email,
-      status: input.status,
-      nom: input.nom,
-      prenom: input.prenom,
-      dateNaissance: input.dateNaissance,
-      profileImage: input.profileImage,
-      description: input.description,
       password: input.password,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      email_confirm: true,
+    });
+
+    if (authError || !authUser.user) {
+      throw new Error(`Erreur lors de la création de l'utilisateur: ${authError?.message || 'Erreur inconnue'}`);
+    }
+
+    // Créer le profil dans la table users
+    const { data: newUser, error: profileError } = await supabase
+      .from('users')
+      .insert({
+        id: authUser.user.id,
+        login: input.login,
+        email: input.email,
+        status: input.status,
+        profile_image: input.profileImage || null,
+        description: input.description || null,
+        detail: input.detail || null,
+      })
+      .select()
+      .single();
+
+    if (profileError || !newUser) {
+      // Nettoyer: supprimer l'utilisateur Auth si le profil échoue
+      await supabase.auth.admin.deleteUser(authUser.user.id);
+      throw new Error(`Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}`);
+    }
+
+    return {
+      id: newUser.id,
+      login: newUser.login,
+      email: newUser.email,
+      status: newUser.status as User['status'],
+      profileImage: newUser.profile_image || undefined,
+      description: newUser.description || undefined,
+      detail: newUser.detail || undefined,
+      createdAt: newUser.created_at,
+      updatedAt: newUser.updated_at,
     };
-
-    users.push(newUser);
-    await writeUsers(users);
-
-    const { password: _, ...userWithoutPassword } = newUser;
-    return userWithoutPassword;
   }
 
   /**
    * Mettre à jour un utilisateur
    */
   static async update(login: string, input: UserUpdateInput): Promise<User> {
-    const users = await readUsers();
-    const userIndex = users.findIndex(u => u.login === login);
+    const supabase = await createServiceRoleClient();
 
-    if (userIndex === -1) {
+    // Vérifier que l'utilisateur existe
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('login', login)
+      .single();
+
+    if (!existingUser) {
       throw new Error('Utilisateur non trouvé');
     }
 
-    const updatedUser = {
-      ...users[userIndex],
-      ...input,
-      login, // Garantir que le login ne change pas
-      updatedAt: new Date().toISOString(),
+    // Préparer les données de mise à jour
+    const updateData: Record<string, any> = {};
+    
+    if (input.email !== undefined) updateData.email = input.email;
+    if (input.description !== undefined) updateData.description = input.description || null;
+    if (input.detail !== undefined) updateData.detail = input.detail || null;
+    if (input.profileImage !== undefined) updateData.profile_image = input.profileImage || null;
+    if (input.status !== undefined) updateData.status = input.status;
+
+    // Mettre à jour dans Supabase
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('login', login)
+      .select()
+      .single();
+
+    if (error || !updatedUser) {
+      throw new Error(`Erreur lors de la mise à jour: ${error?.message || 'Erreur inconnue'}`);
+    }
+
+    return {
+      id: updatedUser.id,
+      login: updatedUser.login,
+      email: updatedUser.email,
+      status: updatedUser.status as User['status'],
+      profileImage: updatedUser.profile_image || undefined,
+      description: updatedUser.description || undefined,
+      detail: updatedUser.detail || undefined,
+      createdAt: updatedUser.created_at,
+      updatedAt: updatedUser.updated_at,
     };
-
-    users[userIndex] = updatedUser;
-    await writeUsers(users);
-
-    const { password: _, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
   }
 
   /**
    * Supprimer un utilisateur
    */
   static async delete(login: string): Promise<void> {
-    const users = await readUsers();
-    const filteredUsers = users.filter(u => u.login !== login);
+    const supabase = await createServiceRoleClient();
 
-    if (users.length === filteredUsers.length) {
+    // Récupérer l'ID de l'utilisateur
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('login', login)
+      .single();
+
+    if (findError || !user) {
       throw new Error('Utilisateur non trouvé');
     }
 
-    await writeUsers(filteredUsers);
+    // Supprimer l'utilisateur (la contrainte CASCADE supprimera aussi auth.users)
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('login', login);
+
+    if (deleteError) {
+      throw new Error(`Erreur lors de la suppression: ${deleteError.message}`);
+    }
   }
 }
-

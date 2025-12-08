@@ -1,26 +1,8 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import type { ObjectData, ObjectPhoto } from '@/types/objects';
+import { revalidatePath } from 'next/cache';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import type { ObjectPhoto } from '@/types/objects';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
-
-const objectsPath = path.join(process.cwd(), 'src/data/objects.json');
-
-async function readObjects(): Promise<ObjectData[]> {
-  try {
-    const data = await fs.readFile(objectsPath, 'utf-8');
-    return JSON.parse(data) as ObjectData[];
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writeObjects(objects: ObjectData[]): Promise<void> {
-  await fs.writeFile(objectsPath, JSON.stringify(objects, null, 2), 'utf-8');
-}
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -43,27 +25,67 @@ export async function POST(
       );
     }
 
-    const objects = await readObjects();
-    const objectIndex = objects.findIndex(obj => obj.id === id);
+    const supabase = await createServiceRoleClient();
 
-    if (objectIndex === -1) {
+    // Vérifier que l'objet existe
+    const { data: existingObject } = await supabase
+      .from('objects')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existingObject) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Objet non trouvé' },
         { status: 404 }
       );
     }
 
-    // Ajouter les nouvelles photos
-    const currentPhotos = objects[objectIndex].photos || [];
-    const updatedPhotos = [...currentPhotos, ...photos];
+    // Récupérer le nombre actuel de photos pour déterminer display_order
+    const { data: existingPhotos } = await supabase
+      .from('object_photos')
+      .select('display_order')
+      .eq('object_id', id)
+      .order('display_order', { ascending: false })
+      .limit(1);
 
-    objects[objectIndex].photos = updatedPhotos;
-    objects[objectIndex].updatedAt = new Date().toISOString();
+    const maxDisplayOrder = existingPhotos && existingPhotos.length > 0 
+      ? (existingPhotos[0].display_order || 0) 
+      : -1;
 
-    await writeObjects(objects);
+    // Insérer les nouvelles photos
+    const photosToInsert = photos.map((photo, index) => ({
+      object_id: id,
+      url: photo.url,
+      description: photo.description || [],
+      display_order: photo.display_order ?? (maxDisplayOrder + 1 + index),
+    }));
+
+    const { data: insertedPhotos, error: insertError } = await supabase
+      .from('object_photos')
+      .insert(photosToInsert)
+      .select();
+
+    if (insertError || !insertedPhotos) {
+      console.error('Erreur insertion photos:', insertError);
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Erreur lors de l\'ajout des photos' },
+        { status: 500 }
+      );
+    }
+
+    // Revalider le cache
+    revalidatePath(`/objects/${id}`, 'page');
+
+    const mappedPhotos: ObjectPhoto[] = insertedPhotos.map((p: any) => ({
+      id: p.id,
+      url: p.url,
+      description: p.description || [],
+      display_order: p.display_order || 0,
+    }));
 
     return NextResponse.json<SuccessResponse<{ photos: ObjectPhoto[] }>>(
-      { message: 'Photos ajoutées avec succès', data: { photos } },
+      { message: 'Photos ajoutées avec succès', data: { photos: mappedPhotos } },
       { status: 200 }
     );
   } catch (error: any) {
@@ -83,59 +105,48 @@ export async function DELETE(
   try {
     const { id } = await context.params;
     const { searchParams } = new URL(request.url);
-    const photoIndex = searchParams.get('photoIndex');
+    const photoId = searchParams.get('photoId');
 
-    if (!photoIndex) {
+    if (!photoId) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Index de photo manquant' },
+        { error: 'ID de photo manquant' },
         { status: 400 }
       );
     }
 
-    const photoIdx = parseInt(photoIndex);
-    if (isNaN(photoIdx) || photoIdx < 0) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Index de photo invalide' },
-        { status: 400 }
-      );
-    }
+    const supabase = await createServiceRoleClient();
 
-    const objects = await readObjects();
-    const objectIndex = objects.findIndex(obj => obj.id === id);
+    // Vérifier que la photo existe et appartient à l'objet
+    const { data: photo } = await supabase
+      .from('object_photos')
+      .select('id, object_id')
+      .eq('id', photoId)
+      .eq('object_id', id)
+      .single();
 
-    if (objectIndex === -1) {
+    if (!photo) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Objet non trouvé' },
+        { error: 'Photo non trouvée' },
         { status: 404 }
       );
     }
 
-    const photos = objects[objectIndex].photos || [];
-    if (photoIdx >= photos.length) {
+    // Supprimer la photo
+    const { error: deleteError } = await supabase
+      .from('object_photos')
+      .delete()
+      .eq('id', photoId);
+
+    if (deleteError) {
+      console.error('Erreur suppression photo:', deleteError);
       return NextResponse.json<ErrorResponse>(
-        { error: 'Index de photo invalide' },
-        { status: 400 }
+        { error: 'Erreur lors de la suppression de la photo' },
+        { status: 500 }
       );
     }
 
-    // Supprimer le fichier physique si nécessaire
-    const photoUrl = photos[photoIdx].url;
-    if (photoUrl) {
-      const filePath = path.join(process.cwd(), 'public', photoUrl);
-      try {
-        await fs.unlink(filePath);
-      } catch (error) {
-        console.error('Erreur lors de la suppression du fichier:', error);
-        // Continuer même si la suppression du fichier échoue
-      }
-    }
-
-    // Supprimer la photo du tableau
-    photos.splice(photoIdx, 1);
-    objects[objectIndex].photos = photos;
-    objects[objectIndex].updatedAt = new Date().toISOString();
-
-    await writeObjects(objects);
+    // Revalider le cache
+    revalidatePath(`/objects/${id}`, 'page');
 
     return NextResponse.json<SuccessResponse>(
       { message: 'Photo supprimée avec succès' },
@@ -149,4 +160,3 @@ export async function DELETE(
     );
   }
 }
-
