@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/utils/logger';
 
 export default function Login() {
   const router = useRouter();
@@ -21,18 +22,34 @@ export default function Login() {
   useEffect(() => {
     setMounted(true);
     
+    // Timeout pour éviter que la vérification reste bloquée
+    const timeoutId = setTimeout(() => {
+      setCheckingAuth(false);
+    }, 5000); // 5 secondes maximum
+    
     // Vérifier si l'utilisateur est déjà connecté
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Créer une promesse avec timeout
+        const authPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 4000)
+        );
+        
+        const { data: { user } } = await Promise.race([authPromise, timeoutPromise]);
+        
         if (user) {
           // Utilisateur déjà connecté, rediriger vers l'accueil
+          clearTimeout(timeoutId);
           router.push('/accueil');
           return;
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        // Ignorer les erreurs silencieusement (timeout ou erreur réseau)
+        // L'utilisateur pourra quand même se connecter
+        logger.debug('Vérification auth:', error instanceof Error ? error.message : 'Erreur inconnue');
       } finally {
+        clearTimeout(timeoutId);
         setCheckingAuth(false);
       }
     };
@@ -49,6 +66,10 @@ export default function Login() {
       }
     };
     void checkLogo();
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [router, supabase]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
