@@ -1,31 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import fs from 'fs/promises';
-import path from 'path';
-import bcrypt from 'bcrypt';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { userUpdateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
 import type { User, UserResponse } from '@/types/user';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
-
-const usersPath = path.join(process.cwd(), 'src/data/users.json');
-
-async function readUsers(): Promise<(User & { password?: string })[]> {
-  try {
-    const data = await fs.readFile(usersPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function writeUsers(users: (User & { password?: string })[]): Promise<void> {
-  await fs.writeFile(usersPath, JSON.stringify(users, null, 2), 'utf-8');
-}
 
 type RouteContext = {
   params: Promise<{ login: string }>;
@@ -38,18 +18,35 @@ export async function GET(
 ) {
   try {
     const { login } = await context.params;
-    const users = await readUsers();
-    const user = users.find(u => u.login === login);
+    const supabase = await createServiceRoleClient();
 
-    if (!user) {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('login', login)
+      .single();
+
+    if (error || !user) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json<UserResponse>(userWithoutPassword, { status: 200 });
+    // Mapper les champs Supabase vers le format User
+    const userResponse: UserResponse = {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      status: user.status as User['status'],
+      profileImage: user.profile_image || undefined,
+      description: user.description || undefined,
+      detail: user.detail || undefined,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+    };
+
+    return NextResponse.json<UserResponse>(userResponse, { status: 200 });
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
     return NextResponse.json<ErrorResponse>(
@@ -74,46 +71,84 @@ export async function PUT(
       return createValidationErrorResponse(validation.error);
     }
     
-    const users = await readUsers();
-    const userIndex = users.findIndex(u => u.login === login);
+    const supabase = await createServiceRoleClient();
 
-    if (userIndex === -1) {
+    // Vérifier que l'utilisateur existe
+    const { data: existingUser, error: findError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('login', login)
+      .single();
+
+    if (findError || !existingUser) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    // Mettre à jour l'utilisateur
-    const updateData: any = { ...validation.data };
+    // Préparer les données de mise à jour pour Supabase
+    const updateData: Record<string, any> = {};
     
-    // Hasher le mot de passe si fourni
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
+    if (validation.data.email !== undefined) {
+      updateData.email = validation.data.email;
     }
-    
-    const updatedUser = {
-      ...users[userIndex],
-      ...updateData,
-      login, // Garantir que le login ne change pas
-      updatedAt: new Date().toISOString(),
-    };
+    if (validation.data.description !== undefined) {
+      updateData.description = validation.data.description || null;
+    }
+    if (validation.data.detail !== undefined) {
+      updateData.detail = validation.data.detail || null;
+    }
+    if (validation.data.profileImage !== undefined) {
+      updateData.profile_image = validation.data.profileImage || null;
+    }
+    if (validation.data.status !== undefined) {
+      updateData.status = validation.data.status;
+    }
+    // Note: nom, prenom, dateNaissance ne sont pas dans le schéma Supabase users
+    // Ils peuvent être ajoutés plus tard si nécessaire
 
-    users[userIndex] = updatedUser;
-    await writeUsers(users);
+    // Mettre à jour dans Supabase
+    const { data: updatedUser, error: updateError } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('login', login)
+      .select()
+      .single();
+
+    if (updateError || !updatedUser) {
+      console.error('Erreur Supabase lors de la mise à jour:', updateError);
+      return NextResponse.json<ErrorResponse>(
+        { error: getErrorMessage('SERVER_ERROR') },
+        { status: 500 }
+      );
+    }
+
+    // Mapper les champs Supabase vers le format User
+    const userResponse: UserResponse = {
+      id: updatedUser.id,
+      login: updatedUser.login,
+      email: updatedUser.email,
+      status: updatedUser.status as User['status'],
+      profileImage: updatedUser.profile_image || undefined,
+      description: updatedUser.description || undefined,
+      detail: updatedUser.detail || undefined,
+      createdAt: updatedUser.created_at,
+      updatedAt: updatedUser.updated_at,
+    };
 
     // Revalider le cache
     revalidatePath('/users', 'page');
     revalidatePath(`/users/${login}`, 'page');
 
-    const { password: _, ...userWithoutPassword } = updatedUser;
-
     return NextResponse.json<SuccessResponse<UserResponse>>(
-      { message: 'Utilisateur mis à jour avec succès', data: userWithoutPassword },
+      { message: 'Utilisateur mis à jour avec succès', data: userResponse },
       { status: 200 }
     );
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error('Détails de l\'erreur:', errorMessage);
     return NextResponse.json<ErrorResponse>(
       { error: getErrorMessage('SERVER_ERROR') },
       { status: 500 }
@@ -128,17 +163,35 @@ export async function DELETE(
 ) {
   try {
     const { login } = await context.params;
-    const users = await readUsers();
-    const filteredUsers = users.filter(u => u.login !== login);
+    const supabase = await createServiceRoleClient();
 
-    if (users.length === filteredUsers.length) {
+    // Vérifier que l'utilisateur existe
+    const { data: existingUser, error: findError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('login', login)
+      .single();
+
+    if (findError || !existingUser) {
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
       );
     }
 
-    await writeUsers(filteredUsers);
+    // Supprimer l'utilisateur (la contrainte CASCADE supprimera aussi auth.users)
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('login', login);
+
+    if (deleteError) {
+      console.error('Erreur Supabase lors de la suppression:', deleteError);
+      return NextResponse.json<ErrorResponse>(
+        { error: getErrorMessage('SERVER_ERROR') },
+        { status: 500 }
+      );
+    }
 
     // Revalider le cache
     revalidatePath('/users', 'page');

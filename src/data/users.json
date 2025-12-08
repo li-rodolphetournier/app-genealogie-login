@@ -4,8 +4,10 @@
     "password": "OctobreHalloween2024",
     "email": "monsieur@example.com",
     "description": "je suis l'admin de ce site",
-    "profileImage": "/uploads/users/1730653493489-t35za28um.jpg",
-    "status": "administrateur"
+    "profileImage": "https://etrameteinczkfuponai.supabase.co/storage/v1/object/public/users/users/1765153499875-681064698-Blason-de-Serdaigle.webp",
+    "status": "administrateur",
+    "detail": "",
+    "updatedAt": "2025-12-08T00:25:05.536Z"
   },
   {
     "login": "redacteur",
