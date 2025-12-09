@@ -7,6 +7,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { User } from '@/types/user';
+import { ProfileImage } from '@/components/ProfileImage';
 
 type UserCardProps = {
   user: User;
@@ -17,21 +18,12 @@ export const UserCard = React.memo<UserCardProps>(({ user, onDelete }) => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
-        {user.profileImage ? (
-          <img
-            src={user.profileImage}
-            alt={`Photo de profil de ${user.login}`}
-            className="h-16 w-16 rounded-full object-cover"
-            width={64}
-            height={64}
-          />
-        ) : (
-          <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400 text-xl">
-              {user.login.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        <ProfileImage
+          src={user.profileImage}
+          alt={`Photo de profil de ${user.login}`}
+          fallbackText={user.login}
+          size={64}
+        />
         <span
           className={`px-2 py-1 text-xs rounded ${
             user.status === 'administrateur'

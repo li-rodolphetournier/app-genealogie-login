@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { ProfileImage } from '@/components/ProfileImage';
 import type { User } from '@/types/user';
 
 type UserDetailClientProps = {
@@ -47,19 +48,14 @@ export function UserDetailClient({ user }: UserDetailClientProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <div className="relative h-64 w-64 mx-auto md:mx-0 rounded-lg overflow-hidden">
-                  {user.profileImage ? (
-                    <Image
-                      src={user.profileImage}
-                      alt={`Photo de profil de ${user.prenom || ''} ${user.nom || user.login}`}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400">Pas de photo</span>
-                    </div>
-                  )}
+                <div className="relative h-64 w-64 mx-auto md:mx-0 rounded-lg overflow-hidden flex items-center justify-center">
+                  <ProfileImage
+                    src={user.profileImage}
+                    alt={`Photo de profil de ${user.prenom || ''} ${user.nom || user.login}`}
+                    fallbackText={user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.login}
+                    size={256}
+                    className="rounded-lg"
+                  />
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg">

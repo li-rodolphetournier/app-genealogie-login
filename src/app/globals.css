@@ -109,3 +109,18 @@ label {
   background-color: #22c55e;
   color: white;
 }
+
+/* Fix pour les motion.div dans les grilles */
+[data-framer-motion] {
+  display: block;
+}
+
+/* Assurer que les cartes dans la grille ont la même hauteur */
+.grid.auto-rows-fr > * {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid.auto-rows-fr > * > * {
+  flex: 1;
+}

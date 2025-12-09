@@ -32,8 +32,9 @@ export async function POST(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.error('Erreur d\'authentification upload:', authError);
       return NextResponse.json<ErrorResponse>(
-        { error: 'Non authentifié' },
+        { error: 'Non authentifié. Veuillez vous connecter pour uploader des fichiers.' },
         { status: 401 }
       );
     }
@@ -83,17 +84,23 @@ export async function POST(request: Request) {
     const originalName = file.name.replace(/[^a-zA-Z0-9.]/g, '-');
     const fileName = `${uniqueSuffix}-${originalName}`;
 
-    // Upload vers Supabase Storage
+    // Pour tous les buckets, uploader directement à la racine (pas de sous-dossier)
+    // Le folder est utilisé uniquement pour déterminer le bucket à utiliser
+    console.log(`[Upload] Tentative d'upload: bucket=${bucket}, fileName=${fileName}, size=${file.size} bytes`);
+
+    // Upload vers Supabase Storage (directement à la racine du bucket)
     const uploadResult = await uploadFile(
       bucket,
       file,
       fileName,
       {
-        folder: folder || undefined,
+        folder: undefined, // Toujours à la racine du bucket
         public: true,
         upsert: false,
       }
     );
+
+    console.log(`[Upload] Succès: ${uploadResult.publicUrl}`);
 
     return NextResponse.json({
       message: 'Fichier uploadé avec succès',
@@ -102,9 +109,13 @@ export async function POST(request: Request) {
       filePath: uploadResult.path,
     });
   } catch (error) {
+    console.error('[Upload] Erreur détaillée:', error);
     logError(error, 'API Upload');
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : getErrorMessage('FILE_UPLOAD_FAILED');
     return NextResponse.json<ErrorResponse>(
-      { error: error instanceof Error ? error.message : getErrorMessage('FILE_UPLOAD_FAILED') },
+      { error: errorMessage },
       { status: 500 }
     );
   }

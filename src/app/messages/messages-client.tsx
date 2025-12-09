@@ -32,7 +32,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
 
   // Vérifier que l'utilisateur est administrateur
   if (!isLoading && user && user.status !== 'administrateur') {
-    window.location.href = '/accueil';
+    router.push('/accueil');
     return null;
   }
 
@@ -390,6 +390,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover rounded"
+                            loading={messages.indexOf(message) === 0 && index === 0 ? 'eager' : 'lazy'}
+                            priority={messages.indexOf(message) === 0 && index === 0}
                           />
                         </div>
                       ))}

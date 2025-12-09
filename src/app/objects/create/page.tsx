@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -21,6 +21,81 @@ export default function CreateObject() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // États pour la gestion des catégories
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+
+  // Charger les catégories au montage du composant
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          // Extraire les noms des catégories
+          const categoryNames = (data.categories || []).map((cat: any) => cat.name || cat);
+          setCategories(categoryNames);
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des catégories:', err);
+      }
+    };
+    
+    loadCategories();
+  }, []);
+
+  // Fonction pour créer une nouvelle catégorie
+  const handleCreateCategory = async () => {
+    if (!newCategory.trim()) {
+      setError('Le nom de la catégorie ne peut pas être vide');
+      return;
+    }
+
+    if (categories.includes(newCategory.trim())) {
+      setError('Cette catégorie existe déjà');
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    setError(null);
+
+    try {
+      // Appeler l'API pour créer la catégorie
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newCategory.trim(),
+          description: '',
+        }),
+      });
+
+      if (response.ok) {
+        // Ajouter la nouvelle catégorie à la liste
+        const updatedCategories = [...categories, newCategory.trim()].sort();
+        setCategories(updatedCategories);
+        
+        // Sélectionner automatiquement la nouvelle catégorie
+        setType(newCategory.trim());
+        
+        // Réinitialiser le formulaire de création
+        setNewCategory('');
+        setShowNewCategoryInput(false);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Erreur lors de la création de la catégorie');
+      }
+    } catch (err) {
+      setError('Erreur de connexion lors de la création de la catégorie');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
 
   if (isLoading || !user) {
     return <div>Chargement...</div>;
@@ -51,9 +126,56 @@ export default function CreateObject() {
         formData.append('photos', photo);
       }
 
-      const response = await fetch('/api/objects/create', {
+      // Convertir FormData en JSON car l'API attend du JSON
+      const objectData: any = {
+        nom,
+        type,
+        status,
+        utilisateur: user.login,
+        description,
+        longDescription,
+      };
+
+      // Pour les photos, il faudra les uploader séparément via /api/upload
+      // puis ajouter les URLs aux données de l'objet
+      if (photos.length > 0) {
+        const photoUrls: string[] = [];
+        for (const photo of photos) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', photo);
+          uploadFormData.append('folder', 'objects');
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            // L'API retourne imageUrl ou publicUrl
+            const imageUrl = uploadData.imageUrl || uploadData.url || uploadData.publicUrl;
+            if (imageUrl) {
+              photoUrls.push(imageUrl);
+            }
+          } else {
+            const errorData = await uploadResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `Erreur lors de l'upload de ${photo.name}`);
+          }
+        }
+        // Le schéma attend description comme tableau de strings
+        objectData.photos = photoUrls.map((url, index) => ({ 
+          url, 
+          description: [] as string[],
+          display_order: index 
+        }));
+      }
+
+      const response = await fetch('/api/objects', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(objectData),
       });
 
       if (!response.ok) {
@@ -114,18 +236,85 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
                   Catégorie
                 </label>
-                <input
-                  type="text"
+                
+                {/* Dropdown pour sélectionner une catégorie existante */}
+                <select
                   id="type"
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
+                  onChange={(e) => {
+                    setType(e.target.value);
+                    setShowNewCategoryInput(false);
+                    setError(null);
+                  }}
                   required
-                  className="mt-1 block w-full"
-                  placeholder="Saisissez la catégorie"
-                />
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">-- Sélectionner une catégorie --</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Option pour créer une nouvelle catégorie */}
+                {!showNewCategoryInput ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategoryInput(true);
+                      setType('');
+                    }}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    + Créer une nouvelle catégorie
+                  </button>
+                ) : (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nouvelle catégorie
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        id="newCategory"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleCreateCategory();
+                          }
+                        }}
+                        placeholder="Nom de la nouvelle catégorie"
+                        className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateCategory}
+                        disabled={isCreatingCategory || !newCategory.trim()}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {isCreatingCategory ? 'Ajout...' : 'Valider'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setNewCategory('');
+                          setError(null);
+                        }}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

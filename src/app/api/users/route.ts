@@ -62,19 +62,91 @@ export async function POST(request: Request) {
     const { login, email, password, status, description, profileImage } = validation.data;
     const supabase = await createServiceRoleClient();
 
-    // Vérifier si l'utilisateur ou l'email existe déjà
+    // Vérifier si l'utilisateur ou l'email existe déjà dans la table users
     const { data: existingUser } = await supabase
       .from('users')
-      .select('login, email')
+      .select('login, email, id')
       .or(`login.eq.${login},email.eq.${email}`)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       const field = existingUser.login === login ? 'Login' : 'Email';
       return NextResponse.json<ErrorResponse>(
         { error: `${field} déjà utilisé` },
         { status: 409 }
+      );
+    }
+
+    // Vérifier aussi dans auth.users si l'email existe déjà
+    const { data: existingAuthUsers } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = existingAuthUsers?.users?.find(
+      (u) => u.email === email || u.user_metadata?.login === login
+    );
+
+    if (existingAuthUser) {
+      // Si l'utilisateur Auth existe mais pas dans users, on peut réutiliser son ID
+      // Vérifier s'il n'existe pas déjà dans users
+      const { data: checkUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', existingAuthUser.id)
+        .maybeSingle();
+
+      if (checkUser) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Cet utilisateur existe déjà' },
+          { status: 409 }
+        );
+      }
+
+      // Réutiliser l'utilisateur Auth existant
+      const { data: newUser, error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: existingAuthUser.id,
+          login,
+          email,
+          status,
+          profile_image: profileImage || null,
+          description: description || null,
+          detail: null,
+        })
+        .select()
+        .single();
+
+      if (profileError || !newUser) {
+        console.error('Erreur création profil utilisateur:', profileError);
+        // Ne pas supprimer l'utilisateur Auth existant
+        return NextResponse.json<ErrorResponse>(
+          { 
+            error: profileError?.code === '23505' 
+              ? 'Cet utilisateur existe déjà dans la base de données' 
+              : `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` 
+          },
+          { status: 500 }
+        );
+      }
+
+      // Mapper et retourner la réponse
+      const userResponse: UserResponse = {
+        id: newUser.id,
+        login: newUser.login,
+        email: newUser.email,
+        status: newUser.status as User['status'],
+        profileImage: newUser.profile_image || undefined,
+        description: newUser.description || undefined,
+        detail: newUser.detail || undefined,
+        createdAt: newUser.created_at,
+        updatedAt: newUser.updated_at,
+      };
+
+      revalidatePath('/users', 'page');
+      revalidatePath('/users/[login]', 'page');
+
+      return NextResponse.json<SuccessResponse<UserResponse>>(
+        { message: 'Utilisateur créé avec succès', data: userResponse },
+        { status: 201 }
       );
     }
 
@@ -87,8 +159,17 @@ export async function POST(request: Request) {
 
     if (authError || !authUser.user) {
       console.error('Erreur création utilisateur Auth:', authError);
+      
+      // Si l'erreur est liée à un email déjà utilisé
+      if (authError?.message?.includes('already registered') || authError?.message?.includes('already exists')) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Cet email est déjà utilisé' },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json<ErrorResponse>(
-        { error: 'Erreur lors de la création de l\'utilisateur' },
+        { error: `Erreur lors de la création de l'utilisateur: ${authError?.message || 'Erreur inconnue'}` },
         { status: 500 }
       );
     }
@@ -110,15 +191,29 @@ export async function POST(request: Request) {
 
     if (profileError || !newUser) {
       // Si l'insertion du profil échoue, supprimer l'utilisateur Auth
-      await supabase.auth.admin.deleteUser(authUser.user.id);
+      try {
+        await supabase.auth.admin.deleteUser(authUser.user.id);
+      } catch (deleteError) {
+        console.error('Erreur lors de la suppression de l\'utilisateur Auth:', deleteError);
+      }
+      
       console.error('Erreur création profil utilisateur:', profileError);
+      
+      // Message d'erreur plus explicite
+      if (profileError?.code === '23505') {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Cet utilisateur existe déjà dans la base de données. L\'ID est déjà utilisé.' },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json<ErrorResponse>(
-        { error: 'Erreur lors de la création du profil utilisateur' },
+        { error: `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` },
         { status: 500 }
       );
     }
 
-    // Mapper les champs Supabase vers le format UserResponse
+    // Mapper les champs Supabase vers le format UserResponse (pour le nouveau utilisateur créé)
     const userResponse: UserResponse = {
       id: newUser.id,
       login: newUser.login,
@@ -141,6 +236,15 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     console.error('Erreur API create-user:', error);
+    
+    // Gérer spécifiquement les erreurs de clé dupliquée
+    if (error?.code === '23505' || error?.message?.includes('duplicate key')) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Cet utilisateur existe déjà dans la base de données' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json<ErrorResponse>(
       { error: error instanceof Error ? error.message : getErrorMessage('USER_CREATE_FAILED') },
       { status: 500 }

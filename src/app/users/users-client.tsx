@@ -6,6 +6,7 @@ import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
+import { ProfileImage } from '@/components/ProfileImage';
 import type { User } from '@/types/user';
 
 type UsersClientProps = {
@@ -107,19 +108,12 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                   >
                     <div className="p-6">
                       <div className="flex flex-col items-center space-y-4">
-                        {user.profileImage ? (
-                          <img
-                            src={user.profileImage}
-                            alt={`Photo de profil de ${user.login}`}
-                            className="w-32 h-32 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-4xl font-semibold text-gray-600">
-                              {user.login.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
+                        <ProfileImage
+                          src={user.profileImage}
+                          alt={`Photo de profil de ${user.login}`}
+                          fallbackText={user.login}
+                          size={128}
+                        />
                         <div className="text-center">
                           <h2 className="text-xl font-semibold text-gray-900">
                             {user.login}
@@ -165,19 +159,12 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                 {users.map((user) => (
                   <li key={user.login} className="p-4 hover:bg-gray-50">
                     <div className="flex items-center space-x-4">
-                      {user.profileImage ? (
-                        <img
-                          src={user.profileImage}
-                          alt={`Photo de profil de ${user.login}`}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-lg font-semibold text-gray-600">
-                            {user.login.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
+                      <ProfileImage
+                        src={user.profileImage}
+                        alt={`Photo de profil de ${user.login}`}
+                        fallbackText={user.login}
+                        size={48}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {user.login}

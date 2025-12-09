@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
+import { motion } from 'framer-motion';
+import { AnimatedContainer } from '@/components/animations';
 
 export default function Login() {
   const router = useRouter();
@@ -94,20 +96,26 @@ export default function Login() {
     setError(null);
 
     try {
-      // Tentative 1 : Essayer avec le login comme email
-      let authResult = await supabase.auth.signInWithPassword({
-        email: formData.login.trim(),
-        password: formData.password,
-      });
-
-      // Tentative 2 : Si échec, chercher par login dans la table users via l'API
-      if (authResult.error) {
+      // Vérifier si le login ressemble à un email
+      const loginValue = formData.login.trim();
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginValue);
+      
+      let authResult;
+      
+      if (isEmail) {
+        // Tentative 1 : Le login est un email, essayer directement
+        authResult = await supabase.auth.signInWithPassword({
+          email: loginValue,
+          password: formData.password,
+        });
+      } else {
+        // Tentative 1 : Le login n'est pas un email, chercher l'email via l'API
         const response = await fetch('/api/auth/get-email-by-login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ login: formData.login }),
+          body: JSON.stringify({ login: loginValue }),
         });
 
         if (response.ok) {
@@ -117,27 +125,83 @@ export default function Login() {
               email,
               password: formData.password,
             });
+          } else {
+            setError('Identifiant introuvable');
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          setError('Erreur lors de la récupération de l\'email');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Tentative 2 : Si la première tentative a échoué et que c'était un email, essayer avec l'API
+      if (authResult.error && isEmail) {
+        const response = await fetch('/api/auth/get-email-by-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login: loginValue }),
+        });
+
+        if (response.ok) {
+          const { email } = await response.json();
+          if (email && email !== loginValue) {
+            // L'email trouvé est différent, réessayer
+            authResult = await supabase.auth.signInWithPassword({
+              email,
+              password: formData.password,
+            });
           }
         }
       }
 
       if (authResult.error) {
-        setError(authResult.error.message || 'Identifiants incorrects');
+        // Ne pas afficher les détails techniques de l'erreur
+        const errorMessage = authResult.error.message || '';
+        if (errorMessage.includes('Invalid login credentials') || 
+            errorMessage.includes('Email not confirmed') ||
+            errorMessage.includes('invalid_grant')) {
+          setError('Identifiants incorrects');
+        } else if (errorMessage.includes('Email rate limit exceeded')) {
+          setError('Trop de tentatives. Veuillez réessayer plus tard.');
+        } else {
+          setError('Erreur de connexion. Veuillez vérifier vos identifiants.');
+        }
         setIsLoading(false);
         return;
       }
 
-      if (authResult.data.user) {
-        // Connexion réussie, rediriger vers l'accueil
-        router.push('/accueil');
-        router.refresh();
+      if (authResult.data?.user) {
+        // Connexion réussie
+        logger.debug('[LOGIN] Connexion réussie, utilisateur:', authResult.data.user.email);
+        logger.debug('[LOGIN] Session:', authResult.data.session?.access_token ? 'présente' : 'absente');
+        
+        // Attendre un peu pour que la session soit établie
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Vérifier que la session est toujours là avant de rediriger
+        const { data: { user: verifyUser } } = await supabase.auth.getUser();
+        if (verifyUser) {
+          logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
+          router.push('/accueil');
+          router.refresh();
+        } else {
+          logger.error('[LOGIN] Session perdue après connexion !');
+          setError('Erreur de session. Veuillez réessayer.');
+          setIsLoading(false);
+        }
       } else {
+        logger.error('[LOGIN] Pas de user dans authResult.data');
         setError('Erreur de connexion. Veuillez réessayer.');
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
+      logger.error('Erreur de connexion:', error);
       setError('Erreur de connexion au serveur. Veuillez réessayer.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -154,148 +218,197 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {hasLogo ? (
-          <div className="flex justify-center mb-8">
-            <div className="relative w-32 h-32">
-              <Image
-                src="/uploads/login/armoirie.png"
-                alt="Armoiries"
-                width={128}
-                height={128}
-                className="object-contain"
-                priority
-                onError={() => setHasLogo(false)}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        {/* Titre */}
-        <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900 mb-2">
-          Bienvenue
-        </h1>
-        <p className="text-center text-sm text-gray-600 mb-8">
-          Connectez-vous pour accéder à votre compte
-        </p>
-      </div>
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200">
-          {/* Message d'erreur */}
-          {error && (
-            <div
-              role="alert"
-              className="bg-red-50 border-l-4 border-red-500 p-4 mb-6"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8"
+    >
+      <AnimatedContainer variant="fadeIn" delay={0.1}>
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          {hasLogo && (
+            <motion.div
+              className="flex justify-center mb-8"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              <p className="text-red-700">{error}</p>
-            </div>
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <Image
+                  src="/uploads/login/armoirie.png"
+                  alt="Armoiries"
+                  width={128}
+                  height={128}
+                  className="object-contain"
+                  style={{ maxWidth: '100%', width: 'auto', height: 'auto' }}
+                  priority
+                  loading="eager"
+                  onError={() => setHasLogo(false)}
+                />
+              </div>
+            </motion.div>
           )}
 
-          {/* Formulaire */}
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-            noValidate
+          {/* Titre */}
+          <motion.h1
+            className="text-center text-3xl font-bold tracking-tight text-gray-900 mb-2"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
           >
-            <div>
-              <label
-                htmlFor="login"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Identifiant
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="login"
-                  name="login"
-                  type="text"
-                  autoComplete="username"
-                  required
-                  value={formData.login}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                  aria-required="true"
-                  aria-invalid={error ? "true" : "false"}
-                  aria-describedby={error ? "login-error" : undefined}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Mot de passe
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                  aria-required="true"
-                  aria-invalid={error ? "true" : "false"}
-                  aria-describedby={error ? "password-error" : undefined}
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
-                aria-busy={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    <span>Connexion en cours...</span>
-                  </div>
-                ) : (
-                  'Se connecter'
-                )}
-              </button>
-            </div>
-          </form>
+            Bienvenue
+          </motion.h1>
+          <motion.p
+            className="text-center text-sm text-gray-600 mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            Connectez-vous pour accéder à votre compte
+          </motion.p>
         </div>
+      </AnimatedContainer>
 
-        {/* Footer */}
+      <AnimatedContainer variant="scale" delay={0.5}>
+        <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+          <motion.div
+            className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+          >
+            {/* Message d'erreur */}
+            {error && (
+              <motion.div
+                role="alert"
+                className="bg-red-50 border-l-4 border-red-500 p-4 mb-6"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="text-red-700">{error}</p>
+              </motion.div>
+            )}
+
+            {/* Formulaire */}
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              noValidate
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.4 }}
+            >
+              <div>
+                <label
+                  htmlFor="login"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Identifiant
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="login"
+                    name="login"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    value={formData.login}
+                    onChange={handleChange}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={error ? "true" : "false"}
+                    aria-describedby={error ? "login-error" : undefined}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Mot de passe
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoading}
+                    aria-required="true"
+                    aria-invalid={error ? "true" : "false"}
+                    aria-describedby={error ? "password-error" : undefined}
+                  />
+                </div>
+              </div>
+
+              <motion.div>
+                <motion.button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  aria-busy={isLoading}
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <motion.svg
+                        className="h-5 w-5 text-white -ml-1 mr-3"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </motion.svg>
+                      <span>Connexion en cours...</span>
+                    </div>
+                  ) : (
+                    'Se connecter'
+                  )}
+                </motion.button>
+              </motion.div>
+            </motion.form>
+          </motion.div>
+        </div>
+      </AnimatedContainer>
+
+      {/* Footer */}
+      <AnimatedContainer variant="fadeIn" delay={0.8}>
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             En cas de problème de connexion, contactez l&apos;administrateur
           </p>
         </div>
-      </div>
-    </div>
+      </AnimatedContainer>
+    </motion.div>
   );
 }

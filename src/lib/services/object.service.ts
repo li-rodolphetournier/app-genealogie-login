@@ -29,6 +29,17 @@ export class ObjectService {
       throw new Error(`Erreur lors de la récupération des objets: ${error.message}`);
     }
 
+    // Récupérer tous les IDs utilisateurs uniques
+    const userIds = [...new Set((objects || []).map((obj: any) => obj.utilisateur_id).filter(Boolean))];
+    
+    // Récupérer les logins des utilisateurs en une seule requête
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, login')
+      .in('id', userIds);
+    
+    const userLoginMap = new Map((users || []).map((u: any) => [u.id, u.login]));
+
     return (objects || []).map((obj: any) => {
       const photos: ObjectPhoto[] = (obj.object_photos || []).map((photo: any) => ({
         id: photo.id,
@@ -44,7 +55,7 @@ export class ObjectService {
         status: obj.status as ObjectData['status'],
         description: obj.description || undefined,
         longDescription: obj.long_description || undefined,
-        utilisateur: obj.utilisateur_id || '',
+        utilisateur: obj.utilisateur_id ? (userLoginMap.get(obj.utilisateur_id) || '') : '',
         utilisateur_id: obj.utilisateur_id || undefined,
         photos: photos.length > 0 ? photos : undefined,
         createdAt: obj.created_at,
@@ -76,6 +87,17 @@ export class ObjectService {
       return null;
     }
 
+    // Récupérer le login de l'utilisateur depuis l'ID
+    let utilisateurLogin = '';
+    if (object.utilisateur_id) {
+      const { data: user } = await supabase
+        .from('users')
+        .select('login')
+        .eq('id', object.utilisateur_id)
+        .single();
+      utilisateurLogin = user?.login || '';
+    }
+
     const photos: ObjectPhoto[] = (object.object_photos || []).map((photo: any) => ({
       id: photo.id,
       url: photo.url,
@@ -90,7 +112,7 @@ export class ObjectService {
       status: object.status as ObjectData['status'],
       description: object.description || undefined,
       longDescription: object.long_description || undefined,
-      utilisateur: object.utilisateur_id || '',
+      utilisateur: utilisateurLogin,
       utilisateur_id: object.utilisateur_id || undefined,
       photos: photos.length > 0 ? photos : undefined,
       createdAt: object.created_at,

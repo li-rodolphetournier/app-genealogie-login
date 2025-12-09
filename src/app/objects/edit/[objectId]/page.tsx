@@ -27,32 +27,69 @@ export default function EditObject() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // États pour la gestion des catégories
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const { user } = useAuth({
     redirectIfUnauthenticated: true,
     redirectTo: '/',
   });
 
+  // Charger les catégories et l'objet
   useEffect(() => {
-    if (objectId) {
-      const fetchObject = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`/api/objects/${objectId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setObject(data);
-            setPreviews(data.photos?.map((p: { url: string }) => p.url) || []);
-          } else {
-            setError('Impossible de charger l\'objet');
-          }
-        } catch (err) {
-          setError('Erreur de connexion');
-        } finally {
-          setIsLoading(false);
+    const loadData = async () => {
+      if (!objectId) return;
+      
+      setIsLoading(true);
+      try {
+        // Charger les catégories et l'objet en parallèle
+        const [categoriesResponse, objectResponse] = await Promise.all([
+          fetch('/api/categories'),
+          fetch(`/api/objects/${objectId}`)
+        ]);
+
+        // Traiter les catégories
+        let loadedCategories: string[] = [];
+        if (categoriesResponse.ok) {
+          const categoriesData = await categoriesResponse.json();
+          // Extraire les noms des catégories
+          loadedCategories = (categoriesData.categories || []).map((cat: any) => cat.name || cat);
         }
-      };
-      void fetchObject();
-    }
+          
+        // Traiter l'objet
+        if (objectResponse.ok) {
+          const objectData = await objectResponse.json();
+          
+          // S'assurer que la catégorie de l'objet est dans la liste
+          if (objectData.type && !loadedCategories.includes(objectData.type)) {
+            loadedCategories = [...loadedCategories, objectData.type].sort();
+          }
+          
+          setObject(objectData);
+          setPreviews(objectData.photos?.map((p: { url: string }) => p.url) || []);
+          
+          // S'assurer que utilisateur est défini (login, pas UUID)
+          if (!objectData.utilisateur || objectData.utilisateur.trim() === '') {
+            console.warn('[EditObject] Objet sans utilisateur, utilisation du login actuel');
+          }
+        } else {
+          setError('Impossible de charger l\'objet');
+        }
+        
+        // Mettre à jour les catégories après avoir vérifié l'objet
+        setCategories(loadedCategories);
+      } catch (err) {
+        console.error('Erreur lors du chargement:', err);
+        setError('Erreur de connexion');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    void loadData();
   }, [objectId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,33 +122,92 @@ export default function EditObject() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('id', object.id);
-      formData.append('nom', object.nom);
-      formData.append('type', object.type);
-      formData.append('description', object.description || '');
-      formData.append('longDescription', object.longDescription || '');
-      formData.append('status', object.status);
-      formData.append('utilisateur', object.utilisateur);
-
-      const existingPhotos = object.photos?.filter((p: ObjectPhoto) => !removedPhotos.includes(p.url)).map((p: ObjectPhoto) => JSON.stringify(p)) || [];
-      existingPhotos.forEach((photo: string) => formData.append('existingPhotosJson', photo));
-
-      newImages.forEach(file => {
+      // Uploader les nouvelles images d'abord
+      const newPhotoUrls: string[] = [];
+      for (const file of newImages) {
         if (file.size > MAX_FILE_SIZE) {
           throw new Error(`Le fichier ${file.name} dépasse la taille maximale de 2 Mo.`);
         }
-        formData.append('newPhotos', file);
-      });
+        
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('folder', 'objects');
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          // L'API retourne imageUrl ou publicUrl
+          const imageUrl = uploadData.imageUrl || uploadData.url || uploadData.publicUrl;
+          if (!imageUrl) {
+            throw new Error(`Réponse d'upload invalide pour ${file.name}`);
+          }
+          newPhotoUrls.push(imageUrl);
+        } else {
+          const errorData = await uploadResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Erreur lors de l'upload de ${file.name}`);
+        }
+      }
+
+      // Préparer les photos existantes (en excluant celles supprimées)
+      const existingPhotos = object.photos
+        ?.filter((p: ObjectPhoto) => !removedPhotos.includes(p.url))
+        .map((p: ObjectPhoto) => ({
+          url: p.url,
+          description: p.description || [],
+          display_order: p.display_order || 0,
+        })) || [];
+
+      // Ajouter les nouvelles photos
+      const allPhotos = [
+        ...existingPhotos,
+        ...newPhotoUrls.map((url, index) => ({
+          url,
+          description: [] as string[], // S'assurer que c'est un tableau de strings
+          display_order: existingPhotos.length + index,
+        })),
+      ];
+
+      // Préparer les données JSON pour l'API
+      // S'assurer que utilisateur est toujours une string (login) et non un ID
+      // Utiliser user.login comme fallback si object.utilisateur est vide ou absent
+      let utilisateurLogin = '';
+      if (typeof object.utilisateur === 'string' && object.utilisateur.trim() !== '') {
+        utilisateurLogin = object.utilisateur.trim();
+      } else if (user?.login) {
+        // Fallback sur l'utilisateur actuel si l'objet n'a pas de utilisateur défini
+        utilisateurLogin = user.login;
+        console.warn('[EditObject] Objet sans utilisateur, utilisation du login actuel:', user.login);
+      } else {
+        throw new Error('Impossible de déterminer l\'utilisateur pour cet objet');
+      }
+
+      const updateData = {
+        nom: object.nom,
+        type: object.type,
+        description: object.description || undefined,
+        longDescription: object.longDescription || undefined,
+        status: object.status,
+        utilisateur: utilisateurLogin, // Toujours présent et non vide maintenant
+        photos: allPhotos,
+      };
+      
+      console.log('[EditObject] Données à envoyer:', { ...updateData, photos: `[${allPhotos.length} photos]` });
 
       const response = await fetch(`/api/objects/${object.id}`, {
         method: 'PUT',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Erreur lors de la mise à jour de l\'objet');
+        throw new Error(errorData.error || errorData.message || 'Erreur lors de la mise à jour de l\'objet');
       }
 
       router.push(`/objects/${object.id}`);
@@ -128,9 +224,64 @@ export default function EditObject() {
   if (error) return <div className="text-red-500">{error}</div>;
   if (!object) return <div>Objet non trouvé</div>;
 
+  // Fonction pour créer une nouvelle catégorie
+  const handleCreateCategory = async () => {
+    if (!newCategory.trim()) {
+      setError('Le nom de la catégorie ne peut pas être vide');
+      return;
+    }
+
+    if (categories.includes(newCategory.trim())) {
+      setError('Cette catégorie existe déjà');
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    setError(null);
+
+    try {
+      // Appeler l'API pour créer la catégorie
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newCategory.trim(),
+          description: '',
+        }),
+      });
+
+      if (response.ok) {
+        // Ajouter la nouvelle catégorie à la liste
+        const updatedCategories = [...categories, newCategory.trim()].sort();
+        setCategories(updatedCategories);
+        
+        // Mettre à jour l'objet avec la nouvelle catégorie
+        setObject((prev: ObjectData | null) => 
+          prev ? { ...prev, type: newCategory.trim() } : null
+        );
+        
+        // Réinitialiser le formulaire de création
+        setNewCategory('');
+        setShowNewCategoryInput(false);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Erreur lors de la création de la catégorie');
+      }
+    } catch (err) {
+      setError('Erreur de connexion lors de la création de la catégorie');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setObject((prev: ObjectData | null) => (prev ? { ...prev, [name]: value } : null));
+    if (name === 'type') {
+      setShowNewCategoryInput(false);
+    }
   };
 
   return (
@@ -163,18 +314,94 @@ export default function EditObject() {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                  Type
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+                  Catégorie
                 </label>
-                <input
-                  type="text"
+                
+                {/* Dropdown pour sélectionner une catégorie existante */}
+                <select
                   name="type"
                   id="type"
-                  value={object.type}
+                  value={object.type || ''}
                   onChange={handleChange}
-                  className="mt-1 block w-full"
                   required
-                />
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">-- Sélectionner une catégorie --</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                  {/* Si la catégorie de l'objet n'est pas dans la liste, l'ajouter quand même */}
+                  {object.type && !categories.includes(object.type) && (
+                    <option value={object.type}>
+                      {object.type}
+                    </option>
+                  )}
+                </select>
+                
+                {/* Message si aucune catégorie n'est disponible */}
+                {categories.length === 0 && !object.type && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Aucune catégorie disponible. Créez-en une nouvelle ci-dessous.
+                  </p>
+                )}
+
+                {/* Option pour créer une nouvelle catégorie */}
+                {!showNewCategoryInput ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategoryInput(true);
+                    }}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    + Créer une nouvelle catégorie
+                  </button>
+                ) : (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nouvelle catégorie
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        id="newCategory"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleCreateCategory();
+                          }
+                        }}
+                        placeholder="Nom de la nouvelle catégorie"
+                        className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateCategory}
+                        disabled={isCreatingCategory || !newCategory.trim()}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {isCreatingCategory ? 'Ajout...' : 'Valider'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setNewCategory('');
+                          setError(null);
+                        }}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

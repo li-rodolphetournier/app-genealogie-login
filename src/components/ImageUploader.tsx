@@ -79,20 +79,23 @@ const GenericImageUploader: React.FC<ImageUploaderProps> = ({
         let errorMessage = "Erreur lors de l'upload de l'image.";
         try {
           const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
+          // L'API peut retourner soit 'error' soit 'message'
+          errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (jsonError) {
           // Ignorer l'erreur si la réponse n'est pas du JSON
-          errorMessage = `Erreur serveur (${response.status}) lors de l'upload.`;
+          const statusText = response.statusText || 'Erreur inconnue';
+          errorMessage = `Erreur serveur (${response.status}: ${statusText}) lors de l'upload.`;
         }
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
-      // Assumant que l'API renvoie un objet avec une clé `imageUrl` ou `imageUrls`
+      // L'API renvoie 'imageUrl' dans la réponse
       const imageUrl = data.imageUrl || (Array.isArray(data.imageUrls) ? data.imageUrls[0] : null);
 
       if (!imageUrl) {
+        console.error('Réponse API inattendue:', data);
         throw new Error("L'URL de l'image n'a pas été retournée par l'API.");
       }
 

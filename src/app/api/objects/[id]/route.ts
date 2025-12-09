@@ -41,6 +41,25 @@ export async function GET(
       );
     }
 
+    // Récupérer le login de l'utilisateur depuis l'ID
+    let utilisateurLogin = '';
+    if (object.utilisateur_id) {
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('login')
+        .eq('id', object.utilisateur_id)
+        .single();
+      
+      if (userError) {
+        console.warn(`[GET /api/objects/[id]] Erreur récupération utilisateur ${object.utilisateur_id}:`, userError);
+      }
+      utilisateurLogin = user?.login || '';
+    }
+    
+    if (!utilisateurLogin && object.utilisateur_id) {
+      console.warn(`[GET /api/objects/[id]] Utilisateur ${object.utilisateur_id} trouvé mais sans login - utilisateur sera vide`);
+    }
+
     // Mapper vers ObjectData
     const photos: ObjectPhoto[] = (object.object_photos || []).map((photo: any) => ({
       id: photo.id,
@@ -56,7 +75,7 @@ export async function GET(
       status: object.status as ObjectData['status'],
       description: object.description || undefined,
       longDescription: object.long_description || undefined,
-      utilisateur: object.utilisateur_id || '',
+      utilisateur: utilisateurLogin,
       utilisateur_id: object.utilisateur_id || undefined,
       photos: photos.length > 0 ? photos : undefined,
       createdAt: object.created_at,
@@ -80,11 +99,36 @@ export async function PUT(
 ) {
   try {
     const { id } = await context.params;
-    const body = await request.json();
+    
+    // Vérifier que le body existe et est valide
+    let body;
+    try {
+      const text = await request.text();
+      if (!text || text.trim() === '') {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Le corps de la requête est vide' },
+          { status: 400 }
+        );
+      }
+      body = JSON.parse(text);
+      console.log('[PUT /api/objects/[id]] Body reçu:', JSON.stringify(body, null, 2));
+      
+      // Si utilisateur est une chaîne vide, le retirer du body (ne pas mettre à jour)
+      if (body.utilisateur === '' || (typeof body.utilisateur === 'string' && body.utilisateur.trim() === '')) {
+        delete body.utilisateur;
+      }
+    } catch (parseError) {
+      console.error('[PUT /api/objects/[id]] Erreur de parsing JSON:', parseError);
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Format JSON invalide dans le corps de la requête' },
+        { status: 400 }
+      );
+    }
     
     // Validation Zod
     const validation = validateWithSchema(objectUpdateSchema, body);
     if (!validation.success) {
+      console.error('[PUT /api/objects/[id]] Erreur de validation:', validation.error);
       return createValidationErrorResponse(validation.error);
     }
     
@@ -112,12 +156,13 @@ export async function PUT(
     if (validation.data.status !== undefined) updateData.status = validation.data.status;
     if (validation.data.description !== undefined) updateData.description = validation.data.description || null;
     if (validation.data.longDescription !== undefined) updateData.long_description = validation.data.longDescription || null;
-    if (validation.data.utilisateur !== undefined) {
+    // Mettre à jour utilisateur seulement si fourni et non vide
+    if (validation.data.utilisateur !== undefined && validation.data.utilisateur.trim() !== '') {
       // Récupérer l'ID utilisateur depuis le login
       const { data: user } = await supabase
         .from('users')
         .select('id')
-        .eq('login', validation.data.utilisateur)
+        .eq('login', validation.data.utilisateur.trim())
         .single();
       updateData.utilisateur_id = user?.id || null;
     }
@@ -180,6 +225,17 @@ export async function PUT(
       .eq('id', id)
       .single();
 
+    // Récupérer le login de l'utilisateur depuis l'ID
+    let utilisateurLogin = validation.data.utilisateur || '';
+    if (!utilisateurLogin && completeObject!.utilisateur_id) {
+      const { data: user } = await supabase
+        .from('users')
+        .select('login')
+        .eq('id', completeObject!.utilisateur_id)
+        .single();
+      utilisateurLogin = user?.login || '';
+    }
+
     // Mapper vers ObjectData
     const photos: ObjectPhoto[] = (completeObject!.object_photos || []).map((photo: any) => ({
       id: photo.id,
@@ -195,7 +251,7 @@ export async function PUT(
       status: completeObject!.status as ObjectData['status'],
       description: completeObject!.description || undefined,
       longDescription: completeObject!.long_description || undefined,
-      utilisateur: validation.data.utilisateur || '',
+      utilisateur: utilisateurLogin,
       utilisateur_id: completeObject!.utilisateur_id || undefined,
       photos: photos.length > 0 ? photos : undefined,
       createdAt: completeObject!.created_at,

@@ -92,6 +92,13 @@ async function checkAuth(request: NextRequest) {
       }
     );
 
+    // Log de débogage pour le middleware
+    if (process.env.NODE_ENV === 'development') {
+      const cookies = request.cookies.getAll();
+      const hasAuthCookie = cookies.some(c => c.name.includes('auth') || c.name.includes('supabase'));
+      console.log(`[MIDDLEWARE] Path: ${request.nextUrl.pathname}, Has auth cookie: ${hasAuthCookie}`);
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser();
 
     return { user, error, response };
@@ -150,6 +157,10 @@ export async function middleware(request: NextRequest) {
     if (error || !user) {
       // Rediriger vers la page de login pour les pages
       if (pathname.startsWith('/')) {
+        // Log de débogage
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[MIDDLEWARE] Redirection vers / depuis ${pathname} - Utilisateur non authentifié`);
+        }
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = '/';
         redirectUrl.searchParams.set('redirect', pathname);

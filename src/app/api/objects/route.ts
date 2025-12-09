@@ -34,6 +34,17 @@ export async function GET() {
       );
     }
 
+    // Récupérer tous les IDs utilisateurs uniques
+    const userIds = [...new Set((objects || []).map((obj: any) => obj.utilisateur_id).filter(Boolean))];
+    
+    // Récupérer les logins des utilisateurs en une seule requête
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, login')
+      .in('id', userIds);
+    
+    const userLoginMap = new Map((users || []).map((u: any) => [u.id, u.login]));
+
     // Mapper les données Supabase vers ObjectData
     const mappedObjects: ObjectData[] = (objects || []).map((obj: any) => {
       const photos: ObjectPhoto[] = (obj.object_photos || []).map((photo: any) => ({
@@ -50,7 +61,7 @@ export async function GET() {
         status: obj.status as ObjectData['status'],
         description: obj.description || undefined,
         longDescription: obj.long_description || undefined,
-        utilisateur: obj.utilisateur_id || '', // À adapter selon votre logique
+        utilisateur: obj.utilisateur_id ? (userLoginMap.get(obj.utilisateur_id) || '') : '',
         utilisateur_id: obj.utilisateur_id || undefined,
         photos: photos.length > 0 ? photos : undefined,
         createdAt: obj.created_at,
@@ -72,10 +83,12 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log('[POST /api/objects] Body reçu:', JSON.stringify(body, null, 2));
     
     // Validation Zod
     const validation = validateWithSchema(objectCreateSchema, body);
     if (!validation.success) {
+      console.error('[POST /api/objects] Erreur de validation:', validation.error);
       return createValidationErrorResponse(validation.error);
     }
     

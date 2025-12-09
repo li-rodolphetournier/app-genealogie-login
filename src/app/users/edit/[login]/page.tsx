@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { ProfileImage } from '@/components/ProfileImage';
 
 type User = {
   login: string;
@@ -61,27 +62,44 @@ export default function EditUser() {
     e.preventDefault();
 
     try {
-      const formDataToSend = new FormData();
+      let profileImageUrl = formData.profileImage;
 
-      // Ajouter tous les champs au FormData
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formDataToSend.append(key, value.toString());
-        }
-      });
-
-      // Ajouter la photo si elle a été sélectionnée
+      // Si une nouvelle photo a été sélectionnée, l'uploader d'abord
       if (photoFile) {
-        formDataToSend.append('profileImage', photoFile);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', photoFile);
+        uploadFormData.append('folder', 'users');
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Erreur lors de l\'upload de l\'image');
+        }
+
+        const uploadData = await uploadResponse.json();
+        profileImageUrl = uploadData.imageUrl || uploadData.url;
       }
 
+      // Envoyer les données en JSON avec l'URL de l'image
       const response = await fetch(`/api/users/${login}`, {
         method: 'PUT',
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          description: formData.description,
+          status: formData.status,
+          profileImage: profileImageUrl,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la mise à jour de l\'utilisateur');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour de l\'utilisateur');
       }
 
       router.push(`/users/${login}`);
@@ -147,17 +165,13 @@ export default function EditUser() {
 
         <div>
           <label className="block mb-1">Photo de profil:</label>
-          {formData.profileImage && (
-            <div className="mb-2">
-              <Image
-                src={formData.profileImage}
-                alt="Photo de profil actuelle"
-                width={128}
-                height={128}
-                className="rounded object-cover"
-              />
-            </div>
-          )}
+          <ProfileImage
+            src={formData.profileImage}
+            alt="Photo de profil actuelle"
+            fallbackText={user?.login || 'User'}
+            size={128}
+            className="mb-2"
+          />
           <input
             type="file"
             accept="image/*"

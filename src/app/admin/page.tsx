@@ -6,6 +6,7 @@ import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { ProfileImage } from '@/components/ProfileImage';
 import type { User } from '@/types/user';
 
 export default function EditProfile() {
@@ -42,7 +43,14 @@ export default function EditProfile() {
   }, [authUser]);
 
   if (isLoading || !authUser) {
-    return <div>Chargement...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleImageUploadSuccess = (imageUrl: string) => {
@@ -239,15 +247,12 @@ export default function EditProfile() {
                 Photo de profil
               </h2>
               <div className="mt-1 flex items-center space-x-4">
-                {formData.profileImage ? (
-                  <img src={formData.profileImage} alt="Photo de profil actuelle" className="h-16 w-16 rounded-full object-cover border border-gray-300" />
-                ) : (
-                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center border border-gray-300">
-                    <span className="text-xl text-gray-500">
-                      {user?.login.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
+                <ProfileImage
+                  src={formData.profileImage}
+                  alt="Photo de profil actuelle"
+                  fallbackText={user?.login || ''}
+                  size={64}
+                />
                 <GenericImageUploader
                   onUploadSuccess={handleImageUploadSuccess}
                   onError={handleImageUploadError}

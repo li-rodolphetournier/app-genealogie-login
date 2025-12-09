@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { uploadFile, STORAGE_BUCKETS, ensureBucketExists } from '@/lib/supabase/storage';
 import { userUpdateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -63,7 +64,70 @@ export async function PUT(
 ) {
   try {
     const { login } = await context.params;
-    const body = await request.json();
+    
+    // Vérifier le Content-Type pour déterminer si c'est FormData ou JSON
+    const contentType = request.headers.get('content-type') || '';
+    let body: any;
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Gérer FormData
+      const formData = await request.formData();
+      
+      // Vérifier si une nouvelle image est uploadée
+      const imageFile = formData.get('profileImage') as File | null;
+      let profileImageUrl: string | undefined;
+      
+      if (imageFile && imageFile instanceof File && imageFile.size > 0) {
+        // Uploader l'image directement via le service
+        try {
+          await ensureBucketExists(STORAGE_BUCKETS.USERS, true);
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const originalName = imageFile.name.replace(/[^a-zA-Z0-9.]/g, '-');
+          const fileName = `${uniqueSuffix}-${originalName}`;
+          
+          const uploadResult = await uploadFile(
+            STORAGE_BUCKETS.USERS,
+            imageFile,
+            fileName,
+            {
+              folder: 'users',
+              public: true,
+              upsert: false,
+            }
+          );
+          
+          profileImageUrl = uploadResult.publicUrl;
+        } catch (uploadError) {
+          console.error('Erreur upload image:', uploadError);
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Erreur lors de l\'upload de l\'image' },
+            { status: 500 }
+          );
+        }
+      } else {
+        // Utiliser l'URL fournie si pas de nouveau fichier
+        profileImageUrl = formData.get('profileImage')?.toString() || undefined;
+      }
+      
+      body = {
+        email: formData.get('email')?.toString(),
+        description: formData.get('description')?.toString(),
+        status: formData.get('status')?.toString(),
+        detail: formData.get('detail')?.toString(),
+        profileImage: profileImageUrl,
+      };
+    } else {
+      // Gérer JSON
+      try {
+        body = await request.json();
+      } catch (jsonError) {
+        console.error('Erreur parsing JSON:', jsonError);
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Format de données invalide. Attendu: JSON ou FormData.' },
+          { status: 400 }
+        );
+      }
+    }
     
     // Validation Zod
     const validation = validateWithSchema(userUpdateSchema, body);

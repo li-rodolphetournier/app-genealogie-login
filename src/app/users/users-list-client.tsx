@@ -7,6 +7,7 @@ import { getErrorMessage } from '@/lib/errors/messages';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import LoadingIndicator from '@/components/LoadingIndicator';
 import { UserCard } from '@/components/cards/UserCard';
+import { ProfileImage } from '@/components/ProfileImage';
 import type { User } from '@/types/user';
 
 type UsersListClientProps = {
@@ -89,19 +90,12 @@ export function UsersListClient({ initialUsers }: UsersListClientProps) {
                 <li key={user.login}>
                   <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
                     <div className="flex items-center">
-                      {user.profileImage ? (
-                        <img
-                          src={user.profileImage}
-                          alt={user.login}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400">
-                            {user.login.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
+                      <ProfileImage
+                        src={user.profileImage}
+                        alt={user.login}
+                        fallbackText={user.login}
+                        size={40}
+                      />
                       <div className="ml-4">
                         <div className="flex items-center">
                           <p className="text-sm font-medium text-gray-900">{user.login}</p>

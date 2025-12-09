@@ -22,11 +22,28 @@ const nextConfig = {
         pathname: "/uploads/**",
       },
       {
+        protocol: "http",
+        hostname: "192.168.*.*", // IP locale pour développement réseau (pattern plus large)
+        pathname: "/uploads/**",
+      },
+      {
         protocol: "https",
         hostname: "**.vercel.app",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co", // Supabase Storage
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "etrameteinczkfuponai.supabase.co", // Hostname spécifique Supabase
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
+    // Désactiver l'optimisation pour les images locales si nécessaire
+    unoptimized: false,
   },
   // Next.js 16 : serverActions reste dans experimental mais avec nouvelles options
   experimental: {
