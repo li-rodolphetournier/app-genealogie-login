@@ -38,6 +38,12 @@ type TreeChartsRendererProps = {
   onNodeClick: (node: TreeNode) => void;
   getImage: (node: TreeNode) => string;
   getDefaultImage: (genre?: 'homme' | 'femme') => string;
+  persons: Person[];
+  customPositions: Map<string, { x: number; y: number }>;
+  draggedNodeId: string | null;
+  onNodeMouseDown: (e: React.MouseEvent, nodeId: string, nodeX: number, nodeY: number) => void;
+  onSvgMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
+  canEdit: boolean;
 };
 
 function TreeChartsRenderer({
@@ -49,22 +55,29 @@ function TreeChartsRenderer({
   selectedNodeId,
   onNodeClick,
   getImage,
-  getDefaultImage
+  getDefaultImage,
+  persons,
+  customPositions,
+  draggedNodeId,
+  onNodeMouseDown,
+  onSvgMouseDown,
+  canEdit
 }: TreeChartsRendererProps) {
   const root = useMemo(() => hierarchy(data), [data]);
   
-  const yMax = Math.max(600, height - defaultMargin.top - defaultMargin.bottom);
+  const yMax = Math.max(1200, height - defaultMargin.top - defaultMargin.bottom);
   const xMax = Math.max(800, width - defaultMargin.left - defaultMargin.right);
   
   const treeLayout = useMemo(() => {
     const t = tree<TreeNode>();
     t.size([yMax, xMax]);
     t.separation((a, b) => {
-      // Séparation améliorée pour TreeCharts
+      // Séparation horizontale pour les enfants du même parent (frères/sœurs)
       if (a.parent === b.parent) {
         return 1;
       }
-      return 0.6 / (a.depth + 1);
+      // Pour les nœuds à différents niveaux : réduction normale
+      return 1.0 / (a.depth * 2 + 1);
     });
     return t;
   }, [yMax, xMax]);
@@ -73,24 +86,110 @@ function TreeChartsRenderer({
     return treeLayout(root);
   }, [treeLayout, root]);
   
-  // Fonction pour créer un chemin step (lignes droites avec angles droits) - arbre vertical
-  const linkPath = (source: any, target: any) => {
-    // Dans un arbre vertical : source.x et target.x = positions horizontales
-    // source.y et target.y = positions verticales (profondeur)
-    const sx = source.x || 0; // Position horizontale source
-    const sy = source.y || 0; // Position verticale source
-    const tx = target.x || 0; // Position horizontale target
-    const ty = target.y || 0; // Position verticale target
-    const midY = (sy + ty) / 2; // Point médian vertical
+  // Fonction pour créer un chemin vertical simple avec angles droits (style TreeCharts)
+  const verticalLinkPath = (sourceX: number, sourceY: number, targetX: number, targetY: number) => {
+    const midY = (sourceY + targetY) / 2;
     // Chemin avec angles droits : vertical depuis source, puis horizontal, puis vertical vers target
-    return `M${sx},${sy}L${sx},${midY}L${tx},${midY}L${tx},${ty}`;
+    return `M${sourceX},${sourceY}L${sourceX},${midY}L${targetX},${midY}L${targetX},${targetY}`;
   };
+  
+  // Fonction pour détecter et résoudre les collisions
+  const nodeWidth = 200;
+  const nodeHeight = 100;
+  const minSpacing = 30;
+  const coupleSpacing = 50;
+  
+  // Récupérer tous les nœuds (sans root)
+  const nodes = treeRoot.descendants().filter(n => n.data.id !== 'root');
+  
+  // Identifier les couples
+  const couplesMap = new Map<string, { pereId: string; mereId: string }>();
+  persons.forEach(person => {
+    if (person.pere && person.mere) {
+      const coupleKey = [person.pere, person.mere].sort().join('-');
+      if (!couplesMap.has(coupleKey)) {
+        couplesMap.set(coupleKey, { pereId: person.pere, mereId: person.mere });
+      }
+    }
+  });
+  
+  // Créer un map pour trouver le partenaire
+  const partnerMap = new Map<string, string>();
+  couplesMap.forEach((couple) => {
+    partnerMap.set(couple.pereId, couple.mereId);
+    partnerMap.set(couple.mereId, couple.pereId);
+  });
+  
+  interface NodePosition {
+    id: string;
+    x: number;
+    y: number;
+    depth: number;
+    node: typeof nodes[0];
+  }
+  
+  const nodePositions: NodePosition[] = nodes.map(node => ({
+    id: node.data.id,
+    x: node.x || 0,
+    y: node.y || 0,
+    depth: node.depth,
+    node: node
+  }));
+  
+  // Résoudre les collisions niveau par niveau (simplifié)
+  for (let depth = 0; depth <= Math.max(...nodePositions.map(n => n.depth)); depth++) {
+    const nodesAtDepth = nodePositions.filter(n => n.depth === depth);
+    if (nodesAtDepth.length === 0) continue;
+    nodesAtDepth.sort((a, b) => a.x - b.x);
+    
+    for (let i = 1; i < nodesAtDepth.length; i++) {
+      const currentNode = nodesAtDepth[i];
+      const previousNode = nodesAtDepth[i - 1];
+      const minX = previousNode.x + nodeWidth / 2 + minSpacing + nodeWidth / 2;
+      if (currentNode.x < minX) {
+        currentNode.x = minX;
+      }
+    }
+  }
+  
+  // Créer un map pour accéder rapidement aux positions ajustées
+  const positionMap = new Map<string, { x: number; y: number }>();
+  nodePositions.forEach(nodePos => {
+    const customPos = customPositions.get(nodePos.id);
+    positionMap.set(nodePos.id, customPos || { x: nodePos.x, y: nodePos.y });
+  });
+  
+  // Grouper les enfants par couple de parents
+  const childrenByCouple = new Map<string, Person[]>();
+  const singleParentChildren = new Map<string, Person[]>();
+  persons.forEach(person => {
+    if (person.pere && person.mere) {
+      const coupleKey = [person.pere, person.mere].sort().join('-');
+      if (!childrenByCouple.has(coupleKey)) {
+        childrenByCouple.set(coupleKey, []);
+      }
+      childrenByCouple.get(coupleKey)!.push(person);
+    } else if (person.pere) {
+      const key = `pere-${person.pere}`;
+      if (!singleParentChildren.has(key)) {
+        singleParentChildren.set(key, []);
+      }
+      singleParentChildren.get(key)!.push(person);
+    } else if (person.mere) {
+      const key = `mere-${person.mere}`;
+      if (!singleParentChildren.has(key)) {
+        singleParentChildren.set(key, []);
+      }
+      singleParentChildren.get(key)!.push(person);
+    }
+  });
   
   return (
     <svg
       width={width}
       height={height}
       style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+      onMouseDown={onSvgMouseDown}
     >
       <rect width="100%" height="100%" fill="#fafafa" />
       <defs>
@@ -101,49 +200,211 @@ function TreeChartsRenderer({
         </linearGradient>
       </defs>
       <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y})`}>
-        {/* Liens entre les nœuds */}
-        {treeRoot.links().map((link, i) => {
-          const sourceId = link.source.data?.id;
-          const targetId = link.target.data?.id;
-          if (sourceId === 'root' || targetId === 'root') return null;
-          
-          const isDeceased = link.target.data?.dateDeces;
+        {/* Liens horizontaux entre les parents (couples) */}
+        {Array.from(couplesMap.values()).map((couple, i) => {
+          const perePos = positionMap.get(couple.pereId);
+          const merePos = positionMap.get(couple.mereId);
+          if (!perePos || !merePos) return null;
+          const pereNode = nodePositions.find(n => n.id === couple.pereId);
+          const mereNode = nodePositions.find(n => n.id === couple.mereId);
+          if (!pereNode || !mereNode || pereNode.depth !== mereNode.depth) return null;
           return (
-            <path
-              key={`link-${sourceId}-${targetId}-${i}`}
-              d={linkPath(link.source, link.target)}
-              fill="none"
-              stroke={isDeceased ? "#9ca3af" : "url(#treecharts-link-gradient)"}
-              strokeWidth="2.5"
-              strokeOpacity={isDeceased ? 0.4 : 0.9}
-              strokeDasharray={isDeceased ? "6,6" : undefined}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <line
+              key={`couple-link-${couple.pereId}-${couple.mereId}-${i}`}
+              x1={perePos.x + nodeWidth / 2}
+              y1={perePos.y}
+              x2={merePos.x - nodeWidth / 2}
+              y2={merePos.y}
+              stroke="#e11d48"
+              strokeWidth="2"
+              strokeDasharray="3,3"
+              strokeOpacity={0.7}
             />
           );
         })}
+        
+        {/* Liens verticaux entre parents et enfants */}
+        {(() => {
+          const links: React.ReactElement[] = [];
+          
+          // Traiter les enfants avec les deux parents
+          childrenByCouple.forEach((children, coupleKey) => {
+            const [pereId, mereId] = coupleKey.split('-');
+            const perePos = positionMap.get(pereId);
+            const merePos = positionMap.get(mereId);
+            if (!perePos || !merePos) return;
+            
+            if (children.length === 1) {
+              // Un seul enfant : les deux liens se rejoignent sur l'enfant
+              const child = children[0];
+              const childPos = positionMap.get(child.id);
+              if (!childPos) return;
+              
+              // Lien depuis le père
+              links.push(
+                <path
+                  key={`pere-link-${pereId}-${child.id}`}
+                  d={verticalLinkPath(perePos.x, perePos.y, childPos.x, childPos.y)}
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                  strokeOpacity={0.7}
+                  strokeDasharray={child.dateDeces ? "5,5" : undefined}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              );
+              
+              // Lien depuis la mère
+              links.push(
+                <path
+                  key={`mere-link-${mereId}-${child.id}`}
+                  d={verticalLinkPath(merePos.x, merePos.y, childPos.x, childPos.y)}
+                  fill="none"
+                  stroke="#ec4899"
+                  strokeWidth="2"
+                  strokeOpacity={0.7}
+                  strokeDasharray={child.dateDeces ? "5,5" : undefined}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              );
+            } else {
+              // Plusieurs enfants : les liens se rejoignent en un point central
+              const centerX = (perePos.x + merePos.x) / 2;
+              const centerY = perePos.y + 20;
+              
+              // Lien depuis le père vers le point central
+              links.push(
+                <path
+                  key={`pere-to-center-${coupleKey}`}
+                  d={verticalLinkPath(perePos.x, perePos.y, centerX, centerY)}
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                  strokeOpacity={0.7}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              );
+              
+              // Lien depuis la mère vers le point central
+              links.push(
+                <path
+                  key={`mere-to-center-${coupleKey}`}
+                  d={verticalLinkPath(merePos.x, merePos.y, centerX, centerY)}
+                  fill="none"
+                  stroke="#ec4899"
+                  strokeWidth="2"
+                  strokeOpacity={0.7}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              );
+              
+              // Point central
+              links.push(
+                <circle
+                  key={`center-point-${coupleKey}`}
+                  cx={centerX}
+                  cy={centerY}
+                  r={3}
+                  fill="#6b7280"
+                />
+              );
+              
+              // Lien depuis le point central vers chaque enfant
+              children.forEach(child => {
+                const childPos = positionMap.get(child.id);
+                if (!childPos) return;
+                links.push(
+                  <path
+                    key={`center-to-child-${coupleKey}-${child.id}`}
+                    d={verticalLinkPath(centerX, centerY, childPos.x, childPos.y)}
+                    fill="none"
+                    stroke="#6b7280"
+                    strokeWidth="2"
+                    strokeOpacity={0.7}
+                    strokeDasharray={child.dateDeces ? "5,5" : undefined}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                );
+              });
+            }
+          });
+          
+          // Traiter les enfants avec un seul parent
+          singleParentChildren.forEach((children, key) => {
+            if (key.startsWith('pere-')) {
+              const pereId = key.replace('pere-', '');
+              const perePos = positionMap.get(pereId);
+              if (perePos) {
+                children.forEach(child => {
+                  const childPos = positionMap.get(child.id);
+                  if (!childPos) return;
+                  links.push(
+                    <path
+                      key={`pere-link-${pereId}-${child.id}`}
+                      d={verticalLinkPath(perePos.x, perePos.y, childPos.x, childPos.y)}
+                      fill="none"
+                      stroke="#2563eb"
+                      strokeWidth="2"
+                      strokeOpacity={0.7}
+                      strokeDasharray={child.dateDeces ? "5,5" : undefined}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  );
+                });
+              }
+            } else if (key.startsWith('mere-')) {
+              const mereId = key.replace('mere-', '');
+              const merePos = positionMap.get(mereId);
+              if (merePos) {
+                children.forEach(child => {
+                  const childPos = positionMap.get(child.id);
+                  if (!childPos) return;
+                  links.push(
+                    <path
+                      key={`mere-link-${mereId}-${child.id}`}
+                      d={verticalLinkPath(merePos.x, merePos.y, childPos.x, childPos.y)}
+                      fill="none"
+                      stroke="#ec4899"
+                      strokeWidth="2"
+                      strokeOpacity={0.7}
+                      strokeDasharray={child.dateDeces ? "5,5" : undefined}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  );
+                });
+              }
+            }
+          });
+          
+          return links;
+        })()}
         
         {/* Nœuds */}
         {treeRoot.descendants().map((node, i) => {
           const nodeData = node.data;
           if (nodeData.id === 'root') return null;
           
-          const nodeWidth = 200;
-          const nodeHeight = 100;
-          // Dans un arbre vertical avec size([yMax, xMax]):
-          // node.y = position verticale (profondeur/génération) - de haut en bas
-          // node.x = position horizontale (position dans la branche) - de gauche à droite
-          const top = node.y || 0; // Position verticale (profondeur)
-          const left = node.x || 0; // Position horizontale (branche)
+          // Utiliser les positions ajustées si disponibles
+          const adjustedPosition = positionMap.get(nodeData.id);
+          const top = adjustedPosition?.y ?? node.y ?? 0;
+          const left = adjustedPosition?.x ?? node.x ?? 0;
+          
           const isDead = !!nodeData.dateDeces;
           const isSelected = selectedNodeId === nodeData.id;
           
-          // Couleurs uniques TreeCharts (orange/ambre)
+          // Couleurs uniques TreeCharts (orange/ambre) avec genre
           const borderColor = isDead 
-            ? '#9ca3af' 
+            ? (nodeData.genre === 'homme' ? '#93c5fd' : '#f9a8d4')
             : isSelected 
-            ? '#ea580c' 
-            : '#f59e0b';
+            ? '#ea580c'
+            : (nodeData.genre === 'homme' ? '#3b82f6' : '#ec4899');
           
           return (
             <g key={`node-${nodeData.id}-${i}`} transform={`translate(${left},${top})`}>
@@ -155,17 +416,35 @@ function TreeChartsRenderer({
                 className="treecharts-node"
               >
                 <div
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    if (!canEdit) {
+                      e.preventDefault();
+                      return;
+                    }
+                    if (e.button === 0) {
+                      onNodeMouseDown(e, nodeData.id, left, top);
+                    }
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onNodeClick(nodeData);
+                    if (!draggedNodeId || draggedNodeId !== nodeData.id) {
+                      onNodeClick(nodeData);
+                    }
                   }}
-                  className={`bg-white border-2 rounded-xl p-2 cursor-pointer transition-all hover:shadow-2xl ${
-                    isDead
-                      ? 'border-gray-400 opacity-70'
-                      : isSelected
-                      ? 'border-orange-600 shadow-2xl ring-2 ring-orange-300'
-                      : 'border-amber-500'
-                  }`}
+                  className={`${isDead ? 'bg-gray-300' : 'bg-white'} border-2 rounded-xl p-2 cursor-pointer transition-all hover:shadow-2xl ${
+                    nodeData.genre === 'homme' 
+                      ? isDead 
+                        ? 'border-blue-400' 
+                        : isSelected 
+                        ? 'border-blue-600 shadow-2xl ring-2 ring-blue-300' 
+                        : 'border-blue-500'
+                      : isDead 
+                        ? 'border-pink-400' 
+                        : isSelected 
+                        ? 'border-pink-600 shadow-2xl ring-2 ring-pink-300' 
+                        : 'border-pink-500'
+                  } ${draggedNodeId === nodeData.id ? (nodeData.genre === 'homme' ? 'shadow-xl ring-2 ring-blue-400' : 'shadow-xl ring-2 ring-pink-400') : ''}`}
                   style={{
                     width: nodeWidth,
                     height: nodeHeight,
@@ -174,6 +453,9 @@ function TreeChartsRenderer({
                     gap: '8px',
                     borderColor: borderColor,
                     boxShadow: isSelected ? '0 10px 25px rgba(245, 158, 11, 0.3)' : undefined,
+                    cursor: canEdit 
+                      ? (draggedNodeId === nodeData.id ? 'grabbing' : 'grab')
+                      : 'default',
                   }}
                 >
                   <img
@@ -215,6 +497,7 @@ function TreeChartsRenderer({
 
 export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreechartsClientProps) {
   const { showToast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
   const [persons, setPersons] = useState<Person[]>(initialPersons);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Omit<Person, 'id'>>({
@@ -235,10 +518,16 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   
   // États pour le drag/pan
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [translate, setTranslate] = useState({ x: 400, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  
+  // États pour le drag and drop des nœuds
+  const [customPositions, setCustomPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [dragNodeStart, setDragNodeStart] = useState({ x: 0, y: 0, nodeX: 0, nodeY: 0 });
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { user } = useAuth({
     redirectIfUnauthenticated: true,
@@ -246,6 +535,136 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   });
 
   const userStatus = user?.status || '';
+  const isAdmin = userStatus === 'administrateur';
+  
+  // État pour l'historique (admin seulement)
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<Array<{
+    id: string;
+    personId: string;
+    x: number;
+    y: number;
+    action: string;
+    updatedAt: string;
+    updatedBy: { id: string; login: string; email: string } | null;
+  }>>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  
+  // Charger l'historique (admin seulement)
+  const loadHistory = async () => {
+    if (!isAdmin) return;
+    setLoadingHistory(true);
+    try {
+      const response = await fetch('/api/genealogie/positions/history');
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      } else {
+        showToast('Erreur lors du chargement de l\'historique', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+      showToast('Erreur lors du chargement de l\'historique', 'error');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+  
+  // Charger les positions depuis Supabase au montage, puis depuis localStorage si disponible
+  useEffect(() => {
+    const loadPositions = async () => {
+      try {
+        // D'abord charger depuis Supabase (source de vérité)
+        const response = await fetch('/api/genealogie/positions');
+        if (response.ok) {
+          const positions = await response.json();
+          const positionsMap = new Map(Object.entries(positions).map(([key, value]) => [
+            key,
+            value as { x: number; y: number }
+          ]));
+          setCustomPositions(positionsMap);
+          
+          // Synchroniser avec localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('genealogy-node-positions-treecharts', JSON.stringify(positions));
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des positions depuis Supabase:', error);
+        // En cas d'erreur, charger depuis localStorage comme fallback
+        if (typeof window !== 'undefined') {
+          const saved = localStorage.getItem('genealogy-node-positions-treecharts');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              const positionsMap = new Map(Object.entries(parsed).map(([key, value]) => [
+                key,
+                value as { x: number; y: number }
+              ]));
+              setCustomPositions(positionsMap);
+            } catch (e) {
+              console.error('Erreur lors du chargement depuis localStorage:', e);
+            }
+          }
+        }
+      }
+    };
+    loadPositions();
+  }, []);
+  
+  // Sauvegarder dans localStorage (rapide, pour modifications temporaires)
+  const saveToLocalStorage = (positions: Map<string, { x: number; y: number }>) => {
+    if (typeof window !== 'undefined') {
+      const positionsObject = Object.fromEntries(positions);
+      localStorage.setItem('genealogy-node-positions-treecharts', JSON.stringify(positionsObject));
+    }
+  };
+  
+  // Fonction de sauvegarde vers Supabase (pour persistance partagée)
+  const savePositionsToSupabase = async (positions: Map<string, { x: number; y: number }>) => {
+    if (!canEdit(userStatus)) {
+      showToast('Vous n\'avez pas les droits pour sauvegarder', 'error');
+      return false;
+    }
+    
+    setIsSaving(true);
+    try {
+      const positionsObject = Object.fromEntries(positions);
+      const response = await fetch('/api/genealogie/positions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ positions: positionsObject }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        throw new Error(errorData.error || 'Erreur de sauvegarde');
+      }
+      
+      // Synchroniser localStorage après sauvegarde réussie
+      saveToLocalStorage(positions);
+      
+      showToast('Positions sauvegardées avec succès dans Supabase', 'success');
+      return true;
+    } catch (error: any) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      showToast(`Erreur lors de la sauvegarde: ${error.message}`, 'error');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Fonction pour sauvegarder et rediriger vers l'accueil
+  const handleSaveAndGoHome = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    
+    // Sauvegarder dans Supabase avant de partir
+    const success = await savePositionsToSupabase(customPositions);
+    
+    // Rediriger même en cas d'erreur (l'utilisateur a choisi de partir)
+    window.location.href = '/accueil';
+  };
 
   // Déterminer les dimensions du viewport
   useEffect(() => {
@@ -584,41 +1003,65 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   };
 
   // Handlers pour le drag/pan
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    // Seulement si clic gauche (bouton principal)
     if (e.button === 0) {
       const target = e.target as HTMLElement;
-      if (target.closest('.treecharts-node') || target.closest('svg')) {
+      // Ne pas activer le drag si on clique sur un nœud (foreignObject ou son contenu)
+      if (target.closest('foreignObject') || target.tagName === 'foreignObject') {
         return;
       }
       
       setIsDragging(true);
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+      const svgRect = svgRef.current?.getBoundingClientRect();
+      if (svgRect) {
         setDragStart({
-          x: e.clientX - rect.left - translate.x,
-          y: e.clientY - rect.top - translate.y
+          x: e.clientX - svgRect.left - translate.x,
+          y: e.clientY - svgRect.top - translate.y
         });
       }
       e.preventDefault();
     }
   };
 
+  // Gérer les événements globaux pour le drag même en dehors du SVG
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (isDragging && containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
+      if (draggedNodeId && svgRef.current) {
+        // Drag d'un nœud individuel
+        const svgRect = svgRef.current.getBoundingClientRect();
+        const svgX = e.clientX - svgRect.left - translate.x;
+        const svgY = e.clientY - svgRect.top - translate.y;
+        
+        const newX = dragNodeStart.nodeX + (svgX - dragNodeStart.x);
+        const newY = dragNodeStart.nodeY + (svgY - dragNodeStart.y);
+        
+        // Mettre à jour la position personnalisée
+        setCustomPositions(prev => {
+          const newMap = new Map(prev);
+          newMap.set(draggedNodeId, { x: newX, y: newY });
+          // Sauvegarder uniquement dans localStorage (rapide, pas de logs)
+          saveToLocalStorage(newMap);
+          return newMap;
+        });
+      } else if (isDragging && svgRef.current) {
+        // Drag du pan (déplacement de la vue)
+        const svgRect = svgRef.current.getBoundingClientRect();
         setTranslate({
-          x: e.clientX - rect.left - dragStart.x,
-          y: e.clientY - rect.top - dragStart.y
+          x: e.clientX - svgRect.left - dragStart.x,
+          y: e.clientY - svgRect.top - dragStart.y
         });
       }
     };
 
     const handleGlobalMouseUp = () => {
+      if (draggedNodeId) {
+        setDraggedNodeId(null);
+      }
       setIsDragging(false);
     };
 
-    if (isDragging) {
+    if (isDragging || draggedNodeId) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
       return () => {
@@ -626,7 +1069,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
         document.removeEventListener('mouseup', handleGlobalMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, draggedNodeId, dragNodeStart, translate]);
 
   if (!treeData) {
     return (
@@ -672,34 +1115,113 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
-                {isEditing ? "Modifier une personne" : "Ajouter une personne"}
+                {historyOpen ? "Historique des positions" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
               <div className="space-x-2">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className={`px-4 py-2 rounded ${
-                    !isEditing
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  Ajouter
-                </button>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className={`px-4 py-2 rounded ${
-                    isEditing
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                  disabled={!editingId}
-                >
-                  Modifier
-                </button>
+                {!historyOpen && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditingId(null);
+                        setSelectedNode(null);
+                        setFormData({
+                          nom: '',
+                          prenom: '',
+                          genre: 'homme',
+                          description: '',
+                          mere: null,
+                          pere: null,
+                          ordreNaissance: 1,
+                          dateNaissance: '',
+                          dateDeces: null,
+                          image: null
+                        });
+                      }}
+                      className={`px-4 py-2 rounded ${
+                        !isEditing
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Ajouter
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className={`px-4 py-2 rounded ${
+                        isEditing
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                      disabled={!editingId}
+                    >
+                      Modifier
+                    </button>
+                  </>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      if (!historyOpen) {
+                        loadHistory();
+                      }
+                      setHistoryOpen(!historyOpen);
+                    }}
+                    className={`px-4 py-2 rounded ${
+                      historyOpen
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-purple-500 text-white'
+                    }`}
+                  >
+                    {historyOpen ? 'Fermer' : 'Historique'}
+                  </button>
+                )}
               </div>
             </div>
-
-            <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
+            
+            {historyOpen && isAdmin ? (
+              <div className="space-y-4">
+                {loadingHistory ? (
+                  <p className="text-gray-500">Chargement de l'historique...</p>
+                ) : history.length === 0 ? (
+                  <p className="text-gray-500">Aucun historique disponible</p>
+                ) : (
+                  <div className="space-y-3">
+                    {history.map((item) => {
+                      const person = persons.find(p => p.id === item.personId);
+                      return (
+                        <div key={item.id} className="border rounded-lg p-3 bg-gray-50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold">
+                                {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId.substring(0, 8)}...`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {new Date(item.updatedAt).toLocaleString('fr-FR')}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.action === 'created' ? 'bg-green-100 text-green-800' :
+                              item.action === 'updated' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {item.action === 'created' ? 'Créé' : item.action === 'updated' ? 'Modifié' : 'Supprimé'}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            <p>Position: X={item.x.toFixed(2)}, Y={item.y.toFixed(2)}</p>
+                            {item.updatedBy && (
+                              <p className="mt-1">Par: {item.updatedBy.login}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : !historyOpen ? (
+              <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
                 <input
@@ -847,7 +1369,8 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
                   </button>
                 )}
               </div>
-            </form>
+              </form>
+            ) : null}
           </div>
         ) : (
           <div className="h-full p-6 overflow-y-auto">
@@ -914,20 +1437,40 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
             >
               🔄 Actualiser
             </button>
+            {canEdit(userStatus) && (
+              <button
+                onClick={() => savePositionsToSupabase(customPositions)}
+                disabled={isSaving || customPositions.size === 0}
+                className="px-4 py-2 text-sm bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded transition-colors flex items-center gap-2"
+                title="Sauvegarder les positions dans Supabase (partagé avec tous les utilisateurs)"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="animate-spin">⏳</span> Sauvegarde...
+                  </>
+                ) : (
+                  <>
+                    💾 Sauvegarder dans Supabase
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          <Link href="/accueil" className="text-blue-500 hover:underline">
+          <a 
+            href="/accueil" 
+            onClick={handleSaveAndGoHome}
+            className="text-blue-500 hover:underline"
+          >
             Retour à l&apos;accueil
-          </Link>
+          </a>
         </div>
       </div>
 
       {/* Arbre généalogique avec TreeCharts */}
       <div 
-        ref={containerRef}
         className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
         style={{ paddingTop: '64px' }}
         onClick={handleBackgroundClick}
-        onMouseDown={handleMouseDown}
       >
         {dimensions.width > 0 && dimensions.height > 0 && treeData && (
           <TreeChartsRenderer
@@ -940,9 +1483,30 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
             onNodeClick={handleNodeClick}
             getImage={getImage}
             getDefaultImage={getDefaultImage}
+            persons={persons}
+            customPositions={customPositions}
+            draggedNodeId={draggedNodeId}
+            onNodeMouseDown={(e, nodeId, nodeX, nodeY) => {
+              if (svgRef.current && e.button === 0) {
+                const svgRect = svgRef.current.getBoundingClientRect();
+                const svgX = e.clientX - svgRect.left - translate.x;
+                const svgY = e.clientY - svgRect.top - translate.y;
+                setDraggedNodeId(nodeId);
+                setDragNodeStart({
+                  x: svgX,
+                  y: svgY,
+                  nodeX,
+                  nodeY
+                });
+              }
+            }}
+            onSvgMouseDown={handleMouseDown}
+            canEdit={canEdit(userStatus)}
           />
         )}
       </div>
+      {/* SVG ref pour le drag global */}
+      <svg ref={svgRef} style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} />
     </div>
   );
 }
