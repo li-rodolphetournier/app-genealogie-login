@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -33,8 +33,10 @@ export async function POST(request: Request) {
     });
 
     // Tentative 2 : Si échec, chercher par login dans la table users
+    // Utiliser createServiceRoleClient pour contourner le RLS
     if (authResult.error) {
-      const { data: userByLogin } = await supabase
+      const serviceSupabase = await createServiceRoleClient();
+      const { data: userByLogin } = await serviceSupabase
         .from('users')
         .select('email')
         .eq('login', login)

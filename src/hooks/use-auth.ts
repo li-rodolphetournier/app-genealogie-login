@@ -140,31 +140,67 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
 
         logger.debug('[useAuth] Utilisateur trouvé dans loadUser:', authUser.email);
 
-        // Récupérer le profil utilisateur depuis la table users
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
+        // Récupérer le profil utilisateur via l'API pour éviter les problèmes RLS
+        let userData: User | null = null;
+        try {
+          const profileResponse = await fetch('/api/auth/profile');
+          if (profileResponse.ok) {
+            const { user: profileUser } = await profileResponse.json();
+            userData = profileUser;
+            if (userData) {
+              logger.debug('[useAuth] Profil récupéré via API:', userData.login, 'Status:', userData.status);
+            }
+          } else {
+            // Fallback: essayer de récupérer directement depuis Supabase
+            logger.debug('[useAuth] API profile échoué, tentative directe Supabase');
+            const { data: profile, error: profileError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', authUser.id)
+              .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          logger.error('[useAuth] Erreur lors de la récupération du profil:', profileError);
+            if (profileError && profileError.code !== 'PGRST116') {
+              logger.error('[useAuth] Erreur lors de la récupération du profil:', {
+                code: profileError.code,
+                message: profileError.message,
+                details: profileError.details,
+              });
+            }
+
+            if (profile) {
+              userData = {
+                id: profile.id,
+                login: profile.login,
+                email: profile.email,
+                status: profile.status as User['status'],
+                description: profile.description || undefined,
+                profileImage: profile.profile_image || undefined,
+                createdAt: profile.created_at,
+                updatedAt: profile.updated_at,
+              };
+            }
+          }
+        } catch (fetchError) {
+          logger.error('[useAuth] Erreur lors de la récupération du profil via API:', fetchError);
+        }
+
+        // Si toujours pas de profil, utiliser les données de base depuis auth
+        if (!userData) {
+          userData = {
+            id: authUser.id,
+            login: authUser.email?.split('@')[0] || '',
+            email: authUser.email || '',
+            status: 'utilisateur',
+            description: undefined,
+            profileImage: undefined,
+            createdAt: authUser.created_at || new Date().toISOString(),
+            updatedAt: authUser.updated_at || new Date().toISOString(),
+          };
+          logger.debug('[useAuth] Utilisation des données de base depuis auth');
         }
 
         if (mounted) {
-          // Construire l'objet utilisateur
-          const userData: User = {
-            id: authUser.id,
-            login: profile?.login || authUser.email?.split('@')[0] || '',
-            email: authUser.email || profile?.email || '',
-            status: (profile?.status as User['status']) || 'utilisateur',
-            description: profile?.description || null,
-            profileImage: profile?.profile_image || null,
-            createdAt: profile?.created_at || new Date().toISOString(),
-            updatedAt: profile?.updated_at || new Date().toISOString(),
-          };
-
-          logger.debug('[useAuth] Utilisateur chargé avec succès:', userData.login);
+          logger.debug('[useAuth] Utilisateur chargé avec succès:', userData.login, 'Status:', userData.status);
           setUser(userData);
           setIsLoading(false);
         }

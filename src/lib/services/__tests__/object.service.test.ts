@@ -50,14 +50,30 @@ describe('ObjectService', () => {
 
   describe('findAll', () => {
     it('devrait retourner tous les objets', async () => {
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({
-            data: mockObjects,
-            error: null,
+      const mockUsers = [
+        { id: 'user1', login: 'user1' },
+        { id: 'user2', login: 'user2' },
+      ];
+
+      // Premier appel: from('objects') pour récupérer les objets
+      // Deuxième appel: from('users') pour récupérer les logins des utilisateurs
+      mockSupabaseClient.from
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({
+              data: mockObjects,
+              error: null,
+            }),
           }),
-        }),
-      });
+        })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: mockUsers,
+              error: null,
+            }),
+          }),
+        });
 
       const objects = await ObjectService.findAll();
 

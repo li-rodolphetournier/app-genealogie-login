@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
@@ -18,6 +18,78 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
     redirectTo: '/',
   });
   const [lastMessage] = useState<Message | null>(initialLastMessage);
+  
+  // États pour la visibilité des cartes de généalogie (depuis Supabase)
+  const [cardVisibility, setCardVisibility] = useState<Record<string, boolean>>({
+    'genealogie': true,
+    'genealogie-visx': true,
+    'genealogie-nivo': true,
+    'genealogie-treecharts': true,
+  });
+  const [loadingVisibility, setLoadingVisibility] = useState(true);
+  
+  // Charger la visibilité depuis Supabase au montage
+  useEffect(() => {
+    const loadVisibility = async () => {
+      try {
+        const response = await fetch('/api/genealogie/card-visibility');
+        if (response.ok) {
+          const visibility = await response.json();
+          setCardVisibility(visibility);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement de la visibilité:', error);
+      } finally {
+        setLoadingVisibility(false);
+      }
+    };
+    loadVisibility();
+  }, []);
+  
+  // Fonction pour mettre à jour la visibilité d'une carte (admin seulement)
+  const toggleCardVisibility = async (cardKey: string) => {
+    if (user?.status !== 'administrateur') return;
+    
+    const newVisibility = !cardVisibility[cardKey];
+    
+    // Mise à jour optimiste
+    setCardVisibility(prev => ({ ...prev, [cardKey]: newVisibility }));
+    
+    try {
+      const response = await fetch('/api/genealogie/card-visibility', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardKey, isVisible: newVisibility }),
+      });
+      
+      if (!response.ok) {
+        // Revenir à l'état précédent en cas d'erreur
+        setCardVisibility(prev => ({ ...prev, [cardKey]: !newVisibility }));
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        console.error('Erreur lors de la mise à jour de la visibilité:', {
+          error: errorData.error,
+          details: errorData.details,
+          status: response.status,
+        });
+        // Afficher une notification d'erreur à l'utilisateur (seulement en développement ou si erreur importante)
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Erreur visibilité carte ${cardKey}:`, errorData.error);
+        }
+      }
+    } catch (error) {
+      // Revenir à l'état précédent en cas d'erreur
+      setCardVisibility(prev => ({ ...prev, [cardKey]: !newVisibility }));
+      console.error('Erreur lors de la mise à jour de la visibilité:', error);
+    }
+  };
+  
+  // Vérifier si l'utilisateur peut voir une carte
+  const canSeeCard = (cardKey: string) => {
+    // Les admins voient toujours toutes les cartes
+    if (user?.status === 'administrateur') return true;
+    // Pour les autres, vérifier la visibilité
+    return cardVisibility[cardKey] !== false;
+  };
 
   // Logs de débogage (uniquement en mode dev et une seule fois par changement)
   // Utiliser useRef pour éviter les logs multiples
@@ -97,7 +169,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
               transition={{ delay: 0.3, duration: 0.4 }}
             >
               <span className="text-gray-600">
-                Connecté en tant que <span className="font-medium">{user.login.charAt(0).toUpperCase() + user.login.slice(1)}</span>
+                Connecté en tant que <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
               </span>
               <motion.button
                 onClick={logout}
@@ -255,32 +327,232 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
             </>
           )}
 
-          {/* Généalogie - accessible à tous */}
-          <FadeInStaggerItem>
-            <motion.div
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              whileTap={{ scale: 0.98 }}
-              style={{ display: 'block', height: '100%' }}
-            >
-              <Link
-                href="/genealogie"
-                className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
-                aria-label="Accéder à l'arbre généalogique"
+          {/* Généalogie - accessible selon visibilité */}
+          {canSeeCard('genealogie') && (
+            <FadeInStaggerItem>
+              <motion.div
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                style={{ display: 'block', height: '100%' }}
+                className="relative"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-green-500 flex items-center justify-center">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                {user?.status === 'administrateur' && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={cardVisibility['genealogie']}
+                        onChange={() => toggleCardVisibility('genealogie')}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <span className="text-xs text-gray-600">Afficher</span>
+                    </label>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-medium text-gray-900">Généalogie</h2>
-                    <p className="mt-1 text-sm text-gray-500">Visualiser l&apos;arbre généalogique</p>
+                )}
+                <Link
+                  href="/genealogie"
+                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                  aria-label="Accéder à l'arbre généalogique"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-green-500 flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-medium text-gray-900">Généalogie</h2>
+                      <p className="mt-1 text-sm text-gray-500">Visualiser l&apos;arbre généalogique</p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          </FadeInStaggerItem>
+                </Link>
+              </motion.div>
+            </FadeInStaggerItem>
+          )}
+
+          {/* Alternatives de visualisation généalogique */}
+          {/* Généalogie Visx - accessible selon visibilité */}
+          {canSeeCard('genealogie-visx') && (
+            <FadeInStaggerItem>
+              <motion.div
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                style={{ display: 'block', height: '100%' }}
+                className="relative"
+              >
+                {user?.status === 'administrateur' && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={cardVisibility['genealogie-visx']}
+                        onChange={() => toggleCardVisibility('genealogie-visx')}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                      />
+                      <span className="text-xs text-gray-600">Afficher</span>
+                    </label>
+                  </div>
+                )}
+                <Link
+                  href="/genealogie-alternatives/visx"
+                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-emerald-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-emerald-200"
+                  aria-label="Accéder à l'arbre généalogique avec Visx"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-medium text-gray-900">Généalogie Visx</h2>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                          Alternative 1
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">Arbre avec Visx (Airbnb) - Bundle léger</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </FadeInStaggerItem>
+          )}
+
+          {/* Généalogie Nivo - accessible selon visibilité */}
+          {canSeeCard('genealogie-nivo') && (
+            <FadeInStaggerItem>
+              <motion.div
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                style={{ display: 'block', height: '100%' }}
+                className="relative"
+              >
+                {user?.status === 'administrateur' && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={cardVisibility['genealogie-nivo']}
+                        onChange={() => toggleCardVisibility('genealogie-nivo')}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
+                      />
+                      <span className="text-xs text-gray-600">Afficher</span>
+                    </label>
+                  </div>
+                )}
+                <Link
+                  href="/genealogie-alternatives/nivo"
+                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-cyan-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-cyan-200 opacity-75"
+                  aria-label="Accéder à l'arbre généalogique avec Nivo"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-cyan-500 flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-medium text-gray-900">Généalogie Nivo</h2>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800">
+                          Alternative 2
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          À venir
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">Arbre avec Nivo - Composants prêts à l&apos;emploi</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </FadeInStaggerItem>
+          )}
+
+          {/* Généalogie TreeCharts - accessible selon visibilité */}
+          {canSeeCard('genealogie-treecharts') && (
+            <FadeInStaggerItem>
+              <motion.div
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                style={{ display: 'block', height: '100%' }}
+                className="relative"
+              >
+                {user?.status === 'administrateur' && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={cardVisibility['genealogie-treecharts']}
+                        onChange={() => toggleCardVisibility('genealogie-treecharts')}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                      />
+                      <span className="text-xs text-gray-600">Afficher</span>
+                    </label>
+                  </div>
+                )}
+                <Link
+                  href="/genealogie-alternatives/treecharts"
+                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-amber-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-amber-200 opacity-75"
+                  aria-label="Accéder à l'arbre généalogique avec TreeCharts"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-medium text-gray-900">Généalogie TreeCharts</h2>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                          Alternative 3
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          À venir
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">Arbre avec TreeCharts - Spécialisé généalogie</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </FadeInStaggerItem>
+          )}
+
+          {/* Historique des positions - accessible uniquement aux administrateurs */}
+          {user.status === 'administrateur' && (
+            <FadeInStaggerItem>
+              <motion.div
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileTap={{ scale: 0.98 }}
+                style={{ display: 'block', height: '100%' }}
+              >
+                <Link
+                  href="/genealogie/historique"
+                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-violet-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-violet-200"
+                  aria-label="Consulter l'historique des positions"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-violet-500 flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-xl font-medium text-gray-900">Historique des modifications</h2>
+                      <p className="mt-1 text-sm text-gray-500">Consulter l'historique de création et modifications des positions</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </FadeInStaggerItem>
+          )}
 
           {/* Modifier mon profil - accessible à tous */}
           <FadeInStaggerItem>

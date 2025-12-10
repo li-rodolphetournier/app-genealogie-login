@@ -86,21 +86,38 @@ export async function POST(request: Request) {
 
     if (existingAuthUser) {
       // Si l'utilisateur Auth existe mais pas dans users, on peut réutiliser son ID
-      // Vérifier s'il n'existe pas déjà dans users
-      const { data: checkUser } = await supabase
+      // Vérifier s'il n'existe pas déjà dans users avec cet ID
+      const { data: checkUser, error: checkError } = await supabase
         .from('users')
-        .select('id')
+        .select('id, login, email')
         .eq('id', existingAuthUser.id)
         .maybeSingle();
 
-      if (checkUser) {
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Erreur lors de la vérification de l\'utilisateur:', checkError);
         return NextResponse.json<ErrorResponse>(
-          { error: 'Cet utilisateur existe déjà' },
-          { status: 409 }
+          { error: `Erreur lors de la vérification: ${checkError.message}` },
+          { status: 500 }
         );
       }
 
-      // Réutiliser l'utilisateur Auth existant
+      // Si l'utilisateur existe déjà dans users, vérifier si c'est le même email/login
+      if (checkUser) {
+        if (checkUser.login === login || checkUser.email === email) {
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Cet utilisateur existe déjà dans la base de données' },
+            { status: 409 }
+          );
+        } else {
+          // ID existe mais avec des données différentes - c'est un conflit
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Conflit: cet ID est déjà utilisé par un autre utilisateur. Veuillez contacter un administrateur.' },
+            { status: 409 }
+          );
+        }
+      }
+
+      // Réutiliser l'utilisateur Auth existant et créer le profil
       const { data: newUser, error: profileError } = await supabase
         .from('users')
         .insert({
@@ -117,12 +134,34 @@ export async function POST(request: Request) {
 
       if (profileError || !newUser) {
         console.error('Erreur création profil utilisateur:', profileError);
-        // Ne pas supprimer l'utilisateur Auth existant
+        
+        // Si l'erreur est une clé dupliquée, c'est qu'un utilisateur avec cet ID existe maintenant
+        if (profileError?.code === '23505') {
+          // Vérifier à nouveau si l'utilisateur existe maintenant
+          const { data: existingUserNow } = await supabase
+            .from('users')
+            .select('login, email')
+            .eq('id', existingAuthUser.id)
+            .maybeSingle();
+          
+          if (existingUserNow) {
+            if (existingUserNow.login === login || existingUserNow.email === email) {
+              return NextResponse.json<ErrorResponse>(
+                { error: 'Cet utilisateur existe déjà dans la base de données' },
+                { status: 409 }
+              );
+            }
+          }
+          
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Cet utilisateur existe déjà dans la base de données. L\'ID est déjà utilisé.' },
+            { status: 409 }
+          );
+        }
+        
         return NextResponse.json<ErrorResponse>(
           { 
-            error: profileError?.code === '23505' 
-              ? 'Cet utilisateur existe déjà dans la base de données' 
-              : `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` 
+            error: `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` 
           },
           { status: 500 }
         );
@@ -171,6 +210,34 @@ export async function POST(request: Request) {
       return NextResponse.json<ErrorResponse>(
         { error: `Erreur lors de la création de l'utilisateur: ${authError?.message || 'Erreur inconnue'}` },
         { status: 500 }
+      );
+    }
+
+    // Vérifier une dernière fois que l'ID n'existe pas déjà dans users (race condition)
+    const { data: checkExisting } = await supabase
+      .from('users')
+      .select('id, login, email')
+      .eq('id', authUser.user.id)
+      .maybeSingle();
+
+    if (checkExisting) {
+      // Supprimer l'utilisateur Auth qu'on vient de créer car l'ID est déjà utilisé
+      try {
+        await supabase.auth.admin.deleteUser(authUser.user.id);
+      } catch (deleteError) {
+        console.error('Erreur lors de la suppression de l\'utilisateur Auth:', deleteError);
+      }
+      
+      if (checkExisting.login === login || checkExisting.email === email) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Cet utilisateur existe déjà dans la base de données' },
+          { status: 409 }
+        );
+      }
+      
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Conflit: cet ID est déjà utilisé par un autre utilisateur. Veuillez réessayer.' },
+        { status: 409 }
       );
     }
 

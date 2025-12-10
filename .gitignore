@@ -44,3 +44,10 @@ next-env.d.ts
 # documentation and cursor rules
 /cursorrules
 /documentation
+
+# migrations
+/supabase/migrations/
+
+# markdown files (except README.md)
+*.md
+!README.md

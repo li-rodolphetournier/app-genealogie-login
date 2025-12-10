@@ -29,7 +29,7 @@ export const personUpdateSchema = z.object({
   nom: z.string().min(1).max(100).optional(),
   prenom: z.string().min(1).max(100).optional(),
   genre: z.enum(['homme', 'femme'] as const).optional(),
-  description: z.string().min(1).optional(),
+  description: z.string().optional().or(z.literal('')),  // Permet les chaînes vides
   mere: z.string().nullable().optional(),
   pere: z.string().nullable().optional(),
   ordreNaissance: z.number().int().positive().optional(),
