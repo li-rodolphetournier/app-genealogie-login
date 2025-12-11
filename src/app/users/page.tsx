@@ -5,12 +5,13 @@
 
 import { UserService } from '@/lib/services';
 import { UsersClient } from './users-client';
+import type { User } from '@/types/user';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersList() {
   // Récupération des données côté serveur
-  let users = [];
+  let users: User[] = [];
   try {
     // Vérifier si les variables d'environnement sont disponibles
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {

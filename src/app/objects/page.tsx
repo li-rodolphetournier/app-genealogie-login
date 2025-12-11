@@ -5,12 +5,13 @@
 
 import { ObjectService } from '@/lib/services';
 import { ObjectsClient } from './objects-client';
+import type { ObjectData } from '@/types/objects';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ObjectsList() {
   // Récupération des données côté serveur
-  let objects = [];
+  let objects: ObjectData[] = [];
   try {
     // Vérifier si les variables d'environnement sont disponibles
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
