@@ -55,9 +55,14 @@ export async function createServiceRoleClient() {
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error(
+    // Pendant le build, les variables d'environnement peuvent ne pas être disponibles
+    // On lance quand même une erreur mais elle sera catchée dans les pages avec try/catch
+    const error = new Error(
       'Missing Supabase environment variables. Please check your .env.local file.'
     );
+    // Ajouter une propriété pour identifier les erreurs de build
+    (error as any).isBuildError = true;
+    throw error;
   }
 
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');

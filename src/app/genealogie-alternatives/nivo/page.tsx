@@ -15,38 +15,56 @@ import type { Person } from '@/types/genealogy';
 export const dynamic = 'force-dynamic';
 
 export default async function GenealogieNivo() {
-  // Vérifier la visibilité de la carte
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (user) {
-    // Récupérer le statut de l'utilisateur
-    const { data: profile } = await supabase
-      .from('users')
-      .select('status')
-      .eq('id', user.id)
-      .single();
+  // Vérifier la visibilité de la carte (uniquement si les variables d'environnement sont disponibles)
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Récupérer le statut de l'utilisateur
+        const { data: profile } = await supabase
+          .from('users')
+          .select('status')
+          .eq('id', user.id)
+          .single();
 
-    // Si l'utilisateur n'est pas admin, vérifier la visibilité
-    if (profile?.status !== 'administrateur') {
-      const { data: visibility } = await supabase
-        .from('genealogy_card_visibility')
-        .select('is_visible')
-        .eq('card_key', 'genealogie-nivo')
-        .single();
+        // Si l'utilisateur n'est pas admin, vérifier la visibilité
+        if (profile?.status !== 'administrateur') {
+          const { data: visibility } = await supabase
+            .from('genealogy_card_visibility')
+            .select('is_visible')
+            .eq('card_key', 'genealogie-nivo')
+            .single();
 
-      if (!visibility?.is_visible) {
-        redirect('/accueil');
+          if (!visibility?.is_visible) {
+            redirect('/accueil');
+          }
+        }
       }
+    }
+  } catch (error: any) {
+    // Ignorer les erreurs pendant le build (variables d'environnement non disponibles)
+    if (process.env.NODE_ENV === 'production' && error?.isBuildError) {
+      // Pendant le build Vercel, c'est normal
+    } else {
+      console.error('Erreur lors de la vérification de la visibilité (Nivo):', error);
     }
   }
 
   // Récupération des données initiales côté serveur (même source que la version originale)
   let persons: Person[] = [];
   try {
-    persons = await GenealogyService.findAll();
-  } catch (error) {
-    console.error('Erreur lors de la récupération des données généalogiques (Nivo):', error);
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      persons = await GenealogyService.findAll();
+    }
+  } catch (error: any) {
+    // Ignorer les erreurs pendant le build
+    if (process.env.NODE_ENV === 'production' && error?.isBuildError) {
+      // Pendant le build Vercel, c'est normal
+    } else {
+      console.error('Erreur lors de la récupération des données généalogiques (Nivo):', error);
+    }
     // Continue avec un tableau vide en cas d'erreur
   }
 
