@@ -30,7 +30,6 @@ export async function GET() {
 
     // Si erreur RLS, utiliser le service role client comme fallback
     if (profileError && (profileError.code === '42501' || profileError.message?.includes('permission') || profileError.message?.includes('row-level security'))) {
-      console.warn('[API /auth/profile] Erreur RLS, utilisation du service role client comme fallback');
       const serviceSupabase = await createServiceRoleClient();
       const result = await serviceSupabase
         .from('users')

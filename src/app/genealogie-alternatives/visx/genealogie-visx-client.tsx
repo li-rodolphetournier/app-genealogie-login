@@ -7,6 +7,7 @@ import { Group } from '@visx/group';
 import { LinkVertical } from '@visx/shape';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -540,9 +541,6 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
       pere: formData.pere || null,
     };
 
-    // Log pour debug
-    console.log('Données envoyées pour mise à jour:', updatedPerson);
-
     try {
       const response = await fetch('/api/genealogie/update', {
         method: 'PUT',
@@ -703,7 +701,12 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-gray-100 flex">
+    <motion.div 
+      className="w-screen h-screen overflow-hidden bg-gray-100 flex"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Bouton pour ouvrir/fermer le menu */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -726,12 +729,16 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
       </button>
 
       {/* Menu latéral */}
-      <div
-        className={`fixed left-0 top-0 h-full bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-10 ${
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ width: '24rem' }}
-      >
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="fixed left-0 top-0 h-full bg-white shadow-lg z-10"
+            style={{ width: '24rem' }}
+            initial={{ x: -384 }}
+            animate={{ x: 0 }}
+            exit={{ x: -384 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          >
         {canEdit(userStatus) ? (
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4 flex-col">
@@ -809,7 +816,14 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
                 )}
               </div>
             ) : !historyOpen && (
-            <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
+            <motion.form 
+              onSubmit={isEditing ? handleUpdate : handleSubmit} 
+              className="space-y-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              key={isEditing ? `edit-${editingId}` : 'add'}
+            >
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
                 <input
@@ -957,7 +971,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
                   </button>
                 )}
               </div>
-            </form>
+            </motion.form>
             )}
           </div>
         ) : (
@@ -1009,7 +1023,9 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
             )}
           </div>
         )}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <div className={`fixed top-0 right-0 bg-white shadow-md z-10 p-4 transition-all duration-300 ${
@@ -1086,10 +1102,13 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
       </div>
 
       {/* Arbre généalogique avec Visx */}
-      <div 
+      <motion.div 
         className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
         style={{ paddingTop: '64px' }}
         onClick={handleBackgroundClick}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
         {dimensions.width > 0 && dimensions.height > 0 && root && (
           <svg 
@@ -1678,8 +1697,8 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
               </g>
           </svg>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

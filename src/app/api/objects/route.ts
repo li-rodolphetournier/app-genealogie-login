@@ -83,7 +83,6 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('[POST /api/objects] Body reçu:', JSON.stringify(body, null, 2));
     
     // Validation Zod
     const validation = validateWithSchema(objectCreateSchema, body);

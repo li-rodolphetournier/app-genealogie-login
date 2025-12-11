@@ -50,14 +50,8 @@ export async function GET(
         .eq('id', object.utilisateur_id)
         .single();
       
-      if (userError) {
-        console.warn(`[GET /api/objects/[id]] Erreur récupération utilisateur ${object.utilisateur_id}:`, userError);
-      }
+      // Ignorer l'erreur de récupération de l'utilisateur si elle existe
       utilisateurLogin = user?.login || '';
-    }
-    
-    if (!utilisateurLogin && object.utilisateur_id) {
-      console.warn(`[GET /api/objects/[id]] Utilisateur ${object.utilisateur_id} trouvé mais sans login - utilisateur sera vide`);
     }
 
     // Mapper vers ObjectData
@@ -111,7 +105,6 @@ export async function PUT(
         );
       }
       body = JSON.parse(text);
-      console.log('[PUT /api/objects/[id]] Body reçu:', JSON.stringify(body, null, 2));
       
       // Si utilisateur est une chaîne vide, le retirer du body (ne pas mettre à jour)
       if (body.utilisateur === '' || (typeof body.utilisateur === 'string' && body.utilisateur.trim() === '')) {

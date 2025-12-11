@@ -43,7 +43,6 @@ export default async function HistoriquePage() {
     }
 
     if (profile?.status !== 'administrateur') {
-      console.log('Utilisateur non admin:', user.id, 'Status:', profile?.status);
       redirect('/accueil');
     }
 

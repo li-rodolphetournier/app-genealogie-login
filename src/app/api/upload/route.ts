@@ -86,8 +86,6 @@ export async function POST(request: Request) {
 
     // Pour tous les buckets, uploader directement à la racine (pas de sous-dossier)
     // Le folder est utilisé uniquement pour déterminer le bucket à utiliser
-    console.log(`[Upload] Tentative d'upload: bucket=${bucket}, fileName=${fileName}, size=${file.size} bytes`);
-
     // Upload vers Supabase Storage (directement à la racine du bucket)
     const uploadResult = await uploadFile(
       bucket,
@@ -99,8 +97,6 @@ export async function POST(request: Request) {
         upsert: false,
       }
     );
-
-    console.log(`[Upload] Succès: ${uploadResult.publicUrl}`);
 
     return NextResponse.json({
       message: 'Fichier uploadé avec succès',

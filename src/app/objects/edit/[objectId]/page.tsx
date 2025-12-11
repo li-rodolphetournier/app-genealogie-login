@@ -72,9 +72,6 @@ export default function EditObject() {
           setPreviews(objectData.photos?.map((p: { url: string }) => p.url) || []);
           
           // S'assurer que utilisateur est défini (login, pas UUID)
-          if (!objectData.utilisateur || objectData.utilisateur.trim() === '') {
-            console.warn('[EditObject] Objet sans utilisateur, utilisation du login actuel');
-          }
         } else {
           setError('Impossible de charger l\'objet');
         }
@@ -180,7 +177,6 @@ export default function EditObject() {
       } else if (user?.login) {
         // Fallback sur l'utilisateur actuel si l'objet n'a pas de utilisateur défini
         utilisateurLogin = user.login;
-        console.warn('[EditObject] Objet sans utilisateur, utilisation du login actuel:', user.login);
       } else {
         throw new Error('Impossible de déterminer l\'utilisateur pour cet objet');
       }
@@ -194,8 +190,6 @@ export default function EditObject() {
         utilisateur: utilisateurLogin, // Toujours présent et non vide maintenant
         photos: allPhotos,
       };
-      
-      console.log('[EditObject] Données à envoyer:', { ...updateData, photos: `[${allPhotos.length} photos]` });
 
       const response = await fetch(`/api/objects/${object.id}`, {
         method: 'PUT',
@@ -474,8 +468,6 @@ export default function EditObject() {
                             const originalFileIndex = newImages.findIndex(file => URL.createObjectURL(file) === previewUrl);
                             if (originalFileIndex !== -1) {
                               handleRemoveNewPhoto(originalFileIndex, previewUrl);
-                            } else {
-                              console.warn('Could not find original file index for preview:', previewUrl);
                             }
                           }
                         }}

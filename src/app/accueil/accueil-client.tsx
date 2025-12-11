@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
@@ -71,10 +71,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
           details: errorData.details,
           status: response.status,
         });
-        // Afficher une notification d'erreur à l'utilisateur (seulement en développement ou si erreur importante)
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(`Erreur visibilité carte ${cardKey}:`, errorData.error);
-        }
+        // Erreur lors de la récupération de la visibilité de la carte
       }
     } catch (error) {
       // Revenir à l'état précédent en cas d'erreur
@@ -90,17 +87,6 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
     // Pour les autres, vérifier la visibilité
     return cardVisibility[cardKey] !== false;
   };
-
-  // Logs de débogage (uniquement en mode dev et une seule fois par changement)
-  // Utiliser useRef pour éviter les logs multiples
-  const lastLogRef = useRef<string>('');
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    const logKey = `accueil-render-${isLoading}-${user?.email || 'null'}`;
-    if (lastLogRef.current !== logKey) {
-      console.log('[ACCUEIL] Render - isLoading:', isLoading, 'user:', user?.email || 'null');
-      lastLogRef.current = logKey;
-    }
-  }
 
   if (isLoading) {
     return (

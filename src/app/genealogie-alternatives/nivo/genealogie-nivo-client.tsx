@@ -5,6 +5,7 @@ import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import { tree } from 'd3-hierarchy';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -26,6 +27,7 @@ type NivoTreeRendererProps = {
   customPositions: Map<string, { x: number; y: number }>;
   draggedNodeId: string | null;
   onNodeMouseDown: (e: React.MouseEvent, nodeId: string, nodeX: number, nodeY: number) => void;
+  onSvgMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
   canEdit: boolean;
   zoomLevel: number;
 };
@@ -46,9 +48,11 @@ function NivoTreeRenderer({
   customPositions,
   draggedNodeId,
   onNodeMouseDown,
+  onSvgMouseDown,
   canEdit,
   zoomLevel
 }: NivoTreeRendererProps) {
+  const svgElementRef = useRef<SVGSVGElement>(null);
   const root = useMemo(() => hierarchy(data), [data]);
   
   const yMax = Math.max(1200, height - defaultMargin.top - defaultMargin.bottom);
@@ -171,9 +175,12 @@ function NivoTreeRenderer({
   
   return (
     <svg
+      id="nivo-tree-svg"
+      ref={svgElementRef}
       width={width}
       height={height}
       style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+      onMouseDown={onSvgMouseDown}
     >
       <rect width="100%" height="100%" fill="#f9fafb" />
       <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
@@ -1021,13 +1028,12 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
       }
       
       setIsDragging(true);
-      const svgRect = svgRef.current?.getBoundingClientRect();
-      if (svgRect) {
-        setDragStart({
-          x: e.clientX - svgRect.left - translate.x,
-          y: e.clientY - svgRect.top - translate.y
-        });
-      }
+      // Utiliser currentTarget (le SVG) au lieu de svgRef
+      const svgRect = e.currentTarget.getBoundingClientRect();
+      setDragStart({
+        x: e.clientX - svgRect.left - translate.x,
+        y: e.clientY - svgRect.top - translate.y
+      });
       e.preventDefault();
     }
   };
@@ -1035,9 +1041,12 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
   // Gérer les événements globaux pour le drag même en dehors du SVG
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (draggedNodeId && svgRef.current) {
+      // Trouver le SVG réel dans le DOM
+      const svgElement = document.querySelector('#nivo-tree-svg') as SVGSVGElement | null;
+      
+      if (draggedNodeId && svgElement) {
         // Drag d'un nœud individuel
-        const svgRect = svgRef.current.getBoundingClientRect();
+        const svgRect = svgElement.getBoundingClientRect();
         const svgX = e.clientX - svgRect.left - translate.x;
         const svgY = e.clientY - svgRect.top - translate.y;
         
@@ -1052,9 +1061,9 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
           saveToLocalStorage(newMap);
           return newMap;
         });
-      } else if (isDragging && svgRef.current) {
+      } else if (isDragging && svgElement) {
         // Drag du pan (déplacement de la vue)
-        const svgRect = svgRef.current.getBoundingClientRect();
+        const svgRect = svgElement.getBoundingClientRect();
         setTranslate({
           x: e.clientX - svgRect.left - dragStart.x,
           y: e.clientY - svgRect.top - dragStart.y
@@ -1090,7 +1099,12 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-gray-100 flex">
+    <motion.div 
+      className="w-screen h-screen overflow-hidden bg-gray-100 flex"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Bouton pour ouvrir/fermer le menu */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -1113,12 +1127,16 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
       </button>
 
       {/* Menu latéral */}
-      <div
-        className={`fixed left-0 top-0 h-full bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-10 ${
-          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ width: '24rem' }}
-      >
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="fixed left-0 top-0 h-full bg-white shadow-lg z-10"
+            style={{ width: '24rem' }}
+            initial={{ x: -384 }}
+            animate={{ x: 0 }}
+            exit={{ x: -384 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          >
         {canEdit(userStatus) ? (
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4 flex-col">
@@ -1196,8 +1214,14 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
                 )}
               </div>
             ) : !historyOpen && (
-
-              <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
+              <motion.form 
+                onSubmit={isEditing ? handleUpdate : handleSubmit} 
+                className="space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                key={isEditing ? `edit-${editingId}` : 'add'}
+              >
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
                 <input
@@ -1345,7 +1369,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
                   </button>
                 )}
               </div>
-            </form>
+            </motion.form>
             )}
           </div>
         ) : (
@@ -1397,7 +1421,9 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
             )}
           </div>
         )}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <div className={`fixed top-0 right-0 bg-white shadow-md z-10 p-4 transition-all duration-300 ${
@@ -1474,10 +1500,13 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
       </div>
 
       {/* Arbre généalogique avec Nivo (rendu SVG personnalisé) */}
-      <div 
+      <motion.div 
         className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
         style={{ paddingTop: '64px' }}
         onClick={handleBackgroundClick}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
         {dimensions.width > 0 && dimensions.height > 0 && treeData && (
           <NivoTreeRenderer
@@ -1495,8 +1524,9 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
             draggedNodeId={draggedNodeId}
             zoomLevel={zoomLevel}
             onNodeMouseDown={(e, nodeId, nodeX, nodeY) => {
-              if (svgRef.current && e.button === 0) {
-                const svgRect = svgRef.current.getBoundingClientRect();
+              const svgElement = document.querySelector('#nivo-tree-svg') as SVGSVGElement | null;
+              if (svgElement && e.button === 0) {
+                const svgRect = svgElement.getBoundingClientRect();
                 const svgX = e.clientX - svgRect.left - translate.x;
                 const svgY = e.clientY - svgRect.top - translate.y;
                 setDraggedNodeId(nodeId);
@@ -1508,12 +1538,13 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
                 });
               }
             }}
+            onSvgMouseDown={handleMouseDown}
             canEdit={canEdit(userStatus)}
           />
         )}
-      </div>
+      </motion.div>
       {/* SVG ref pour le drag global */}
       <svg ref={svgRef} style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} />
-    </div>
+    </motion.div>
   );
 }
