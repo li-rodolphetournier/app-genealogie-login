@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
+import { logAuth } from '@/lib/utils/auth-logger';
 import { motion } from 'framer-motion';
 import { AnimatedContainer } from '@/components/animations';
 
@@ -31,6 +32,7 @@ export default function Login() {
     
     // Vérifier si l'utilisateur est déjà connecté
     const checkAuth = async () => {
+      logAuth.login('Vérification si utilisateur déjà connecté');
       try {
         // Créer une promesse avec timeout
         const authPromise = supabase.auth.getUser();
@@ -41,12 +43,21 @@ export default function Login() {
         const { data: { user } } = await Promise.race([authPromise, timeoutPromise]);
         
         if (user) {
+          logAuth.login('Utilisateur déjà connecté, redirection vers accueil', { email: user.email });
           // Utilisateur déjà connecté, rediriger vers l'accueil
           clearTimeout(timeoutId);
-          router.push('/accueil');
+          setCheckingAuth(false); // Libérer l'écran de chargement avant la redirection
+          logAuth.redirect('/', '/accueil', 'Utilisateur déjà connecté');
+          // Utiliser window.location pour forcer une navigation complète et éviter les blocages
+          window.location.href = '/accueil';
           return;
+        } else {
+          logAuth.login('Aucun utilisateur connecté');
         }
       } catch (error) {
+        logAuth.warn('LOGIN', 'Erreur lors de la vérification auth', { 
+          error: error instanceof Error ? error.message : 'Erreur inconnue' 
+        });
         // Ignorer les erreurs silencieusement (timeout ou erreur réseau)
         // L'utilisateur pourra quand même se connecter
         logger.debug('Vérification auth:', error instanceof Error ? error.message : 'Erreur inconnue');
@@ -177,6 +188,10 @@ export default function Login() {
 
       if (authResult.data?.user) {
         // Connexion réussie
+        logAuth.login('Connexion réussie', { 
+          email: authResult.data.user.email,
+          hasSession: !!authResult.data.session?.access_token 
+        });
         logger.debug('[LOGIN] Connexion réussie, utilisateur:', authResult.data.user.email);
         logger.debug('[LOGIN] Session:', authResult.data.session?.access_token ? 'présente' : 'absente');
         
@@ -189,32 +204,45 @@ export default function Login() {
             const { data: { user }, error } = await supabase.auth.getUser();
             if (user && !error) {
               verifyUser = user;
+              logAuth.session(`Session vérifiée avec succès (tentative ${i + 1})`, { email: user.email });
               logger.debug(`[LOGIN] Session vérifiée avec succès (tentative ${i + 1})`);
               break;
             }
           } catch (err) {
+            logAuth.warn('LOGIN', `Erreur lors de la vérification (tentative ${i + 1})`, { error: err });
             logger.debug(`[LOGIN] Erreur lors de la vérification (tentative ${i + 1}):`, err);
           }
         }
         
         if (verifyUser) {
+          logAuth.login('Vérification session OK, redirection vers /accueil', { email: verifyUser.email });
           logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
-          // Utiliser router.push au lieu de window.location pour une navigation plus fluide
-          // et permettre à Next.js de gérer correctement les cookies
-          await new Promise(resolve => setTimeout(resolve, 500)); // Délai supplémentaire pour la propagation des cookies
-          router.push('/accueil');
-          router.refresh(); // Forcer le rafraîchissement pour s'assurer que les cookies sont lus
+          // Libérer l'état de chargement avant la redirection
+          setIsLoading(false);
+          // Délai supplémentaire pour la propagation des cookies
+          await new Promise(resolve => setTimeout(resolve, 500));
+          logAuth.redirect('/', '/accueil', 'Connexion réussie');
+          // Utiliser window.location pour forcer une navigation complète et éviter les blocages
+          window.location.href = '/accueil';
         } else {
+          logAuth.error('LOGIN', 'Session perdue après connexion !', { 
+            userId: authResult.data.user.id 
+          });
           logger.error('[LOGIN] Session perdue après connexion !');
           setError('Erreur de session. Veuillez réessayer.');
           setIsLoading(false);
         }
       } else {
+        logAuth.error('LOGIN', 'Pas de user dans authResult.data');
         logger.error('[LOGIN] Pas de user dans authResult.data');
         setError('Erreur de connexion. Veuillez réessayer.');
         setIsLoading(false);
       }
     } catch (error) {
+      logAuth.error('LOGIN', 'Erreur de connexion', { 
+        error: error instanceof Error ? error.message : 'Erreur inconnue',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       logger.error('Erreur de connexion:', error);
       setError('Erreur de connexion au serveur. Veuillez réessayer.');
       setIsLoading(false);

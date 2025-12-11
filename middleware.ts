@@ -10,6 +10,7 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { addSecurityHeaders } from '@/lib/security/headers';
 import { checkRateLimit, getRequestIdentifier, rateLimitConfigs } from '@/lib/security/rate-limit';
+import { logAuth } from '@/lib/utils/auth-logger';
 
 /**
  * Routes publiques (accessibles sans authentification)
@@ -93,13 +94,28 @@ async function checkAuth(request: NextRequest) {
     );
 
     // Log de débogage pour le middleware
+    const cookies = request.cookies.getAll();
+    const hasAuthCookie = cookies.some(c => c.name.includes('auth') || c.name.includes('supabase'));
+    
+    logAuth.middleware('Vérification auth', { 
+      pathname: request.nextUrl.pathname,
+      hasAuthCookie,
+      cookieCount: cookies.length
+    });
+    
     if (process.env.NODE_ENV === 'development') {
-      const cookies = request.cookies.getAll();
-      const hasAuthCookie = cookies.some(c => c.name.includes('auth') || c.name.includes('supabase'));
       console.log(`[MIDDLEWARE] Path: ${request.nextUrl.pathname}, Has auth cookie: ${hasAuthCookie}`);
     }
 
     const { data: { user }, error } = await supabase.auth.getUser();
+    
+    logAuth.middleware('Résultat vérification auth', { 
+      pathname: request.nextUrl.pathname,
+      hasUser: !!user,
+      userEmail: user?.email,
+      hasError: !!error,
+      errorMessage: error instanceof Error ? error.message : error ? String(error) : undefined
+    });
 
     return { user, error, response };
   } catch (error) {
@@ -155,8 +171,15 @@ export async function middleware(request: NextRequest) {
     const { user, error, response: authResponse } = await checkAuth(request);
 
     if (error || !user) {
+      logAuth.middleware('Utilisateur non authentifié', { 
+        pathname,
+        error: error ? (typeof error === 'object' && 'message' in error ? String(error.message) : String(error)) : undefined,
+        hasUser: !!user
+      });
+      
       // Rediriger vers la page de login pour les pages
       if (pathname.startsWith('/')) {
+        logAuth.redirect(pathname, '/', 'Utilisateur non authentifié (middleware)');
         // Log de débogage
         if (process.env.NODE_ENV === 'development') {
           console.log(`[MIDDLEWARE] Redirection vers / depuis ${pathname} - Utilisateur non authentifié`);

@@ -9,6 +9,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
+import { logAuth } from '@/lib/utils/auth-logger';
 import type { User } from '@/types/user';
 
 type UseAuthOptions = {
@@ -39,16 +40,51 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   useEffect(() => {
     let mounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
+    let hasActiveSession = false; // Flag pour savoir si on a détecté une session active
+    let userLoaded = false; // Flag pour savoir si l'utilisateur a été chargé avec succès
+
+    logAuth.hook('useAuth initialisé', { 
+      redirectIfUnauthenticated, 
+      redirectTo,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
+    });
 
     const loadUser = async () => {
       try {
+        logAuth.hook('Début du chargement de l\'utilisateur');
+        
         // Timeout de sécurité pour éviter que le chargement reste bloqué
+        // Augmenter le timeout si on sait qu'il y a une session active
         timeoutId = setTimeout(() => {
           if (mounted) {
+            // Si l'utilisateur a déjà été chargé, ne rien faire
+            if (userLoaded) {
+              return;
+            }
+            // Si on a détecté une session active, ne pas rediriger immédiatement
+            // Laisser plus de temps pour la récupération du profil
+            if (hasActiveSession) {
+              logAuth.warn('HOOK', 'Timeout mais session active détectée, attendre encore 5s...');
+              // Remettre un timeout supplémentaire
+              timeoutId = setTimeout(() => {
+                if (mounted && !userLoaded) {
+                  logAuth.warn('HOOK', 'Timeout final même avec session active');
+                  setUser(null);
+                  setIsLoading(false);
+                  if (redirectIfUnauthenticated) {
+                    logAuth.redirect(window.location.pathname, redirectTo, 'Timeout final de chargement');
+                    router.push(redirectTo);
+                  }
+                }
+              }, 5000);
+              return;
+            }
+            logAuth.warn('HOOK', 'Timeout lors du chargement de l\'utilisateur (5s)');
             logger.debug('[useAuth] Timeout lors du chargement de l\'utilisateur');
             setUser(null);
             setIsLoading(false);
             if (redirectIfUnauthenticated) {
+              logAuth.redirect(window.location.pathname, redirectTo, 'Timeout de chargement');
               router.push(redirectTo);
             }
           }
@@ -149,13 +185,24 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         
         const { data: { user: authUser }, error: userError } = authResult;
         
+        // Marquer qu'on a une session active dès qu'on a trouvé un utilisateur
+        if (authUser && !userError) {
+          hasActiveSession = true;
+        }
+        
         if (userError || !authUser) {
+          logAuth.session('Aucune session trouvée', { 
+            error: userError?.message,
+            redirectIfUnauthenticated,
+            redirectTo 
+          });
           logger.debug('[useAuth] Aucune session trouvée:', userError?.message);
           logger.debug(`[useAuth] redirectIfUnauthenticated: ${redirectIfUnauthenticated}, redirectTo: ${redirectTo}`);
           if (mounted) {
             setUser(null);
             setIsLoading(false);
             if (redirectIfUnauthenticated) {
+              logAuth.redirect(window.location.pathname, redirectTo, 'Aucune session trouvée');
               logger.debug(`[useAuth] Redirection vers ${redirectTo} depuis loadUser`);
               router.push(redirectTo);
             }
@@ -163,16 +210,19 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           return;
         }
 
+        logAuth.session('Utilisateur trouvé', { email: authUser.email, id: authUser.id });
         logger.debug('[useAuth] Utilisateur trouvé dans loadUser:', authUser.email);
 
         // Récupérer le profil utilisateur via l'API pour éviter les problèmes RLS
         let userData: User | null = null;
         try {
+          logAuth.hook('Récupération du profil via API');
           const profileResponse = await fetch('/api/auth/profile');
           if (profileResponse.ok) {
             const { user: profileUser } = await profileResponse.json();
             userData = profileUser;
             if (userData) {
+              logAuth.session('Profil récupéré via API', { login: userData.login, status: userData.status });
               logger.debug('[useAuth] Profil récupéré via API:', userData.login, 'Status:', userData.status);
             }
           } else {
@@ -225,9 +275,20 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         }
 
         if (mounted) {
+          userLoaded = true; // Marquer que l'utilisateur a été chargé
+          logAuth.session('Utilisateur chargé avec succès', { 
+            login: userData.login, 
+            status: userData.status,
+            id: userData.id 
+          });
           logger.debug('[useAuth] Utilisateur chargé avec succès:', userData.login, 'Status:', userData.status);
           setUser(userData);
           setIsLoading(false);
+          // Annuler le timeout maintenant qu'on a réussi
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
         }
       } catch (error) {
         if (timeoutId) clearTimeout(timeoutId);
@@ -252,21 +313,45 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        logAuth.session(`Événement auth: ${event}`, { 
+          hasSession: !!session,
+          userEmail: session?.user?.email,
+          pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
+        });
         logger.debug(`[useAuth] Événement auth: ${event}, session:`, session ? `présente (user: ${session.user?.email})` : 'absente');
         
         if (!mounted) {
+          logAuth.hook('Composant démonté, événement ignoré', { event });
           logger.debug('[useAuth] Composant démonté, ignoré');
+          return;
+        }
+
+        // Si on détecte SIGNED_IN ou INITIAL_SESSION avec une session, marquer qu'il y a une session active
+        // et annuler le timeout pour éviter les redirections prématurées
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+          hasActiveSession = true;
+          logAuth.session('Session active détectée via événement, annulation du timeout', { event });
+          // Annuler le timeout car on sait qu'il y a une session
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          // Ne pas continuer, laisser loadUser() terminer son travail
           return;
         }
 
         // Seulement réagir aux événements SIGNED_OUT explicites
         // Ne pas déconnecter pour les autres événements qui peuvent avoir une session null temporairement
         if (event === 'SIGNED_OUT') {
+          logAuth.logout('Déconnexion explicite détectée', { 
+            pathname: typeof window !== 'undefined' ? window.location.pathname : 'server' 
+          });
           logger.debug('[useAuth] Déconnexion explicite détectée');
           if (mounted) {
             setUser(null);
             setIsLoading(false);
             if (redirectIfUnauthenticated) {
+              logAuth.redirect(window.location.pathname, redirectTo, 'Déconnexion explicite');
               router.push(redirectTo);
             }
           }
@@ -314,8 +399,13 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   }, [redirectIfUnauthenticated, redirectTo, router, supabase]);
 
   const logout = async () => {
+    logAuth.logout('Déconnexion initiée', { 
+      userId: user?.id,
+      pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
+    });
     await supabase.auth.signOut();
     setUser(null);
+    logAuth.redirect(window.location.pathname, '/', 'Déconnexion manuelle');
     router.push('/');
   };
 

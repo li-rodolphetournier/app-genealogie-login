@@ -4,6 +4,7 @@ import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AnimatePresence } from "framer-motion";
+import { AuthDebugPanelWrapper } from "@/components/debug/AuthDebugPanelWrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -40,6 +41,8 @@ export default function RootLayout({
             </AnimatePresence>
           </ToastProvider>
         </ErrorBoundary>
+        {/* Panneau de debug d'authentification (uniquement en dev ou si activé) */}
+        <AuthDebugPanelWrapper />
         {/* Script pour désenregistrer tout service worker fantôme */}
         <script
           dangerouslySetInnerHTML={{
