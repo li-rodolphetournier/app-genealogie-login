@@ -53,8 +53,17 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
       try {
         logAuth.hook('Début du chargement de l\'utilisateur');
         
+        // En production, attendre un peu avant de vérifier la session
+        // pour laisser le temps aux cookies de se propager
+        const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
+        if (isProduction) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          logAuth.hook('Délai initial pour propagation des cookies en production');
+        }
+        
         // Timeout de sécurité pour éviter que le chargement reste bloqué
-        // Augmenter le timeout si on sait qu'il y a une session active
+        // Augmenter le timeout en production pour tenir compte de la latence réseau
+        const initialTimeout = isProduction ? 10000 : 5000; // 10s en prod, 5s en dev
         timeoutId = setTimeout(() => {
           if (mounted) {
             // Si l'utilisateur a déjà été chargé, ne rien faire
@@ -64,7 +73,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             // Si on a détecté une session active, ne pas rediriger immédiatement
             // Laisser plus de temps pour la récupération du profil
             if (hasActiveSession) {
-              logAuth.warn('HOOK', 'Timeout mais session active détectée, attendre encore 5s...');
+              const secondaryTimeout = isProduction ? 10000 : 5000; // 10s en prod, 5s en dev
+              logAuth.warn('HOOK', `Timeout mais session active détectée, attendre encore ${secondaryTimeout / 1000}s...`);
               // Remettre un timeout supplémentaire
               timeoutId = setTimeout(() => {
                 if (mounted && !userLoaded) {
@@ -76,10 +86,10 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
                     router.push(redirectTo);
                   }
                 }
-              }, 5000);
+              }, secondaryTimeout);
               return;
             }
-            logAuth.warn('HOOK', 'Timeout lors du chargement de l\'utilisateur (5s)');
+            logAuth.warn('HOOK', `Timeout lors du chargement de l'utilisateur (${initialTimeout / 1000}s)`);
             logger.debug('[useAuth] Timeout lors du chargement de l\'utilisateur');
             setUser(null);
             setIsLoading(false);
@@ -88,7 +98,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               router.push(redirectTo);
             }
           }
-        }, 5000); // 5 secondes maximum
+        }, initialTimeout);
 
         // Créer une promesse avec timeout pour getUser()
         // Augmenter le timeout sur Vercel pour tenir compte de la latence réseau

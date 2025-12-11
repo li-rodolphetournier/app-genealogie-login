@@ -197,9 +197,14 @@ export default function Login() {
         
         // Attendre que la session soit correctement établie dans les cookies
         // Faire plusieurs tentatives pour s'assurer que la session est bien établie
+        // En production (Vercel), augmenter le nombre de tentatives et le délai
+        const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
+        const maxAttempts = isProduction ? 15 : 10;
+        const attemptDelay = isProduction ? 400 : 300;
+        
         let verifyUser = null;
-        for (let i = 0; i < 10; i++) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise(resolve => setTimeout(resolve, attemptDelay));
           try {
             const { data: { user }, error } = await supabase.auth.getUser();
             if (user && !error) {
@@ -219,14 +224,16 @@ export default function Login() {
           logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
           // Libérer l'état de chargement avant la redirection
           setIsLoading(false);
-          // Délai supplémentaire pour la propagation des cookies
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Délai supplémentaire pour la propagation des cookies (augmenté en production)
+          const redirectDelay = isProduction ? 1000 : 500;
+          await new Promise(resolve => setTimeout(resolve, redirectDelay));
           logAuth.redirect('/', '/accueil', 'Connexion réussie');
           // Utiliser window.location pour forcer une navigation complète et éviter les blocages
           window.location.href = '/accueil';
         } else {
           logAuth.error('LOGIN', 'Session perdue après connexion !', { 
-            userId: authResult.data.user.id 
+            userId: authResult.data.user.id,
+            attempts: maxAttempts
           });
           logger.error('[LOGIN] Session perdue après connexion !');
           setError('Erreur de session. Veuillez réessayer.');
