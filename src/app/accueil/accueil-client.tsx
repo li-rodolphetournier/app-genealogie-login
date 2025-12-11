@@ -399,7 +399,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
                           Alternative 1
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Arbre avec Visx (Airbnb) - Bundle léger</p>
+                      <p className="mt-1 text-sm text-gray-500">Arbre avec Visx - Bundle léger</p>
                     </div>
                   </div>
                 </Link>

@@ -6,7 +6,7 @@
 
 ## 📦 Bibliothèque
 
-**Visx (Airbnb)** - Collection de primitives de visualisation React
+**Visx** - Collection de primitives de visualisation React
 
 ### Packages utilisés
 - `@visx/hierarchy` - Composants hiérarchiques

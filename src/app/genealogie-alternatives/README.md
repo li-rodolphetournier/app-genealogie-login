@@ -6,7 +6,7 @@ Ce dossier contient toutes les alternatives à `react-d3-tree` pour visualiser l
 
 ```
 genealogie-alternatives/
-├── visx/          # Alternative 1 : Visx (Airbnb) ✅
+├── visx/          # Alternative 1 : Visx ✅
 ├── nivo/          # Alternative 2 : Nivo ✅
 └── treecharts/    # Alternative 3 : TreeCharts ✅
 ```
