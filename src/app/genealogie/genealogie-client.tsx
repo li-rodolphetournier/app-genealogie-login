@@ -76,12 +76,27 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { user } = useAuth({
     redirectIfUnauthenticated: true,
     redirectTo: '/',
   });
   
   const userStatus = user?.status || '';
+  const isAdmin = userStatus === 'administrateur';
+  
+  // État pour l'historique (admin seulement)
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<Array<{
+    id: string;
+    personId: string;
+    x: number;
+    y: number;
+    action: string;
+    updatedAt: string;
+    updatedBy: { id: string; login: string; email: string } | null;
+  }>>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     const buildFamilyTree = (personsData: Person[]): CustomNodeDatum[] => {
@@ -193,9 +208,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        const addedPerson = result.data || result;
-        setPersons(prev => [...prev, addedPerson]);
+        await refreshData(); // Rafraîchir toutes les données depuis l'API
         showToast('Personne ajoutée avec succès !', 'success');
         setFormData({
           nom: '',
@@ -259,6 +272,56 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     });
   };
 
+  // Fonction pour rafraîchir les données depuis l'API
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      // Recharger les personnes depuis l'API principale
+      const response = await fetch('/api/genealogie');
+      if (response.ok) {
+        const data = await response.json();
+        setPersons(data);
+        showToast('Données rafraîchies avec succès', 'success');
+      } else {
+        showToast('Erreur lors du rafraîchissement des données', 'error');
+        console.error('Erreur lors du rafraîchissement des données');
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des données:', error);
+      showToast('Erreur lors du rafraîchissement des données', 'error');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Charger l'historique (admin seulement)
+  const loadHistory = async () => {
+    if (!isAdmin) return;
+    setLoadingHistory(true);
+    try {
+      const response = await fetch('/api/genealogie/positions/history');
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      } else {
+        showToast('Erreur lors du chargement de l\'historique', 'error');
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'historique:', error);
+      showToast('Erreur lors du chargement de l\'historique', 'error');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Fonction pour sauvegarder et retourner à l'accueil
+  const handleSaveAndGoHome = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    // Utiliser router.push() au lieu de window.location.href pour éviter la perte de session
+    // et permettre une navigation fluide avec Next.js
+    router.push('/accueil');
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingId) return;
@@ -279,10 +342,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        setPersons(prev =>
-          prev.map(p => p.id === editingId ? updatedPerson : p)
-        );
+        await refreshData(); // Rafraîchir toutes les données depuis l'API
         handleCancelEdit();
         showToast('Personne mise à jour avec succès !', 'success');
       } else {
@@ -389,35 +449,114 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
         {canEdit(userStatus) ? (
           // Formulaire d'édition pour admin/rédacteur
           <div className="h-full p-6 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4 flex-col">
+            <div className="flex justify-between items-center mb-4 flex-col gap-4">
               <h2 className="text-xl font-bold">
-                {isEditing ? "Modifier une personne" : "Ajouter une personne"}
+                {historyOpen ? "Historique des positions" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
-              <div className="space-x-2">
+              <div className="flex flex-wrap gap-2 w-full justify-center">
                 <button
-                  onClick={() => setIsEditing(false)}
-                  className={`px-4 py-2 rounded ${!isEditing
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                    }`}
+                  onClick={refreshData}
+                  disabled={isRefreshing}
+                  className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed rounded transition-colors flex items-center gap-2"
+                  title="Rafraîchir les données depuis le serveur"
                 >
-                  Ajouter
+                  {isRefreshing ? (
+                    <>
+                      <span className="animate-spin">⏳</span> Actualisation...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Actualiser
+                    </>
+                  )}
                 </button>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className={`px-4 py-2 rounded ${isEditing
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
+                {!historyOpen && (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className={`px-4 py-2 rounded ${!isEditing
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700'
+                        }`}
+                    >
+                      Ajouter
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className={`px-4 py-2 rounded ${isEditing
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700'
+                        }`}
+                      disabled={!editingId}
+                    >
+                      Modifier
+                    </button>
+                  </>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      if (!historyOpen) {
+                        loadHistory();
+                      }
+                      setHistoryOpen(!historyOpen);
+                    }}
+                    className={`px-4 py-2 rounded ${
+                      historyOpen
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-purple-500 text-white'
                     }`}
-                  disabled={!editingId}
-                >
-                  Modifier
-                </button>
+                  >
+                    {historyOpen ? 'Fermer' : 'Historique'}
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Formulaire existant */}
-            <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
+            {historyOpen && isAdmin ? (
+              <div className="space-y-4">
+                {loadingHistory ? (
+                  <p className="text-gray-500">Chargement de l'historique...</p>
+                ) : history.length === 0 ? (
+                  <p className="text-gray-500">Aucun historique disponible</p>
+                ) : (
+                  <div className="space-y-3">
+                    {history.map((item) => {
+                      const person = persons.find(p => p.id === item.personId);
+                      return (
+                        <div key={item.id} className="border rounded-lg p-3 bg-gray-50">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold">
+                                {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId.substring(0, 8)}...`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {new Date(item.updatedAt).toLocaleString('fr-FR')}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.action === 'created' ? 'bg-green-100 text-green-800' :
+                              item.action === 'updated' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {item.action === 'created' ? 'Créé' : item.action === 'updated' ? 'Modifié' : 'Supprimé'}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            <p>Position: X={item.x.toFixed(2)}, Y={item.y.toFixed(2)}</p>
+                            {item.updatedBy && (
+                              <p className="mt-1">Par: {item.updatedBy.login}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : !historyOpen ? (
+
+              <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
                 <input
@@ -566,6 +705,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
                 )}
               </div>
             </form>
+            ) : null}
           </div>
         ) : (
           // Vue en lecture seule pour utilisateur
@@ -584,10 +724,32 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
         <div className={`fixed top-0 right-0 bg-white shadow-md z-10 p-4 transition-all duration-300 ${isMenuOpen ? 'left-96' : 'left-0'
           }`}>
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Arbre Généalogique Familial</h1>
-            <Link href="/accueil" className="text-blue-500 hover:underline">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold">Arbre Généalogique Familial</h1>
+              <button
+                onClick={refreshData}
+                disabled={isRefreshing}
+                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed rounded transition-colors flex items-center gap-2"
+                title="Rafraîchir les données depuis le serveur"
+              >
+                {isRefreshing ? (
+                  <>
+                    <span className="animate-spin">⏳</span> Actualisation...
+                  </>
+                ) : (
+                  <>
+                    🔄 Actualiser
+                  </>
+                )}
+              </button>
+            </div>
+            <a 
+              href="/accueil" 
+              onClick={handleSaveAndGoHome}
+              className="text-blue-500 hover:underline"
+            >
               Retour à l&apos;accueil
-            </Link>
+            </a>
           </div>
         </div>
 
