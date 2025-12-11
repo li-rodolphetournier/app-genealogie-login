@@ -82,5 +82,9 @@
     "typescript": "^5",
     "vitest": "^4.0.15"
   },
+  "resolutions": {
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
   "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }

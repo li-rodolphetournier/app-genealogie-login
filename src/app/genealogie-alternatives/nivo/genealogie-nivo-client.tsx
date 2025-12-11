@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import { tree } from 'd3-hierarchy';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -468,6 +469,7 @@ type GenealogieNivoClientProps = {
 
 export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientProps) {
   const { showToast } = useToast();
+  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [persons, setPersons] = useState<Person[]>(initialPersons);
   const [isEditing, setIsEditing] = useState(false);
@@ -631,10 +633,11 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
     e.preventDefault();
     
     // Sauvegarder dans Supabase avant de partir
-    const success = await savePositionsToSupabase(customPositions);
+    await savePositionsToSupabase(customPositions);
     
-    // Rediriger même en cas d'erreur (l'utilisateur a choisi de partir)
-    window.location.href = '/accueil';
+    // Utiliser router.push() au lieu de window.location.href pour éviter la perte de session
+    // et permettre une navigation fluide avec Next.js
+    router.push('/accueil');
   };
   
   // Déterminer les dimensions du viewport

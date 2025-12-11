@@ -180,15 +180,22 @@ export default function Login() {
         logger.debug('[LOGIN] Connexion réussie, utilisateur:', authResult.data.user.email);
         logger.debug('[LOGIN] Session:', authResult.data.session?.access_token ? 'présente' : 'absente');
         
-        // Attendre un peu pour que la session soit établie
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Attendre que la session soit correctement établie dans les cookies
+        // Faire plusieurs tentatives pour s'assurer que la session est bien établie
+        let verifyUser = null;
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            verifyUser = user;
+            break;
+          }
+        }
         
-        // Vérifier que la session est toujours là avant de rediriger
-        const { data: { user: verifyUser } } = await supabase.auth.getUser();
         if (verifyUser) {
           logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
-          router.push('/accueil');
-          router.refresh();
+          // Utiliser window.location pour forcer un rechargement complet et établir la session
+          window.location.href = '/accueil';
         } else {
           logger.error('[LOGIN] Session perdue après connexion !');
           setError('Erreur de session. Veuillez réessayer.');

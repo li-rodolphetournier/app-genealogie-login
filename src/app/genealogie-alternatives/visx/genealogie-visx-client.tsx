@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { hierarchy, HierarchyNode } from 'd3-hierarchy';
+import { hierarchy, HierarchyNode, HierarchyPointNode } from 'd3-hierarchy';
 import { Tree } from '@visx/hierarchy';
 import { Group } from '@visx/group';
 import { LinkVertical } from '@visx/shape';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -31,6 +32,7 @@ const defaultMargin = { top: 40, left: 40, right: 40, bottom: 40 };
 
 export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientProps) {
   const { showToast } = useToast();
+  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [persons, setPersons] = useState<Person[]>(initialPersons);
   const [isEditing, setIsEditing] = useState(false);
@@ -194,10 +196,11 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     e.preventDefault();
     
     // Sauvegarder dans Supabase avant de partir
-    const success = await savePositionsToSupabase(customPositions);
+    await savePositionsToSupabase(customPositions);
     
-    // Rediriger même en cas d'erreur (l'utilisateur a choisi de partir)
-    window.location.href = '/accueil';
+    // Utiliser router.push() au lieu de window.location.href pour éviter la perte de session
+    // et permettre une navigation fluide avec Next.js
+    router.push('/accueil');
   };
 
   // Déterminer les dimensions du viewport
@@ -401,7 +404,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     setEditingId(null);
   };
 
-  const handleNodeClick = (node: HierarchyNode<TreeNode>) => {
+  const handleNodeClick = (node: { data: TreeNode }) => {
     if (node.data.id === 'root') return;
     setSelectedNode(node.data);
     const person = persons.find(p => p.id === node.data.id);
