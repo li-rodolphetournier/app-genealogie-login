@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 type Position = { x: number; y: number };
 
 export function useGenealogyDrag(
-  svgRef: React.RefObject<SVGSVGElement>,
+  svgRef: React.RefObject<SVGSVGElement | null>,
   translate: { x: number; y: number },
   onPositionUpdate: (nodeId: string, position: Position) => void,
   onTranslateUpdate: (translate: { x: number; y: number }) => void
