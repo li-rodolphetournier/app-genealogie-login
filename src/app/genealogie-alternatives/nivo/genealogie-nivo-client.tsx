@@ -1117,7 +1117,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
       >
         {canEdit(userStatus) ? (
           <div className="h-full p-6 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 flex-col">
               <h2 className="text-xl font-bold">
                 {historyOpen ? "Historique des positions" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
