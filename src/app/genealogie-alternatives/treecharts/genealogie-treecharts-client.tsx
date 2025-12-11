@@ -500,6 +500,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   const { showToast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [persons, setPersons] = useState<Person[]>(initialPersons);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Omit<Person, 'id'>>({
@@ -818,16 +819,45 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
 
   // Fonction pour rafraîchir les données depuis l'API
   const refreshData = async () => {
+    setIsRefreshing(true);
     try {
+      // Recharger les personnes depuis l'API
       const response = await fetch('/api/genealogie-alternatives');
       if (response.ok) {
         const data = await response.json();
         setPersons(data);
       } else {
+        showToast('Erreur lors du rafraîchissement des données', 'error');
         console.error('Erreur lors du rafraîchissement des données');
+        setIsRefreshing(false);
+        return;
       }
+
+      // Recharger les positions depuis Supabase
+      try {
+        const positionsResponse = await fetch('/api/genealogie/positions');
+        if (positionsResponse.ok) {
+          const positions = await positionsResponse.json();
+          const positionsMap = new Map(Object.entries(positions).map(([key, value]) => [
+            key,
+            value as { x: number; y: number }
+          ]));
+          setCustomPositions(positionsMap);
+          
+          // Synchroniser avec localStorage
+          saveToLocalStorage(positionsMap);
+        }
+      } catch (positionsError) {
+        console.error('Erreur lors du rafraîchissement des positions:', positionsError);
+        // Ne pas bloquer si les positions ne peuvent pas être rechargées
+      }
+
+      showToast('Données rafraîchies avec succès', 'success');
     } catch (error) {
       console.error('Erreur lors du rafraîchissement des données:', error);
+      showToast('Erreur lors du rafraîchissement des données', 'error');
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -1435,10 +1465,19 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
             <h1 className="text-2xl font-bold">Arbre Généalogique - TreeCharts</h1>
             <button
               onClick={refreshData}
-              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-              title="Rafraîchir les données"
+              disabled={isRefreshing || isSaving}
+              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed rounded transition-colors flex items-center gap-2"
+              title="Rafraîchir les données et les positions depuis le serveur"
             >
-              🔄 Actualiser
+              {isRefreshing ? (
+                <>
+                  <span className="animate-spin">⏳</span> Actualisation...
+                </>
+              ) : (
+                <>
+                  🔄 Actualiser
+                </>
+              )}
             </button>
             {canEdit(userStatus) && (
               <button
