@@ -27,6 +27,7 @@ type NivoTreeRendererProps = {
   draggedNodeId: string | null;
   onNodeMouseDown: (e: React.MouseEvent, nodeId: string, nodeX: number, nodeY: number) => void;
   canEdit: boolean;
+  zoomLevel: number;
 };
 
 const defaultMargin = { top: 40, left: 40, right: 40, bottom: 40 };
@@ -45,7 +46,8 @@ function NivoTreeRenderer({
   customPositions,
   draggedNodeId,
   onNodeMouseDown,
-  canEdit
+  canEdit,
+  zoomLevel
 }: NivoTreeRendererProps) {
   const root = useMemo(() => hierarchy(data), [data]);
   
@@ -174,7 +176,7 @@ function NivoTreeRenderer({
       style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       <rect width="100%" height="100%" fill="#f9fafb" />
-      <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y})`}>
+      <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
         {/* Liens horizontaux entre les parents (couples) */}
         {Array.from(couplesMap.values()).map((couple, i) => {
           const perePos = positionMap.get(couple.pereId);
@@ -496,6 +498,9 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  
+  // État pour le zoom
+  const [zoomLevel, setZoomLevel] = useState(1.0);
   
   // États pour le drag and drop des nœuds
   const [customPositions, setCustomPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
@@ -1470,13 +1475,35 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
               </button>
             )}
           </div>
-          <a 
-            href="/accueil" 
-            onClick={handleSaveAndGoHome}
-            className="text-blue-500 hover:underline"
-          >
-            Retour à l&apos;accueil
-          </a>
+          <div className="flex items-center gap-4">
+            {/* Contrôle de zoom */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setZoomLevel(prev => Math.max(0.1, prev - 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Réduire"
+              >
+                −
+              </button>
+              <span className="px-2 text-sm font-medium min-w-[3rem] text-center">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                onClick={() => setZoomLevel(prev => Math.min(2.0, prev + 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Agrandir"
+              >
+                +
+              </button>
+            </div>
+            <a 
+              href="/accueil" 
+              onClick={handleSaveAndGoHome}
+              className="text-blue-500 hover:underline"
+            >
+              Retour à l&apos;accueil
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1500,6 +1527,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
             persons={persons}
             customPositions={customPositions}
             draggedNodeId={draggedNodeId}
+            zoomLevel={zoomLevel}
             onNodeMouseDown={(e, nodeId, nodeX, nodeY) => {
               if (svgRef.current && e.button === 0) {
                 const svgRect = svgRef.current.getBoundingClientRect();

@@ -60,6 +60,9 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
   
+  // État pour le zoom
+  const [zoomLevel, setZoomLevel] = useState(1.0);
+  
   // États pour le drag and drop des nœuds
   const [customPositions, setCustomPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
@@ -1068,13 +1071,35 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
               </button>
             )}
           </div>
-          <a 
-            href="/accueil" 
-            onClick={handleSaveAndGoHome}
-            className="text-blue-500 hover:underline"
-          >
-            Retour à l&apos;accueil
-          </a>
+          <div className="flex items-center gap-4">
+            {/* Contrôle de zoom */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setZoomLevel(prev => Math.max(0.1, prev - 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Réduire"
+              >
+                −
+              </button>
+              <span className="px-2 text-sm font-medium min-w-[3rem] text-center">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                onClick={() => setZoomLevel(prev => Math.min(2.0, prev + 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Agrandir"
+              >
+                +
+              </button>
+            </div>
+            <a 
+              href="/accueil" 
+              onClick={handleSaveAndGoHome}
+              className="text-blue-500 hover:underline"
+            >
+              Retour à l&apos;accueil
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1093,8 +1118,9 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
             onMouseDown={handleMouseDown}
           >
             <rect width="100%" height="100%" fill="#f9fafb" />
-            <Group top={translate.y} left={translate.x}>
-              <Tree<TreeNode>
+            <g transform={`translate(${translate.x}, ${translate.y}) scale(${zoomLevel})`}>
+              <Group top={0} left={0}>
+                <Tree<TreeNode>
                 root={root}
                 size={[yMax, xMax]}
                 nodeSize={[220, 200]}
@@ -1666,7 +1692,8 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
                   );
                 }}
               </Tree>
-            </Group>
+                </Group>
+              </g>
           </svg>
         )}
       </div>

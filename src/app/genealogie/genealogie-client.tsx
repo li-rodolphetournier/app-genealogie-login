@@ -77,6 +77,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(0.6); // Zoom initial pour react-d3-tree
   const { user } = useAuth({
     redirectIfUnauthenticated: true,
     redirectTo: '/',
@@ -743,13 +744,35 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
                 )}
               </button>
             </div>
-            <a 
-              href="/accueil" 
-              onClick={handleSaveAndGoHome}
-              className="text-blue-500 hover:underline"
-            >
-              Retour à l&apos;accueil
-            </a>
+            <div className="flex items-center gap-4">
+              {/* Contrôle de zoom */}
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setZoomLevel(prev => Math.max(0.1, prev - 0.1))}
+                  className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                  title="Réduire"
+                >
+                  −
+                </button>
+                <span className="px-2 text-sm font-medium min-w-[3rem] text-center">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoomLevel(prev => Math.min(2.0, prev + 0.1))}
+                  className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                  title="Agrandir"
+                >
+                  +
+                </button>
+              </div>
+              <a 
+                href="/accueil" 
+                onClick={handleSaveAndGoHome}
+                className="text-blue-500 hover:underline"
+              >
+                Retour à l&apos;accueil
+              </a>
+            </div>
           </div>
         </div>
 
@@ -770,7 +793,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
                 pathFunc="step"
                 translate={{ x: 400, y: 100 }}
                 separation={{ siblings: 2, nonSiblings: 2.5 }}
-                zoom={0.6}
+                zoom={zoomLevel}
                 nodeSize={{ x: 200, y: 120 }}
               />
             </div>

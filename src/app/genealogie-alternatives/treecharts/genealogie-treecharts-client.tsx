@@ -45,6 +45,7 @@ type TreeChartsRendererProps = {
   onNodeMouseDown: (e: React.MouseEvent, nodeId: string, nodeX: number, nodeY: number) => void;
   onSvgMouseDown: (e: React.MouseEvent<SVGSVGElement>) => void;
   canEdit: boolean;
+  zoomLevel: number;
 };
 
 function TreeChartsRenderer({
@@ -62,7 +63,8 @@ function TreeChartsRenderer({
   draggedNodeId,
   onNodeMouseDown,
   onSvgMouseDown,
-  canEdit
+  canEdit,
+  zoomLevel
 }: TreeChartsRendererProps) {
   const root = useMemo(() => hierarchy(data), [data]);
   
@@ -200,7 +202,7 @@ function TreeChartsRenderer({
           <stop offset="100%" stopColor="#ea580c" stopOpacity={0.6} />
         </linearGradient>
       </defs>
-      <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y})`}>
+      <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
         {/* Liens horizontaux entre les parents (couples) */}
         {Array.from(couplesMap.values()).map((couple, i) => {
           const perePos = positionMap.get(couple.pereId);
@@ -525,6 +527,9 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  
+  // État pour le zoom
+  const [zoomLevel, setZoomLevel] = useState(1.0);
   
   // États pour le drag and drop des nœuds
   const [customPositions, setCustomPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
@@ -1498,13 +1503,35 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
               </button>
             )}
           </div>
-          <a 
-            href="/accueil" 
-            onClick={handleSaveAndGoHome}
-            className="text-blue-500 hover:underline"
-          >
-            Retour à l&apos;accueil
-          </a>
+          <div className="flex items-center gap-4">
+            {/* Contrôle de zoom */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setZoomLevel(prev => Math.max(0.1, prev - 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Réduire"
+              >
+                −
+              </button>
+              <span className="px-2 text-sm font-medium min-w-[3rem] text-center">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                onClick={() => setZoomLevel(prev => Math.min(2.0, prev + 0.1))}
+                className="px-3 py-1 bg-white hover:bg-gray-50 rounded text-lg font-bold transition-colors"
+                title="Agrandir"
+              >
+                +
+              </button>
+            </div>
+            <a 
+              href="/accueil" 
+              onClick={handleSaveAndGoHome}
+              className="text-blue-500 hover:underline"
+            >
+              Retour à l&apos;accueil
+            </a>
+          </div>
         </div>
       </div>
 
@@ -1544,6 +1571,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
             }}
             onSvgMouseDown={handleMouseDown}
             canEdit={canEdit(userStatus)}
+            zoomLevel={zoomLevel}
           />
         )}
       </div>
