@@ -55,17 +55,24 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         }, 5000); // 5 secondes maximum
 
         // Créer une promesse avec timeout pour getUser()
+        // Augmenter le timeout sur Vercel pour tenir compte de la latence réseau
+        const timeoutDuration = typeof window !== 'undefined' && window.location.hostname.includes('vercel') 
+          ? 8000 
+          : 4000;
+        
         const authPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => {
             reject(new Error('Timeout'));
-          }, 4000)
+          }, timeoutDuration)
         );
         
         let authResult;
         try {
           // Utiliser getUser() qui fait une requête HTTP et lit les cookies httpOnly
           // C'est la méthode recommandée avec @supabase/ssr pour les cookies httpOnly
+          // Ajouter un petit délai initial pour laisser le temps aux cookies de se propager
+          await new Promise(resolve => setTimeout(resolve, 200));
           authResult = await Promise.race([
             authPromise,
             timeoutPromise,
@@ -76,15 +83,33 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           if (error instanceof Error && error.message === 'Timeout') {
             logger.debug('[useAuth] Timeout lors de la vérification de session - tentative de récupération...');
             
-            // Réessayer une fois avec un délai plus court
-            try {
-              const retryResult = await Promise.race([
-                supabase.auth.getUser(),
-                new Promise<never>((_, reject) => 
-                  setTimeout(() => reject(new Error('Timeout')), 2000)
-                ),
-              ]);
-              
+            // Réessayer plusieurs fois avec des délais progressifs
+            // Sur Vercel, les cookies peuvent prendre plus de temps à se propager
+            let retryResult = null;
+            for (let retry = 0; retry < 3; retry++) {
+              try {
+                await new Promise(resolve => setTimeout(resolve, 500 * (retry + 1)));
+                retryResult = await Promise.race([
+                  supabase.auth.getUser(),
+                  new Promise<never>((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 3000)
+                  ),
+                ]);
+                const { data: { user: retryUser }, error: retryError } = retryResult;
+                if (retryUser && !retryError) {
+                  logger.debug(`[useAuth] Session trouvée au retry ${retry + 1}`);
+                  break;
+                }
+              } catch (retryErr) {
+                logger.debug(`[useAuth] Retry ${retry + 1} échoué:`, retryErr);
+                if (retry === 2) {
+                  // Dernier retry échoué
+                  retryResult = null;
+                }
+              }
+            }
+            
+            if (retryResult) {
               const { data: { user: retryUser }, error: retryError } = retryResult;
               if (retryError || !retryUser) {
                 // Vraiment pas de session
@@ -101,9 +126,9 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               }
               // Session trouvée au retry, continuer normalement
               authResult = retryResult;
-            } catch (retryError) {
-              // Échec du retry aussi
-              logger.debug('[useAuth] Aucune session trouvée après retry échoué');
+            } else {
+              // Tous les retries ont échoué
+              logger.debug('[useAuth] Aucune session trouvée après tous les retries');
               if (timeoutId) clearTimeout(timeoutId);
               if (mounted) {
                 setUser(null);

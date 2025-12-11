@@ -183,19 +183,27 @@ export default function Login() {
         // Attendre que la session soit correctement établie dans les cookies
         // Faire plusieurs tentatives pour s'assurer que la session est bien établie
         let verifyUser = null;
-        for (let i = 0; i < 5; i++) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            verifyUser = user;
-            break;
+        for (let i = 0; i < 10; i++) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+          try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (user && !error) {
+              verifyUser = user;
+              logger.debug(`[LOGIN] Session vérifiée avec succès (tentative ${i + 1})`);
+              break;
+            }
+          } catch (err) {
+            logger.debug(`[LOGIN] Erreur lors de la vérification (tentative ${i + 1}):`, err);
           }
         }
         
         if (verifyUser) {
           logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
-          // Utiliser window.location pour forcer un rechargement complet et établir la session
-          window.location.href = '/accueil';
+          // Utiliser router.push au lieu de window.location pour une navigation plus fluide
+          // et permettre à Next.js de gérer correctement les cookies
+          await new Promise(resolve => setTimeout(resolve, 500)); // Délai supplémentaire pour la propagation des cookies
+          router.push('/accueil');
+          router.refresh(); // Forcer le rafraîchissement pour s'assurer que les cookies sont lus
         } else {
           logger.error('[LOGIN] Session perdue après connexion !');
           setError('Erreur de session. Veuillez réessayer.');
