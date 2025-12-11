@@ -795,8 +795,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
 
   const handleBackgroundClick = () => {
     setSelectedNode(null);
-    setIsEditing(false);
-    setEditingId(null);
+    handleCancelEdit();
   };
 
   const handleNodeClick = (node: TreeNode) => {
@@ -1155,47 +1154,14 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
               <h2 className="text-xl font-bold">
                 {historyOpen ? "Historique des positions" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
-              <div className="space-x-2">
-                {!historyOpen && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditingId(null);
-                        setSelectedNode(null);
-                        setFormData({
-                          nom: '',
-                          prenom: '',
-                          genre: 'homme',
-                          description: '',
-                          mere: null,
-                          pere: null,
-                          ordreNaissance: 1,
-                          dateNaissance: '',
-                          dateDeces: null,
-                          image: null
-                        });
-                      }}
-                      className={`px-4 py-2 rounded ${
-                        !isEditing
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      Ajouter
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className={`px-4 py-2 rounded ${
-                        isEditing
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
-                      disabled={!editingId}
-                    >
-                      Modifier
-                    </button>
-                  </>
+              <div className="space-x-2 flex flex-wrap gap-2 justify-center">
+                {!historyOpen && isEditing && (
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                  >
+                    Ajouter une personne
+                  </button>
                 )}
                 {isAdmin && (
                   <button
@@ -1258,7 +1224,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
                   </div>
                 )}
               </div>
-            ) : !historyOpen ? (
+            ) : !historyOpen && (
               <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
@@ -1408,7 +1374,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
                 )}
               </div>
               </form>
-            ) : null}
+            )}
           </div>
         ) : (
           <div className="h-full p-6 overflow-y-auto">

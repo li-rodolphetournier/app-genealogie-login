@@ -358,9 +358,13 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
   };
 
   const handleBackgroundClick = (e: React.MouseEvent) => {
-    // Vérifier si le clic est sur l'arrière-plan (pas sur un nœud)
-    if ((e.target as SVGElement).tagName === 'svg') {
-      setIsMenuOpen(false);
+    // Vérifier si le clic est sur l'arrière-plan (pas sur un nœud ou un élément enfant)
+    const target = e.target as HTMLElement;
+    // Si c'est un clic sur le conteneur div ou le SVG de base (pas sur un élément g ou foreignObject)
+    if (target.tagName === 'DIV' || (target.tagName === 'svg' && !target.closest('g'))) {
+      setIsMenuOpen(true);
+      // Revenir au formulaire d'ajout et vider le formulaire
+      handleCancelEdit();
     }
   };
 
@@ -471,28 +475,13 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
                     </>
                   )}
                 </button>
-                {!historyOpen && (
-                  <>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className={`px-4 py-2 rounded ${!isEditing
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                        }`}
-                    >
-                      Ajouter
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className={`px-4 py-2 rounded ${isEditing
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 text-gray-700'
-                        }`}
-                      disabled={!editingId}
-                    >
-                      Modifier
-                    </button>
-                  </>
+                {!historyOpen && isEditing && (
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Ajouter une personne
+                  </button>
                 )}
                 {isAdmin && (
                   <button
@@ -555,8 +544,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
                   </div>
                 )}
               </div>
-            ) : !historyOpen ? (
-
+            ) : !historyOpen && (
               <form onSubmit={isEditing ? handleUpdate : handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Prénom</label>
@@ -782,7 +770,8 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
               <Tree
                 data={treeData as unknown as RawNodeDatum}
                 renderCustomNodeElement={(rd) => (
-                  <g onClick={() => {
+                  <g onClick={(e) => {
+                    e.stopPropagation();
                     handleNodeClick(rd.nodeDatum as unknown as CustomNodeDatum);
                     setIsMenuOpen(true);
                   }}>
