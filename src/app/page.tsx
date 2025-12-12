@@ -25,22 +25,59 @@ export default function Login() {
   useEffect(() => {
     setMounted(true);
     
+    // Attendre un peu avant de vérifier pour laisser le temps aux cookies de se propager
+    const initialDelay = typeof window !== 'undefined' && window.location.hostname.includes('vercel') ? 300 : 100;
+    
     // Timeout pour éviter que la vérification reste bloquée
     const timeoutId = setTimeout(() => {
       setCheckingAuth(false);
-    }, 5000); // 5 secondes maximum
+    }, 8000); // 8 secondes maximum
     
     // Vérifier si l'utilisateur est déjà connecté
     const checkAuth = async () => {
+      // Attendre un peu avant de vérifier
+      await new Promise(resolve => setTimeout(resolve, initialDelay));
+      
       logAuth.login('Vérification si utilisateur déjà connecté');
       try {
-        // Créer une promesse avec timeout
+        // Créer une promesse avec timeout plus long en production
+        const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
+        const timeoutDuration = isProduction ? 6000 : 4000;
+        
         const authPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 4000)
+          setTimeout(() => reject(new Error('Timeout')), timeoutDuration)
         );
         
-        const { data: { user } } = await Promise.race([authPromise, timeoutPromise]);
+        let authResult;
+        try {
+          authResult = await Promise.race([authPromise, timeoutPromise]);
+        } catch (error) {
+          // Si timeout, essayer une dernière fois avec un délai
+          if (error instanceof Error && error.message === 'Timeout') {
+            logAuth.warn('LOGIN', 'Timeout initial, nouvelle tentative...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            try {
+              authResult = await Promise.race([
+                supabase.auth.getUser(),
+                new Promise<never>((_, reject) => 
+                  setTimeout(() => reject(new Error('Timeout')), 3000)
+                ),
+              ]);
+            } catch (retryError) {
+              // Si le retry échoue aussi, considérer qu'il n'y a pas de session
+              // Ne pas logger comme erreur, c'est normal si l'utilisateur n'est pas connecté
+              logAuth.login('Timeout après retry, pas de session active (normal si non connecté)');
+              clearTimeout(timeoutId);
+              setCheckingAuth(false);
+              return;
+            }
+          } else {
+            throw error;
+          }
+        }
+        
+        const { data: { user } } = authResult;
         
         if (user) {
           logAuth.login('Utilisateur déjà connecté, redirection vers accueil', { email: user.email });
@@ -55,9 +92,14 @@ export default function Login() {
           logAuth.login('Aucun utilisateur connecté');
         }
       } catch (error) {
-        logAuth.warn('LOGIN', 'Erreur lors de la vérification auth', { 
-          error: error instanceof Error ? error.message : 'Erreur inconnue' 
-        });
+        // Ne logger que les vraies erreurs, pas les timeouts qui sont normaux
+        if (error instanceof Error && error.message !== 'Timeout') {
+          logAuth.warn('LOGIN', 'Erreur lors de la vérification auth', { 
+            error: error.message 
+          });
+        } else {
+          logAuth.login('Timeout lors de la vérification (normal si non connecté)');
+        }
         // Ignorer les erreurs silencieusement (timeout ou erreur réseau)
         // L'utilisateur pourra quand même se connecter
         logger.debug('Vérification auth:', error instanceof Error ? error.message : 'Erreur inconnue');

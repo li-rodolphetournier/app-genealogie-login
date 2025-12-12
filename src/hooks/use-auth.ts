@@ -40,6 +40,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   useEffect(() => {
     let mounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
+    let finalCheckTimeoutId: NodeJS.Timeout | null = null;
     let hasActiveSession = false; // Flag pour savoir si on a détecté une session active
     let userLoaded = false; // Flag pour savoir si l'utilisateur a été chargé avec succès
 
@@ -63,7 +64,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         
         // Timeout de sécurité pour éviter que le chargement reste bloqué
         // Augmenter le timeout en production pour tenir compte de la latence réseau
-        const initialTimeout = isProduction ? 10000 : 5000; // 10s en prod, 5s en dev
+        // Augmenter aussi le timeout pour laisser le temps à onAuthStateChange de se déclencher
+        const initialTimeout = isProduction ? 15000 : 8000; // 15s en prod, 8s en dev
         timeoutId = setTimeout(() => {
           if (mounted) {
             // Si l'utilisateur a déjà été chargé, ne rien faire
@@ -73,7 +75,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             // Si on a détecté une session active, ne pas rediriger immédiatement
             // Laisser plus de temps pour la récupération du profil
             if (hasActiveSession) {
-              const secondaryTimeout = isProduction ? 10000 : 5000; // 10s en prod, 5s en dev
+              const secondaryTimeout = isProduction ? 15000 : 10000; // 15s en prod, 10s en dev
               logAuth.warn('HOOK', `Timeout mais session active détectée, attendre encore ${secondaryTimeout / 1000}s...`);
               // Remettre un timeout supplémentaire
               timeoutId = setTimeout(() => {
@@ -89,14 +91,22 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               }, secondaryTimeout);
               return;
             }
-            logAuth.warn('HOOK', `Timeout lors du chargement de l'utilisateur (${initialTimeout / 1000}s)`);
-            logger.debug('[useAuth] Timeout lors du chargement de l\'utilisateur');
-            setUser(null);
-            setIsLoading(false);
-            if (redirectIfUnauthenticated) {
-              logAuth.redirect(window.location.pathname, redirectTo, 'Timeout de chargement');
-              router.push(redirectTo);
-            }
+            // Ne pas rediriger immédiatement, attendre un peu pour voir si onAuthStateChange se déclenche
+            logAuth.warn('HOOK', `Timeout initial (${initialTimeout / 1000}s) - Attente de onAuthStateChange...`);
+            // Donner encore 5 secondes pour que onAuthStateChange se déclenche
+            finalCheckTimeoutId = setTimeout(() => {
+              if (mounted && !userLoaded && !hasActiveSession) {
+                logAuth.warn('HOOK', 'Timeout final - Aucune session détectée');
+                logger.debug('[useAuth] Timeout final - Aucune session détectée');
+                setUser(null);
+                setIsLoading(false);
+                if (redirectIfUnauthenticated) {
+                  logAuth.redirect(window.location.pathname, redirectTo, 'Timeout de chargement');
+                  router.push(redirectTo);
+                }
+              }
+            }, 5000);
+            return;
           }
         }, initialTimeout);
 
@@ -161,6 +171,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
                 // Vraiment pas de session
                 logger.debug('[useAuth] Aucune session trouvée après retry');
                 if (timeoutId) clearTimeout(timeoutId);
+                if (finalCheckTimeoutId) clearTimeout(finalCheckTimeoutId);
                 if (mounted) {
                   setUser(null);
                   setIsLoading(false);
@@ -176,6 +187,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               // Tous les retries ont échoué
               logger.debug('[useAuth] Aucune session trouvée après tous les retries');
               if (timeoutId) clearTimeout(timeoutId);
+              if (finalCheckTimeoutId) clearTimeout(finalCheckTimeoutId);
               if (mounted) {
                 setUser(null);
                 setIsLoading(false);
@@ -191,7 +203,14 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           }
         }
         
-        if (timeoutId) clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (finalCheckTimeoutId) {
+          clearTimeout(finalCheckTimeoutId);
+          finalCheckTimeoutId = null;
+        }
         
         const { data: { user: authUser }, error: userError } = authResult;
         
@@ -294,14 +313,19 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           logger.debug('[useAuth] Utilisateur chargé avec succès:', userData.login, 'Status:', userData.status);
           setUser(userData);
           setIsLoading(false);
-          // Annuler le timeout maintenant qu'on a réussi
+          // Annuler les timeouts maintenant qu'on a réussi
           if (timeoutId) {
             clearTimeout(timeoutId);
             timeoutId = null;
           }
+          if (finalCheckTimeoutId) {
+            clearTimeout(finalCheckTimeoutId);
+            finalCheckTimeoutId = null;
+          }
         }
       } catch (error) {
         if (timeoutId) clearTimeout(timeoutId);
+        if (finalCheckTimeoutId) clearTimeout(finalCheckTimeoutId);
         // Ne logger que les vraies erreurs, pas les timeouts qui sont déjà gérés
         if (error instanceof Error && error.message !== 'Timeout') {
           logger.error('[useAuth] Erreur inattendue lors du chargement de l\'utilisateur:', error);
@@ -342,10 +366,14 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           hasActiveSession = true;
           userLoaded = true; // Marquer comme chargé pour éviter les redirections
           logAuth.session('Session active détectée via événement, chargement direct de l\'utilisateur', { event });
-          // Annuler le timeout car on sait qu'il y a une session
+          // Annuler les timeouts car on sait qu'il y a une session
           if (timeoutId) {
             clearTimeout(timeoutId);
             timeoutId = null;
+          }
+          if (finalCheckTimeoutId) {
+            clearTimeout(finalCheckTimeoutId);
+            finalCheckTimeoutId = null;
           }
           
           // Charger directement l'utilisateur depuis la session
@@ -447,6 +475,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
     return () => {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
+      if (finalCheckTimeoutId) clearTimeout(finalCheckTimeoutId);
       subscription.unsubscribe();
     };
   }, [redirectIfUnauthenticated, redirectTo, router, supabase]);
