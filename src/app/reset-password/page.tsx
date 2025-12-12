@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { PageTransition } from '@/components/animations';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
   // Supabase peut envoyer code, token_hash, token, ou access_token dans les query params
   // Il peut aussi être dans le hash de l'URL (#) que Next.js ne peut pas lire côté client
   // PRIORITÉ: code (format le plus courant pour resetPasswordForEmail)
-  const token = searchParams.get('code') || searchParams.get('token_hash') || searchParams.get('token') || searchParams.get('access_token');
+  const token = searchParams?.get('code') || searchParams?.get('token_hash') || searchParams?.get('token') || searchParams?.get('access_token') || null;
   
   // Si pas de token dans les query params, essayer de le récupérer depuis le hash
   // Note: window.location.hash n'est disponible que côté client
@@ -281,6 +281,24 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <PageTransition>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+            <div className="text-center">
+              <p className="text-gray-600">Chargement...</p>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
 

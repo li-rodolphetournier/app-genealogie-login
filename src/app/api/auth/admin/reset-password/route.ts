@@ -10,7 +10,7 @@ import { z } from 'zod';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const adminResetPasswordSchema = z.object({
-  userLogin: z.string({ required_error: 'Login utilisateur requis' }).min(1, 'Login utilisateur requis'),
+  userLogin: z.string().min(1, 'Login utilisateur requis'),
   reason: z.string().optional(), // Raison de la réinitialisation
 });
 
@@ -63,15 +63,33 @@ export async function POST(request: Request) {
       },
     });
 
+    // Stocker le message d'erreur avant la vérification pour le logging
+    const linkErrorMessage = linkError?.message;
+
     if (linkError) {
       console.error('Erreur génération lien:', linkError);
+      
+      // Journaliser l'action (échec)
+      await logPasswordResetAction({
+        userId: targetUser.id,
+        userEmail: targetUser.email,
+        actionType: 'admin_reset',
+        adminId: auth.user.id,
+        adminLogin: auth.user.login,
+        reason: reason || 'Réinitialisation par administrateur',
+        ipAddress: getIpAddress(request),
+        userAgent: getUserAgent(request),
+        success: false,
+        errorMessage: linkErrorMessage,
+      });
+
       return NextResponse.json<ErrorResponse>(
         { error: 'Erreur lors de la génération du lien de réinitialisation' },
         { status: 500 }
       );
     }
 
-    // Journaliser l'action
+    // Journaliser l'action (succès)
     await logPasswordResetAction({
       userId: targetUser.id,
       userEmail: targetUser.email,
@@ -81,8 +99,8 @@ export async function POST(request: Request) {
       reason: reason || 'Réinitialisation par administrateur',
       ipAddress: getIpAddress(request),
       userAgent: getUserAgent(request),
-      success: !linkError,
-      errorMessage: linkError ? linkError.message : undefined,
+      success: true,
+      errorMessage: undefined,
     });
 
     return NextResponse.json<SuccessResponse>(

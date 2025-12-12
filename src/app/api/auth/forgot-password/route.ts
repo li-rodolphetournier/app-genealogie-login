@@ -123,8 +123,22 @@ export async function POST(request: Request) {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
     });
 
+    // Stocker le message d'erreur avant la vérification pour le logging
+    const errorMessage = error?.message;
+
     if (error) {
       logger.error('[API /auth/forgot-password] Erreur envoi email:', error);
+      
+      // Journaliser l'action (échec)
+      await logPasswordResetAction({
+        userEmail: userEmail,
+        actionType: 'forgot_password',
+        ipAddress: getIpAddress(request),
+        userAgent: getUserAgent(request),
+        success: false,
+        errorMessage: errorMessage,
+      });
+
       // Ne pas révéler l'erreur à l'utilisateur (sécurité)
       return NextResponse.json<SuccessResponse>(
         { message: 'Si cet email/login existe, un lien de réinitialisation a été envoyé.' },
@@ -132,14 +146,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Journaliser l'action
+    // Journaliser l'action (succès)
     await logPasswordResetAction({
       userEmail: userEmail,
       actionType: 'forgot_password',
       ipAddress: getIpAddress(request),
       userAgent: getUserAgent(request),
-      success: !error,
-      errorMessage: error ? error.message : undefined,
+      success: true,
+      errorMessage: undefined,
     });
 
     return NextResponse.json<SuccessResponse>(

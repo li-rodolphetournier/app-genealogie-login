@@ -10,8 +10,8 @@ import { z } from 'zod';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string({ required_error: 'Mot de passe actuel requis' }).min(1, 'Mot de passe actuel requis'),
-  newPassword: z.string({ required_error: 'Nouveau mot de passe requis' }).min(6, 'Le nouveau mot de passe doit contenir au moins 6 caractères'),
+  currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
+  newPassword: z.string().min(6, 'Le nouveau mot de passe doit contenir au moins 6 caractères'),
 });
 
 export async function POST(request: Request) {
