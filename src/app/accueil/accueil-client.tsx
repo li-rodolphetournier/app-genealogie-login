@@ -10,6 +10,7 @@ import { AnimatedContainer, FadeInStagger, FadeInStaggerItem } from '@/component
 import { SecurityMonitoringPanel } from '@/components/monitoring/SecurityMonitoringPanel';
 import { SecurityTestsPanel } from '@/components/monitoring/SecurityTestsPanel';
 import { isDevelopment } from '@/lib/utils/env';
+import { MessageImageCarousel } from '@/components/carousel/MessageImageCarousel';
 
 type AccueilClientProps = {
   initialDisplayedMessages: Message[];
@@ -685,20 +686,11 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                   </div>
 
                   {message.images && message.images.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-                      {message.images.map((image, imgIndex) => (
-                        image && (
-                          <div key={imgIndex} className="relative aspect-square">
-                            <Image
-                              src={image}
-                              alt={`Image ${imgIndex + 1} du message`}
-                              fill
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              className="object-cover rounded"
-                            />
-                          </div>
-                        )
-                      ))}
+                    <div className="my-4">
+                      <MessageImageCarousel 
+                        images={message.images.filter(Boolean)} 
+                        messageTitle={message.title}
+                      />
                     </div>
                   )}
 
