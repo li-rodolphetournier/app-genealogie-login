@@ -195,49 +195,70 @@ export default function Login() {
         logger.debug('[LOGIN] Connexion réussie, utilisateur:', authResult.data.user.email);
         logger.debug('[LOGIN] Session:', authResult.data.session?.access_token ? 'présente' : 'absente');
         
-        // Attendre que la session soit correctement établie dans les cookies
-        // Faire plusieurs tentatives pour s'assurer que la session est bien établie
-        // En production (Vercel), augmenter le nombre de tentatives et le délai
+        // Si on a une session directement dans authResult, l'utiliser sans vérifier avec getUser()
+        // Cela évite les problèmes de timeout en production
         const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
-        const maxAttempts = isProduction ? 15 : 10;
-        const attemptDelay = isProduction ? 400 : 300;
         
-        let verifyUser = null;
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(resolve => setTimeout(resolve, attemptDelay));
-          try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (user && !error) {
-              verifyUser = user;
-              logAuth.session(`Session vérifiée avec succès (tentative ${i + 1})`, { email: user.email });
-              logger.debug(`[LOGIN] Session vérifiée avec succès (tentative ${i + 1})`);
-              break;
-            }
-          } catch (err) {
-            logAuth.warn('LOGIN', `Erreur lors de la vérification (tentative ${i + 1})`, { error: err });
-            logger.debug(`[LOGIN] Erreur lors de la vérification (tentative ${i + 1}):`, err);
-          }
-        }
-        
-        if (verifyUser) {
-          logAuth.login('Vérification session OK, redirection vers /accueil', { email: verifyUser.email });
-          logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
+        if (authResult.data.session?.access_token) {
+          // On a une session valide directement, rediriger immédiatement
+          logAuth.login('Session disponible directement depuis authResult, redirection vers /accueil', { 
+            email: authResult.data.user.email 
+          });
+          logger.debug('[LOGIN] Session disponible directement, redirection vers /accueil');
+          
           // Libérer l'état de chargement avant la redirection
           setIsLoading(false);
-          // Délai supplémentaire pour la propagation des cookies (augmenté en production)
-          const redirectDelay = isProduction ? 1000 : 500;
+          
+          // Délai pour la propagation des cookies (augmenté en production)
+          const redirectDelay = isProduction ? 1500 : 800;
           await new Promise(resolve => setTimeout(resolve, redirectDelay));
-          logAuth.redirect('/', '/accueil', 'Connexion réussie');
+          
+          logAuth.redirect('/', '/accueil', 'Connexion réussie avec session directe');
           // Utiliser window.location pour forcer une navigation complète et éviter les blocages
           window.location.href = '/accueil';
         } else {
-          logAuth.error('LOGIN', 'Session perdue après connexion !', { 
-            userId: authResult.data.user.id,
-            attempts: maxAttempts
-          });
-          logger.error('[LOGIN] Session perdue après connexion !');
-          setError('Erreur de session. Veuillez réessayer.');
-          setIsLoading(false);
+          // Pas de session dans authResult, essayer de vérifier avec getUser()
+          // En production (Vercel), augmenter le nombre de tentatives et le délai
+          const maxAttempts = isProduction ? 15 : 10;
+          const attemptDelay = isProduction ? 400 : 300;
+          
+          let verifyUser = null;
+          for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(resolve => setTimeout(resolve, attemptDelay));
+            try {
+              const { data: { user }, error } = await supabase.auth.getUser();
+              if (user && !error) {
+                verifyUser = user;
+                logAuth.session(`Session vérifiée avec succès (tentative ${i + 1})`, { email: user.email });
+                logger.debug(`[LOGIN] Session vérifiée avec succès (tentative ${i + 1})`);
+                break;
+              }
+            } catch (err) {
+              logAuth.warn('LOGIN', `Erreur lors de la vérification (tentative ${i + 1})`, { error: err });
+              logger.debug(`[LOGIN] Erreur lors de la vérification (tentative ${i + 1}):`, err);
+            }
+          }
+          
+          if (verifyUser) {
+            logAuth.login('Vérification session OK, redirection vers /accueil', { email: verifyUser.email });
+            logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
+            // Libérer l'état de chargement avant la redirection
+            setIsLoading(false);
+            // Délai supplémentaire pour la propagation des cookies (augmenté en production)
+            const redirectDelay = isProduction ? 1500 : 800;
+            await new Promise(resolve => setTimeout(resolve, redirectDelay));
+            logAuth.redirect('/', '/accueil', 'Connexion réussie après vérification');
+            // Utiliser window.location pour forcer une navigation complète et éviter les blocages
+            window.location.href = '/accueil';
+          } else {
+            logAuth.error('LOGIN', 'Session perdue après connexion !', { 
+              userId: authResult.data.user.id,
+              attempts: maxAttempts
+            });
+            logger.error('[LOGIN] Session perdue après connexion !');
+            setError('Erreur de session. Veuillez réessayer.');
+            setIsLoading(false);
+          }
         }
       } else {
         logAuth.error('LOGIN', 'Pas de user dans authResult.data');

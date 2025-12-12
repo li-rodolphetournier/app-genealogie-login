@@ -337,16 +337,59 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         }
 
         // Si on détecte SIGNED_IN ou INITIAL_SESSION avec une session, marquer qu'il y a une session active
-        // et annuler le timeout pour éviter les redirections prématurées
+        // et charger directement l'utilisateur pour éviter les redirections prématurées
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           hasActiveSession = true;
-          logAuth.session('Session active détectée via événement, annulation du timeout', { event });
+          userLoaded = true; // Marquer comme chargé pour éviter les redirections
+          logAuth.session('Session active détectée via événement, chargement direct de l\'utilisateur', { event });
           // Annuler le timeout car on sait qu'il y a une session
           if (timeoutId) {
             clearTimeout(timeoutId);
             timeoutId = null;
           }
-          // Ne pas continuer, laisser loadUser() terminer son travail
+          
+          // Charger directement l'utilisateur depuis la session
+          try {
+            logger.debug(`[useAuth] Session trouvée pour user: ${session.user.email}, récupération du profil...`);
+            // Récupérer le profil utilisateur
+            const { data: profile, error: profileError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (profileError && profileError.code !== 'PGRST116') {
+              logger.error('[useAuth] Erreur lors de la récupération du profil:', profileError);
+            }
+
+            const userData: User = {
+              id: session.user.id,
+              login: profile?.login || session.user.email?.split('@')[0] || '',
+              email: session.user.email || profile?.email || '',
+              status: (profile?.status as User['status']) || 'utilisateur',
+              description: profile?.description || null,
+              profileImage: profile?.profile_image || null,
+              createdAt: profile?.created_at || new Date().toISOString(),
+              updatedAt: profile?.updated_at || new Date().toISOString(),
+            };
+
+            logAuth.session('Utilisateur chargé directement depuis événement', { 
+              login: userData.login, 
+              status: userData.status 
+            });
+            logger.debug(`[useAuth] Utilisateur chargé: ${userData.login}, status: ${userData.status}`);
+            if (mounted) {
+              setUser(userData);
+              setIsLoading(false);
+            }
+          } catch (error) {
+            logAuth.error('HOOK', 'Erreur lors du chargement direct de l\'utilisateur', { 
+              error: error instanceof Error ? error.message : 'Erreur inconnue' 
+            });
+            logger.error('[useAuth] Erreur lors du chargement direct:', error);
+            // En cas d'erreur, laisser loadUser() continuer
+            userLoaded = false;
+          }
           return;
         }
 
