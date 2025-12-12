@@ -9,6 +9,7 @@ import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
 import { BackToHomeButton } from '@/components/navigation';
 import { PageTransition } from '@/components/animations';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import type { Message } from '@/types/message';
 
 type MessagesClientProps = {
@@ -21,7 +22,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     redirectIfUnauthenticated: true,
     redirectTo: '/',
   });
-  const { showToast, showConfirm } = useToast();
+  const { showToast } = useToast();
   
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -32,6 +33,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     images: [] as string[],
     display_on_home: false
   });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
 
   // Vérifier que l'utilisateur est administrateur
   if (!isLoading && user && user.status !== 'administrateur') {
@@ -174,25 +177,32 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (messageId: string) => {
-    const confirmed = await showConfirm('Êtes-vous sûr de vouloir supprimer ce message ?');
-    if (!confirmed) {
-      return;
-    }
+  const handleDeleteClick = (messageId: string) => {
+    setMessageToDelete(messageId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
 
     try {
-      const response = await fetch(`/api/messages?id=${messageId}`, {
+      const response = await fetch(`/api/messages?id=${messageToDelete}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
+        showToast('Message supprimé avec succès', 'success');
         await fetchMessages();
       } else {
-        throw new Error('Erreur lors de la suppression');
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        showToast(errorData.error || getErrorMessage('MESSAGE_DELETE_FAILED'), 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
       showToast(getErrorMessage('MESSAGE_DELETE_FAILED'), 'error');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -414,7 +424,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(message.id)}
+                        onClick={() => handleDeleteClick(message.id)}
                         className="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition-colors"
                         title="Supprimer"
                       >
@@ -465,6 +475,18 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
         </div>
       </main>
       </div>
+
+      {/* Modal de confirmation de suppression */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setMessageToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Confirmer la suppression"
+        message="Êtes-vous sûr de vouloir supprimer ce message ? Cette action est irréversible."
+      />
     </PageTransition>
   );
 }

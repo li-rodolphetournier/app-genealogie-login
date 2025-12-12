@@ -196,8 +196,18 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 </motion.button>
               )}
               <motion.button
-                onClick={logout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (error) {
+                    console.error('Erreur lors de la déconnexion:', error);
+                    // Forcer la redirection même en cas d'erreur
+                    if (typeof window !== 'undefined') {
+                      window.location.href = '/';
+                    }
+                  }
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Se déconnecter"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

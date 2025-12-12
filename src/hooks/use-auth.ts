@@ -770,20 +770,66 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   }, [redirectIfUnauthenticated, redirectTo, router, supabase]);
 
   const logout = async () => {
-    // Réinitialiser le cache global lors de la déconnexion
-    globalAuthCache.profileLoadingInProgress = false;
-    globalAuthCache.lastLoadedUserId = null;
-    globalAuthCache.lastLoadedUser = null;
-    globalAuthCache.loadingPromise = null;
-    
-    logAuth.logout('Déconnexion initiée', { 
-      userId: user?.id,
-      pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
-    });
-    await supabase.auth.signOut();
-    setUser(null);
-    logAuth.redirect(window.location.pathname, '/', 'Déconnexion manuelle');
-    router.push('/');
+    try {
+      // Réinitialiser le cache global lors de la déconnexion
+      globalAuthCache.profileLoadingInProgress = false;
+      globalAuthCache.lastLoadedUserId = null;
+      globalAuthCache.lastLoadedUser = null;
+      globalAuthCache.loadingPromise = null;
+      
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'server';
+      logAuth.logout('Déconnexion initiée', { 
+        userId: user?.id,
+        pathname: currentPath
+      });
+
+      // Déconnexion côté client
+      const { error: signOutError } = await supabase.auth.signOut();
+      
+      if (signOutError) {
+        logAuth.logout('Erreur lors de la déconnexion côté client', { 
+          error: signOutError.message 
+        });
+        // Continuer quand même avec la déconnexion côté serveur
+      }
+
+      // Déconnexion côté serveur pour s'assurer que les cookies sont supprimés
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch (apiError) {
+        // Si l'API échoue, continuer quand même
+        logAuth.logout('Erreur lors de la déconnexion côté serveur', { 
+          error: apiError instanceof Error ? apiError.message : 'Erreur inconnue'
+        });
+      }
+
+      // Réinitialiser l'état utilisateur
+      setUser(null);
+      
+      logAuth.redirect(currentPath, '/', 'Déconnexion manuelle');
+      
+      // Utiliser window.location.href pour forcer une redirection complète
+      // Cela garantit que la page est complètement rechargée et que les cookies sont bien supprimés
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      logAuth.logout('Erreur inattendue lors de la déconnexion', { 
+        error: error instanceof Error ? error.message : 'Erreur inconnue'
+      });
+      
+      // En cas d'erreur, forcer quand même la redirection
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.push('/');
+      }
+    }
   };
 
   return {
