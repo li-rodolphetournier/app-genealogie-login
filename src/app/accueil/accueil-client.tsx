@@ -181,7 +181,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
               transition={{ delay: 0.3, duration: 0.4 }}
             >
               <span className="text-gray-600">
-                Connecté en tant que <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
+                Bienvenue <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
               </span>
               {user?.status === 'administrateur' && isDevelopment() && (
                 <motion.button

@@ -110,6 +110,7 @@ export async function PUT(
       }
       
       body = {
+        login: formData.get('login')?.toString(),
         email: formData.get('email')?.toString(),
         description: formData.get('description')?.toString(),
         status: formData.get('status')?.toString(),
@@ -151,9 +152,28 @@ export async function PUT(
       );
     }
 
+    // Si le login change, vérifier qu'il n'existe pas déjà
+    if (validation.data.login && validation.data.login !== login) {
+      const { data: existingLoginUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('login', validation.data.login)
+        .single();
+
+      if (existingLoginUser) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Ce login est déjà utilisé par un autre utilisateur' },
+          { status: 409 }
+        );
+      }
+    }
+
     // Préparer les données de mise à jour pour Supabase
     const updateData: Record<string, any> = {};
     
+    if (validation.data.login !== undefined && validation.data.login !== login) {
+      updateData.login = validation.data.login;
+    }
     if (validation.data.email !== undefined) {
       updateData.email = validation.data.email;
     }
@@ -201,6 +221,10 @@ export async function PUT(
     // Revalider le cache
     revalidatePath('/users', 'page');
     revalidatePath(`/users/${login}`, 'page');
+    // Si le login a changé, revalider aussi l'ancienne route
+    if (userResponse.login !== login) {
+      revalidatePath(`/users/${userResponse.login}`, 'page');
+    }
 
     return NextResponse.json<SuccessResponse<UserResponse>>(
       { message: 'Utilisateur mis à jour avec succès', data: userResponse },

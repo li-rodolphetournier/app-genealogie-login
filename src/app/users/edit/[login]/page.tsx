@@ -20,7 +20,8 @@ export default function EditUser() {
   const login = params?.login as string;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState<Omit<User, 'login'>>({
+  const [formData, setFormData] = useState<User>({
+    login: '',
     email: '',
     description: '',
     status: '',
@@ -37,6 +38,7 @@ export default function EditUser() {
           const data = await response.json();
           setUser(data);
           setFormData({
+            login: data.login || '',
             email: data.email || '',
             description: data.description || '',
             status: data.status || '',
@@ -90,6 +92,7 @@ export default function EditUser() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          login: formData.login,
           email: formData.email,
           description: formData.description,
           status: formData.status,
@@ -102,7 +105,10 @@ export default function EditUser() {
         throw new Error(errorData.error || 'Erreur lors de la mise à jour de l\'utilisateur');
       }
 
-      router.push(`/users/${login}`);
+      // Rediriger vers le nouveau login si il a changé, sinon vers l'ancien
+      const responseData = await response.json();
+      const newLogin = responseData.data?.login || formData.login;
+      router.push(`/users/${newLogin}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
@@ -114,7 +120,9 @@ export default function EditUser() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Modifier l&apos;utilisateur {login}</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Modifier l&apos;utilisateur {formData.login || login}
+      </h1>
 
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
@@ -123,6 +131,21 @@ export default function EditUser() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="login" className="block mb-1">Login:</label>
+          <input
+            type="text"
+            id="login"
+            name="login"
+            value={formData.login}
+            onChange={(e) => setFormData({ ...formData, login: e.target.value })}
+            className="w-full border rounded p-2"
+            required
+            minLength={3}
+            maxLength={50}
+          />
+        </div>
+
         <div>
           <label htmlFor="email" className="block mb-1">Email:</label>
           <input

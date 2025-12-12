@@ -4,6 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { personCreateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
+import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import type { Person } from '@/types/genealogy';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
@@ -19,6 +20,11 @@ export async function POST(request: Request) {
     }
     
     const { nom, prenom, genre, description, mere, pere, ordreNaissance, dateNaissance, dateDeces, image } = validation.data;
+    
+    // Récupérer l'utilisateur authentifié pour enregistrer le créateur
+    const auth = await getAuthenticatedUser();
+    const createdBy = auth.user?.id || null;
+    
     const supabase = await createServiceRoleClient();
 
     // Générer un ID unique
@@ -56,6 +62,7 @@ export async function POST(request: Request) {
         date_naissance: dateNaissance || null,
         date_deces: dateDeces || null,
         image: image || null,
+        created_by: createdBy,
       })
       .select()
       .single();
