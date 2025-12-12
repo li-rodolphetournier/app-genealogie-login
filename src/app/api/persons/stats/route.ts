@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { ErrorResponse } from '@/types/api/responses';
+import { logger } from '@/lib/utils/logger';
 
 type TimeFilter = '1day' | '15days' | '1month' | '1year' | 'all';
 
@@ -57,10 +58,10 @@ export async function GET(request: Request) {
     const supabase = await createServiceRoleClient();
     const dateFilter = getDateFilter(filter);
 
-    // Construire la requête (avec jointure optionnelle pour le créateur)
+    // Construire la requête
     let query = supabase
       .from('persons')
-      .select('id, nom, prenom, created_at, created_by')
+      .select('id, nom, prenom, created_at')
       .order('created_at', { ascending: false });
 
     // Appliquer le filtre de date si nécessaire
@@ -71,35 +72,16 @@ export async function GET(request: Request) {
     const { data: persons, error } = await query;
 
     if (error) {
-      console.error('Erreur Supabase lors de la récupération des statistiques:', error);
+      logger.error('[API /persons/stats] Erreur Supabase:', error);
       return NextResponse.json<ErrorResponse>(
-        { error: 'Erreur lors de la récupération des statistiques' },
+        { error: `Erreur lors de la récupération des statistiques: ${error.message || 'Erreur inconnue'}` },
         { status: 500 }
       );
     }
 
-    // Récupérer les informations des créateurs si created_by existe
-    const creatorIds = [...new Set((persons || [])
-      .map((p: any) => p.created_by)
-      .filter((id: any) => id !== null && id !== undefined))];
-
-    let creatorsMap = new Map<string, { login: string; email: string }>();
-    
-    if (creatorIds.length > 0) {
-      const { data: creators } = await supabase
-        .from('users')
-        .select('id, login, email')
-        .in('id', creatorIds);
-
-      if (creators) {
-        creators.forEach((creator: any) => {
-          creatorsMap.set(creator.id, {
-            login: creator.login || creator.email || 'Inconnu',
-            email: creator.email || '',
-          });
-        });
-      }
-    }
+    // Note: La colonne created_by n'existe pas dans la table persons
+    // On ne peut donc pas récupérer les informations du créateur
+    const creatorsMap = new Map<string, { login: string; email: string }>();
 
     // Grouper par date (jour)
     const statsByDate = new Map<string, PersonStats>();
@@ -129,8 +111,8 @@ export async function GET(request: Request) {
         nom: person.nom,
         prenom: person.prenom,
         created_at: person.created_at,
-        created_by: person.created_by || null,
-        creator,
+        created_by: null, // La colonne created_by n'existe pas dans la table persons
+        creator: null, // Pas de créateur disponible
       });
     });
 
@@ -153,9 +135,10 @@ export async function GET(request: Request) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('Erreur lors de la récupération des statistiques:', error);
+    logger.error('[API /persons/stats] Erreur:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return NextResponse.json<ErrorResponse>(
-      { error: 'Erreur lors de la récupération des statistiques' },
+      { error: `Erreur lors de la récupération des statistiques: ${errorMessage}` },
       { status: 500 }
     );
   }

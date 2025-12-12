@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { PageTransition } from '@/components/animations';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // Taille maximale de fichier en octets (2 Mo)
 
@@ -207,7 +208,8 @@ export default function CreateObject() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold mb-6">Créer un nouvel objet</h1>
@@ -425,6 +427,7 @@ export default function CreateObject() {
           </form>
         </div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

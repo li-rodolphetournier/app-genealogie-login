@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/lib/errors/messages';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import ImageWithFallback from '@/components/ImageWithFallback'; // Utilisé dans la vue liste
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 import type { ObjectData } from '@/types/objects';
 
 type FilterType = 'tous' | 'nom' | 'utilisateur' | 'status';
@@ -182,7 +183,8 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
       <div className="fixed top-0 left-0 right-0 z-10 bg-white shadow-sm">
         <header className="w-full">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -399,7 +401,8 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
         }}
         onConfirm={confirmDelete}
       />
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

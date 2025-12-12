@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 import Image from 'next/image';
 import LoadingIndicator from '@/components/LoadingIndicator';
+import { PageTransition } from '@/components/animations';
 import type { User } from '@/types/user';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
@@ -279,7 +280,8 @@ export default function EditObject() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold mb-6">Modifier l'objet : {object.nom}</h1>
@@ -524,6 +526,7 @@ export default function EditObject() {
           </form>
         </div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 } 

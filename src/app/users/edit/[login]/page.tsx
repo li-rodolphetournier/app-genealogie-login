@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ProfileImage } from '@/components/ProfileImage';
+import { PageTransition } from '@/components/animations';
 
 type User = {
   login: string;
@@ -119,7 +120,8 @@ export default function EditUser() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
+    <PageTransition>
+      <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">
         Modifier l&apos;utilisateur {formData.login || login}
       </h1>
@@ -218,6 +220,7 @@ export default function EditUser() {
           </Link>
         </div>
       </form>
-    </div>
+      </div>
+    </PageTransition>
   );
 } 

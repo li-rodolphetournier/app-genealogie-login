@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 import { motion } from 'framer-motion';
 
 type Person = {
@@ -134,7 +135,8 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
@@ -274,7 +276,8 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

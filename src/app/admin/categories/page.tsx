@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import LoadingIndicator from '@/components/LoadingIndicator';
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 
 type Category = {
   id: string | null;
@@ -160,7 +161,8 @@ export default function CategoriesManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow px-6 py-8">
           <div className="flex justify-between items-center mb-6">
@@ -324,7 +326,8 @@ export default function CategoriesManagement() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

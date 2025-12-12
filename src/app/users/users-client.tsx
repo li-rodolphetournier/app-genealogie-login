@@ -8,6 +8,7 @@ import ImageWithFallback from '@/components/ImageWithFallback';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import { ProfileImage } from '@/components/ProfileImage';
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 import type { User } from '@/types/user';
 
 type UsersClientProps = {
@@ -49,7 +50,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
       {/* En-tête fixe */}
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -218,7 +220,8 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
         onConfirm={handleConfirmDelete}
         message={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${userToDelete} ?`}
       />
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

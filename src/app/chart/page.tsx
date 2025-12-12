@@ -17,6 +17,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import LoadingIndicator from '../../components/LoadingIndicator';
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 import { ObjectData } from '../../types/objects';
 
 // Lazy loading des composants Chart (lourds ~80KB)
@@ -154,7 +155,8 @@ export default function ChartPage() {
         const statsRes = await fetch(`/api/persons/stats?filter=${timeFilter}`);
 
         if (!statsRes.ok) {
-          throw new Error('Erreur lors de la récupération des statistiques des personnes');
+          const errorData = await statsRes.json().catch(() => ({ error: 'Erreur inconnue' }));
+          throw new Error(errorData.error || 'Erreur lors de la récupération des statistiques des personnes');
         }
 
         const statsData: PersonStatsResponse = await statsRes.json();
@@ -250,7 +252,8 @@ export default function ChartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -404,6 +407,7 @@ export default function ChartPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import { useAuth } from '@/hooks/use-auth';
+import { PageTransition } from '@/components/animations';
 import type { ObjectData } from '@/types/objects';
 
 type ObjectDetailClientProps = {
@@ -17,7 +18,8 @@ export function ObjectDetailClient({ object }: ObjectDetailClientProps) {
   const canEdit = user && (user.status === 'administrateur' || user.login === object.utilisateur);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow lg:grid lg:grid-cols-3 lg:gap-x-8 px-6 py-8">
           <div className="lg:col-span-1">
@@ -103,7 +105,8 @@ export function ObjectDetailClient({ object }: ObjectDetailClientProps) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

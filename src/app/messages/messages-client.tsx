@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
 import { BackToHomeButton } from '@/components/navigation';
+import { PageTransition } from '@/components/animations';
 import type { Message } from '@/types/message';
 
 type MessagesClientProps = {
@@ -186,7 +187,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
       {/* Header avec bouton retour */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -391,7 +393,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

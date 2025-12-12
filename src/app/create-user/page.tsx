@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { PageTransition } from '@/components/animations';
 
 type User = {
   login: string;
@@ -103,7 +104,8 @@ export default function CreateUser() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
       <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -298,6 +300,7 @@ export default function CreateUser() {
           </form>
         </div>
       </main>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
