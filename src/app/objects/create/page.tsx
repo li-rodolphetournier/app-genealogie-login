@@ -102,6 +102,32 @@ export default function CreateObject() {
     return <div>Chargement...</div>;
   }
 
+  // Vérifier que l'utilisateur est administrateur
+  if (user.status !== 'administrateur') {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Accès refusé
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                Seuls les administrateurs peuvent créer des objets.
+              </p>
+              <button
+                onClick={() => router.push('/objects')}
+                className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Retour à la liste
+              </button>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) {
@@ -180,7 +206,8 @@ export default function CreateObject() {
       });
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la création de l\'objet');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur lors de la création de l\'objet');
       }
 
       router.push('/objects');

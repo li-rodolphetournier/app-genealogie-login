@@ -25,7 +25,7 @@ export const objectCreateSchema = z.object({
   status: z.enum(['publie', 'brouillon'] as const, {
     message: 'Le statut doit être publie ou brouillon'
   }).default('brouillon'),
-  utilisateur: z.string().min(1, 'L\'utilisateur est requis'),
+  utilisateur: z.string().optional(), // Optionnel car on peut utiliser l'utilisateur connecté
   utilisateur_id: z.string().optional(),
   photos: z.array(objectPhotoSchema.omit({ id: true })).optional(),
 });

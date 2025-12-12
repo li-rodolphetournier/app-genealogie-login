@@ -239,7 +239,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
           </FadeInStaggerItem>
 
           {/* Créer un objet - accessible aux rédacteurs et administrateurs */}
-          {user.status !== 'utilisateur' && (
+          {user.status === 'administrateur' && (
             <FadeInStaggerItem>
               <motion.div
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}

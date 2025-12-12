@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import { objectCreateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
@@ -82,6 +83,23 @@ export async function GET() {
 // POST - Créer un nouvel objet
 export async function POST(request: Request) {
   try {
+    // Vérifier l'authentification et les droits admin
+    const auth = await getAuthenticatedUser();
+    if (!auth.user) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Vous devez être connecté pour créer un objet' },
+        { status: 401 }
+      );
+    }
+
+    // Seuls les administrateurs peuvent créer des objets
+    if (auth.user.status !== 'administrateur') {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Seuls les administrateurs peuvent créer des objets' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     
     // Validation Zod
@@ -94,7 +112,7 @@ export async function POST(request: Request) {
     const { nom, type, status, utilisateur, description, longDescription, photos } = validation.data;
     const supabase = await createServiceRoleClient();
 
-    // Récupérer l'ID utilisateur depuis le login si nécessaire
+    // Récupérer l'ID utilisateur depuis le login si fourni, sinon utiliser l'utilisateur connecté
     let utilisateurId: string | null = null;
     if (utilisateur) {
       const { data: user } = await supabase
@@ -103,6 +121,9 @@ export async function POST(request: Request) {
         .eq('login', utilisateur)
         .single();
       utilisateurId = user?.id || null;
+    } else {
+      // Si aucun utilisateur n'est spécifié, utiliser l'utilisateur connecté
+      utilisateurId = auth.user.id;
     }
 
     // Créer l'objet
@@ -124,7 +145,7 @@ export async function POST(request: Request) {
     if (objectError || !newObject) {
       console.error('Erreur création objet:', objectError);
       return NextResponse.json<ErrorResponse>(
-        { error: 'Erreur lors de la création de l\'objet' },
+        { error: `Erreur lors de la création de l'objet: ${objectError?.message || 'Erreur inconnue'}` },
         { status: 500 }
       );
     }

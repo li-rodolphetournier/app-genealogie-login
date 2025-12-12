@@ -165,12 +165,14 @@ export default function Login() {
               password: formData.password,
             });
           } else {
-            setError('Identifiant introuvable');
+            setError('Identifiants incorrects');
             setIsLoading(false);
             return;
           }
         } else {
-          setError('Erreur lors de la récupération de l\'email');
+          // Si l'utilisateur n'existe pas (404) ou autre erreur, traiter comme identifiants incorrects
+          // pour ne pas révéler si l'utilisateur existe ou non (sécurité)
+          setError('Identifiants incorrects');
           setIsLoading(false);
           return;
         }
