@@ -94,7 +94,7 @@ export function GenealogyHeader({
             </button>
           </div>
           <BackToHomeButton 
-            variant="link" 
+            variant="button" 
             onClick={(e) => {
               e.preventDefault();
               onGoHome(e);

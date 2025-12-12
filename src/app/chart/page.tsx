@@ -123,7 +123,7 @@ export default function ChartPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             Statistiques des Objets
           </h1>
-          <BackToHomeButton variant="icon" />
+          <BackToHomeButton variant="button" />
         </div>
 
         {error && (

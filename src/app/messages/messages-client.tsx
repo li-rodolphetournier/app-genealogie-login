@@ -193,7 +193,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             Administration des Messages
           </h1>
-          <BackToHomeButton variant="icon" useRouter label="Retour" />
+          <BackToHomeButton variant="button" useRouter label="Retour" />
         </div>
       </header>
 

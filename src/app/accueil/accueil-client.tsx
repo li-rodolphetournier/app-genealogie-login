@@ -183,7 +183,7 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
               <span className="text-gray-600">
                 Connecté en tant que <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
               </span>
-              {user?.status === 'administrateur' && (
+              {user?.status === 'administrateur' && isDevelopment() && (
                 <motion.button
                   onClick={() => setShowMonitoring(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"

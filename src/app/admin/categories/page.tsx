@@ -166,13 +166,13 @@ export default function CategoriesManagement() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Gestion des Catégories</h1>
             <div className="flex gap-2">
-              <BackToHomeButton useRouter />
               <button
                 onClick={() => handleOpenModal()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 + Nouvelle catégorie
               </button>
+              <BackToHomeButton useRouter variant="button"/>
             </div>
           </div>
 
