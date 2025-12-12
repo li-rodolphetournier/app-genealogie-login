@@ -183,7 +183,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     }
   };
 
-  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     e?.preventDefault();
     savePositionsToSupabase(customPositions);
     router.push('/accueil');

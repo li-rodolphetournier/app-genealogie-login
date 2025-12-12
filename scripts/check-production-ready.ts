@@ -103,7 +103,8 @@ function checkEnvironmentVariables(): CheckResult {
 }
 
 function checkFeatureFlags(): CheckResult {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const nodeEnv = process.env.NODE_ENV || 'production';
+  const isProduction = nodeEnv === 'production';
   
   if (!isProduction) {
     return {
@@ -237,10 +238,12 @@ async function main() {
   // Marquer qu'on est en mode vérification (pas vraiment en production)
   process.env.CHECK_PRODUCTION_MODE = 'true';
 
-  // Forcer NODE_ENV=production si non défini (pour les vérifications)
+  // Vérifier NODE_ENV (ne pas le modifier car il est en lecture seule)
+  const nodeEnv = process.env.NODE_ENV || 'production';
   if (!process.env.NODE_ENV) {
-    process.env.NODE_ENV = 'production';
-    log('NODE_ENV défini à "production" pour cette vérification', 'info');
+    log('ℹ️  NODE_ENV non défini - Utilisation de "production" par défaut pour cette vérification', 'info');
+  } else {
+    log(`ℹ️  NODE_ENV actuel: ${nodeEnv}`, 'info');
   }
   
   log('ℹ️  Mode vérification: Les variables de production manquantes seront des avertissements, pas des erreurs critiques\n', 'info');

@@ -527,8 +527,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               login: session.user.email?.split('@')[0] || '',
               email: session.user.email || '',
               status: 'utilisateur',
-              description: null,
-              profileImage: null,
+              description: undefined,
+              profileImage: undefined,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
@@ -601,8 +601,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
               login: profile?.login || session.user.email?.split('@')[0] || '',
               email: session.user.email || profile?.email || '',
               status: (profile?.status as User['status']) || 'utilisateur',
-              description: profile?.description || null,
-              profileImage: profile?.profile_image || null,
+              description: profile?.description || undefined,
+              profileImage: profile?.profile_image || undefined,
               createdAt: profile?.created_at || new Date().toISOString(),
               updatedAt: profile?.updated_at || new Date().toISOString(),
             };
@@ -658,8 +658,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
                 login: session.user.email?.split('@')[0] || '',
                 email: session.user.email || '',
                 status: 'utilisateur',
-                description: null,
-                profileImage: null,
+                description: undefined,
+                profileImage: undefined,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };

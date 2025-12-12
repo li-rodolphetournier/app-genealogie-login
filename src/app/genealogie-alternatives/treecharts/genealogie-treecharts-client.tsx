@@ -205,7 +205,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
     }
   };
 
-  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     e?.preventDefault();
     savePositionsToSupabase(customPositions);
     router.push('/accueil');

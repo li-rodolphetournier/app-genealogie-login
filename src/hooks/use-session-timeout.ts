@@ -108,14 +108,13 @@ export function useSessionTimeout(options: UseSessionTimeoutOptions = {}) {
     }
   }, [showWarning, countdownDuration]);
 
-  // Configurer le timer d'inactivité
+  // Configurer le timer d'inactivité (uniquement si activé et utilisateur connecté)
   useIdleTimer({
     timeout: warningTimeout,
-    onIdle: handleOnIdle,
-    onActive: handleOnActive,
-    onAction: handleOnAction,
+    onIdle: enabled && !!user ? handleOnIdle : () => {},
+    onActive: enabled && !!user ? handleOnActive : () => {},
+    onAction: enabled && !!user ? handleOnAction : () => {},
     debounce: 500,
-    enabled: enabled && !!user,
   });
 
   const handleStayActive = useCallback(() => {

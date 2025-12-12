@@ -13,7 +13,7 @@ type GenealogyHeaderProps = {
   onSavePositions?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onGoHome: (e?: React.MouseEvent<HTMLAnchorElement>) => void;
+  onGoHome: (e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
   isMenuOpen: boolean;
 };
 

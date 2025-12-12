@@ -239,7 +239,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     }
   };
 
-  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleSaveAndGoHome = (e?: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     e?.preventDefault();
     router.push('/accueil');
   };
