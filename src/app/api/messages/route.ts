@@ -45,6 +45,7 @@ export async function GET() {
         images: images.length > 0 ? images : [],
         userId: msg.user_id || '',
         userName: '', // À récupérer depuis users si nécessaire
+        display_on_home: msg.display_on_home ?? false, // Si la colonne n'existe pas, sera undefined, donc false
         date: msg.created_at,
         created_at: msg.created_at,
         updated_at: msg.updated_at,
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
       return createValidationErrorResponse(validation.error);
     }
     
-    const { title, content, images, userId, userName } = validation.data;
+    const { title, content, images, userId, userName, display_on_home } = validation.data;
     const supabase = await createServiceRoleClient();
 
     // Récupérer l'ID utilisateur depuis le login si nécessaire
@@ -87,20 +88,34 @@ export async function POST(request: Request) {
     }
 
     // Créer le message
+    const insertData: any = {
+      title,
+      content,
+      user_id: userIdUuid,
+    };
+    
+    // Ajouter display_on_home si disponible (peut ne pas exister si la migration n'a pas été exécutée)
+    insertData.display_on_home = display_on_home ?? false;
+    
     const { data: newMessage, error: messageError } = await supabase
       .from('messages')
-      .insert({
-        title,
-        content,
-        user_id: userIdUuid,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (messageError || !newMessage) {
       console.error('Erreur création message:', messageError);
+      
+      // Vérifier si l'erreur est due à une colonne manquante
+      if (messageError?.message?.includes('display_on_home')) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'La colonne display_on_home n\'existe pas. Veuillez exécuter la migration SQL: supabase/migration-add-display-on-home.sql' },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json<ErrorResponse>(
-        { error: 'Erreur lors de la création du message' },
+        { error: `Erreur lors de la création du message: ${messageError?.message || 'Erreur inconnue'}` },
         { status: 500 }
       );
     }
@@ -153,6 +168,7 @@ export async function POST(request: Request) {
       images: messageImages,
       userId: userId || '',
       userName: userName || '',
+      display_on_home: (completeMessage as any).display_on_home ?? false, // Si la colonne n'existe pas, sera undefined, donc false
       date: completeMessage!.created_at,
       created_at: completeMessage!.created_at,
       updated_at: completeMessage!.updated_at,
@@ -215,6 +231,7 @@ export async function PUT(request: Request) {
     
     if (validation.data.title !== undefined) updateFields.title = validation.data.title;
     if (validation.data.content !== undefined) updateFields.content = validation.data.content;
+    if (validation.data.display_on_home !== undefined) updateFields.display_on_home = validation.data.display_on_home;
 
     // Mettre à jour le message
     const { data: updatedMessage, error: updateError } = await supabase
@@ -226,8 +243,17 @@ export async function PUT(request: Request) {
 
     if (updateError || !updatedMessage) {
       console.error('Erreur mise à jour message:', updateError);
+      
+      // Vérifier si l'erreur est due à une colonne manquante
+      if (updateError?.message?.includes('display_on_home')) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'La colonne display_on_home n\'existe pas. Veuillez exécuter la migration SQL: supabase/migration-add-display-on-home.sql' },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json<ErrorResponse>(
-        { error: getErrorMessage('MESSAGE_UPDATE_FAILED') },
+        { error: `Erreur lors de la mise à jour: ${updateError?.message || getErrorMessage('MESSAGE_UPDATE_FAILED')}` },
         { status: 500 }
       );
     }
@@ -283,6 +309,7 @@ export async function PUT(request: Request) {
       images: messageImages,
       userId: completeMessage!.user_id || '',
       userName: validation.data.userName || '',
+      display_on_home: completeMessage!.display_on_home ?? false,
       date: completeMessage!.created_at,
       created_at: completeMessage!.created_at,
       updated_at: completeMessage!.updated_at,

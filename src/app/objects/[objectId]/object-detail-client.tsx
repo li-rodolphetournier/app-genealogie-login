@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import ImageWithFallback from '@/components/ImageWithFallback';
 import { useAuth } from '@/hooks/use-auth';
 import { PageTransition } from '@/components/animations';
+import { ObjectImageCarousel } from '@/components/carousel/ObjectImageCarousel';
 import type { ObjectData } from '@/types/objects';
 
 type ObjectDetailClientProps = {
@@ -21,34 +21,8 @@ export function ObjectDetailClient({ object }: ObjectDetailClientProps) {
     <PageTransition>
       <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow lg:grid lg:grid-cols-3 lg:gap-x-8 px-6 py-8">
-          <div className="lg:col-span-1">
-            {object?.photos && object.photos.length > 0 ? (
-              <div className="space-y-4 mb-6">
-                <h2 className="text-lg font-semibold mb-4 lg:hidden">Photos</h2>
-                {object.photos.map((photo, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <ImageWithFallback
-                      src={photo.url}
-                      alt={`Photo ${index + 1} de ${object.nom} - ${photo.description.join(', ')}`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="rounded shadow-md"
-                      imgClassName="object-cover rounded"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="aspect-square mb-6">
-                <ImageWithFallback
-                  alt={`Placeholder pour ${object?.nom || 'objet'}`}
-                  className="w-full h-full rounded bg-gray-100"
-                />
-              </div>
-            )}
-          </div>
-          <div className="lg:col-span-2 mt-8 lg:mt-0">
+        <div className="bg-white rounded-lg shadow lg:grid lg:grid-cols-1 lg:gap-x-8 px-6 py-8">
+          <div className="lg:col-span-1 mt-8 lg:mt-0">
             <div className="flex flex-col sm:flex-row justify-between items-start mb-6 pb-4 border-b border-gray-200">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">{object?.nom}</h1>
@@ -88,6 +62,15 @@ export function ObjectDetailClient({ object }: ObjectDetailClientProps) {
                 <p className="text-gray-700 whitespace-pre-wrap">{object.longDescription}</p>
               </div>
             )}
+            <div className="lg:col-span-1">
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-4 lg:hidden">Photos</h2>
+               <ObjectImageCarousel
+                photos={object?.photos || []}
+                objectName={object?.nom || 'objet'}
+              />
+            </div>
+          </div>
           </div>
           {object && (
             <div className="lg:col-span-3 mt-8 pt-6 border-t border-gray-200 flex flex-wrap justify-between items-baseline gap-x-4 gap-y-2">

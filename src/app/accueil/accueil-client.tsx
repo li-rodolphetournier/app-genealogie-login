@@ -12,15 +12,15 @@ import { SecurityTestsPanel } from '@/components/monitoring/SecurityTestsPanel';
 import { isDevelopment } from '@/lib/utils/env';
 
 type AccueilClientProps = {
-  initialLastMessage: Message | null;
+  initialDisplayedMessages: Message[];
 };
 
-export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
+export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) {
   const { user, isLoading, logout } = useAuth({
     redirectIfUnauthenticated: true,
     redirectTo: '/',
   });
-  const [lastMessage] = useState<Message | null>(initialLastMessage);
+  const [displayedMessages] = useState<Message[]>(initialDisplayedMessages || []);
   
   // États pour la visibilité des cartes de généalogie (depuis Supabase)
   const [cardVisibility, setCardVisibility] = useState<Record<string, boolean>>({
@@ -655,8 +655,8 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
         </div>
       </FadeInStagger>
 
-        {/* Affichage du dernier message */}
-        {lastMessage && (
+        {/* Affichage des messages */}
+        {displayedMessages.length > 0 && (
           <AnimatedContainer variant="slideUp" delay={0.6} className="mt-12">
             <motion.h2
               className="text-2xl font-bold mb-6"
@@ -664,51 +664,58 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.4 }}
             >
-              Dernier message
+              {displayedMessages.length === 1 ? 'Message' : 'Messages'}
             </motion.h2>
-            <motion.div
-              className="bg-white rounded-lg shadow-md p-6"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8, duration: 0.4 }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {lastMessage.title}
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {new Date(lastMessage.date).toLocaleDateString('fr-FR')}
-                </span>
-              </div>
+            <div className="space-y-6">
+              {displayedMessages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  className="bg-white rounded-lg shadow-md p-6"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {message.title}
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      {new Date(message.date).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
 
-              {lastMessage.images && lastMessage.images.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
-                  {lastMessage.images.map((image, index) => (
-                    image && (
-                      <div key={index} className="relative aspect-square">
-                        <Image
-                          src={image}
-                          alt={`Image ${index + 1} du message`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-cover rounded"
-                        />
-                      </div>
-                    )
-                  ))}
-                </div>
-              )}
+                  {message.images && message.images.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-4">
+                      {message.images.map((image, imgIndex) => (
+                        image && (
+                          <div key={imgIndex} className="relative aspect-square">
+                            <Image
+                              src={image}
+                              alt={`Image ${imgIndex + 1} du message`}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="object-cover rounded"
+                            />
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
 
-              <div className="prose max-w-none">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {lastMessage.content}
-                </p>
-              </div>
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 whitespace-pre-wrap">
+                      {message.content}
+                    </p>
+                  </div>
 
-              <div className="mt-4 text-sm text-gray-500">
-                Publié par {lastMessage.userName}
-              </div>
-            </motion.div>
+                  {message.userName && (
+                    <div className="mt-4 text-sm text-gray-500">
+                      Publié par {message.userName}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </AnimatedContainer>
         )}
       </nav>

@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     // Construire la requête
     let query = supabase
       .from('persons')
-      .select('id, nom, prenom, created_at')
+      .select('id, nom, prenom, created_at, created_by')
       .order('created_at', { ascending: false });
 
     // Appliquer le filtre de date si nécessaire
@@ -79,9 +79,24 @@ export async function GET(request: Request) {
       );
     }
 
-    // Note: La colonne created_by n'existe pas dans la table persons
-    // On ne peut donc pas récupérer les informations du créateur
+    // Récupérer tous les IDs de créateurs uniques
+    const creatorIds = [...new Set((persons || []).map((p: any) => p.created_by).filter(Boolean))];
+    
+    // Récupérer les informations des créateurs
     const creatorsMap = new Map<string, { login: string; email: string }>();
+    if (creatorIds.length > 0) {
+      const { data: creators } = await supabase
+        .from('users')
+        .select('id, login, email')
+        .in('id', creatorIds);
+      
+      (creators || []).forEach((creator: any) => {
+        creatorsMap.set(creator.id, {
+          login: creator.login || 'Inconnu',
+          email: creator.email || '',
+        });
+      });
+    }
 
     // Grouper par date (jour)
     const statsByDate = new Map<string, PersonStats>();
@@ -101,7 +116,7 @@ export async function GET(request: Request) {
       const stat = statsByDate.get(dateKey)!;
       stat.count += 1;
       
-      // Récupérer les informations du créateur
+      // Récupérer les informations du créateur depuis la map
       const creator = person.created_by && creatorsMap.has(person.created_by)
         ? creatorsMap.get(person.created_by)!
         : null;
@@ -111,8 +126,8 @@ export async function GET(request: Request) {
         nom: person.nom,
         prenom: person.prenom,
         created_at: person.created_at,
-        created_by: null, // La colonne created_by n'existe pas dans la table persons
-        creator: null, // Pas de créateur disponible
+        created_by: person.created_by || null,
+        creator: creator,
       });
     });
 

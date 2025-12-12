@@ -9,6 +9,7 @@ export type Message = {
   date: string;
   userId: string;
   userName: string;
+  display_on_home?: boolean;
   created_at?: string;
   updated_at?: string;
 };

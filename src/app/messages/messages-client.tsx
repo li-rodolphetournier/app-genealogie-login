@@ -29,7 +29,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
   const [newMessage, setNewMessage] = useState({
     title: '',
     content: '',
-    images: [] as string[]
+    images: [] as string[],
+    display_on_home: false
   });
 
   // Vérifier que l'utilisateur est administrateur
@@ -112,15 +113,30 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     setIsLoadingMessages(true);
 
     try {
-      const messageData = {
-        id: editingMessageId || uuidv4(),
-        ...newMessage,
-        date: editingMessageId 
-          ? messages.find(m => m.id === editingMessageId)?.date 
-          : new Date().toISOString(),
-        userId: user.id,
-        userName: user.login
-      };
+      let messageData;
+      
+      if (editingMessageId) {
+        // Pour la mise à jour, on envoie seulement les champs modifiables
+        messageData = {
+          id: editingMessageId,
+          title: newMessage.title,
+          content: newMessage.content,
+          images: newMessage.images || [],
+          display_on_home: newMessage.display_on_home ?? false,
+          userId: user.login, // Envoyer le login, pas l'UUID
+          userName: user.login
+        };
+      } else {
+        // Pour la création, on envoie tous les champs
+        messageData = {
+          id: uuidv4(),
+          ...newMessage,
+          display_on_home: newMessage.display_on_home ?? false,
+          date: new Date().toISOString(),
+          userId: user.login, // Envoyer le login, pas l'UUID
+          userName: user.login
+        };
+      }
 
       const response = await fetch('/api/messages', {
         method: editingMessageId ? 'PUT' : 'POST',
@@ -131,7 +147,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
       });
 
       if (response.ok) {
-        setNewMessage({ title: '', content: '', images: [] });
+        setNewMessage({ title: '', content: '', images: [], display_on_home: false });
         setEditingMessageId(null);
         await fetchMessages();
       } else {
@@ -152,7 +168,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     setNewMessage({
       title: message.title,
       content: message.content,
-      images: message.images
+      images: message.images,
+      display_on_home: message.display_on_home ?? false
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -181,7 +198,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
 
   const handleCancelEdit = () => {
     setEditingMessageId(null);
-    setNewMessage({ title: '', content: '', images: [] });
+    setNewMessage({ title: '', content: '', images: [], display_on_home: false });
   };
 
   if (!user) return null;
@@ -195,7 +212,8 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             Administration des Messages
           </h1>
-          <BackToHomeButton variant="button" useRouter label="Retour" />
+          <BackToHomeButton variant='button' className="px-6 py-3 text-base bg-blue-600 hover:bg-blue-700" />
+      
         </div>
       </header>
 
@@ -282,6 +300,19 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                 />
               </div>
 
+              <div className="flex items-center">
+                <input
+                  id="display_on_home"
+                  type="checkbox"
+                  checked={newMessage.display_on_home}
+                  onChange={(e) => setNewMessage(prev => ({ ...prev, display_on_home: e.target.checked }))}
+                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                />
+                <label htmlFor="display_on_home" className="ml-2 block text-sm text-gray-700">
+                  Afficher sur la page d'accueil
+                </label>
+              </div>
+
               <div className="flex gap-4">
                 <button
                   type="submit"
@@ -315,7 +346,47 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                 <div key={message.id} className="border-b pb-4 last:border-b-0 relative">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium mb-1">{message.title}</h3>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-medium">{message.title}</h3>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={message.display_on_home ?? false}
+                            onChange={async (e) => {
+                              try {
+                                const response = await fetch('/api/messages', {
+                                  method: 'PUT',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    id: message.id,
+                                    display_on_home: e.target.checked,
+                                    title: message.title,
+                                    content: message.content,
+                                    images: message.images || [],
+                                    userId: message.userName || user.login, // Utiliser userName (login) ou user.login
+                                    userName: message.userName || user.login,
+                                  }),
+                                });
+                                if (response.ok) {
+                                  await fetchMessages();
+                                } else {
+                                  showToast('Erreur lors de la mise à jour', 'error');
+                                }
+                              } catch (error) {
+                                console.error('Erreur:', error);
+                                showToast('Erreur lors de la mise à jour', 'error');
+                              }
+                            }}
+                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            title={message.display_on_home ? "Masquer de l'accueil" : "Afficher sur l'accueil"}
+                          />
+                          <span className="ml-2 text-xs text-gray-500">
+                            {message.display_on_home ? '✓ Accueil' : 'Accueil'}
+                          </span>
+                        </label>
+                      </div>
                       <div className="text-sm text-gray-500">
                         {new Date(message.date).toLocaleDateString('fr-FR')}
                       </div>

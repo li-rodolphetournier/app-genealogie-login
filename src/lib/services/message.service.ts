@@ -40,6 +40,7 @@ export class MessageService {
         images: images.length > 0 ? images : [],
         userId: msg.user_id || '',
         userName: '',
+        display_on_home: msg.display_on_home ?? false,
         date: msg.created_at,
         created_at: msg.created_at,
         updated_at: msg.updated_at,
@@ -48,11 +49,195 @@ export class MessageService {
   }
 
   /**
-   * Récupérer le dernier message (le plus récent par date)
+   * Récupérer tous les messages affichés sur l'accueil (avec display_on_home = true)
+   */
+  static async findAllDisplayedOnHome(): Promise<Message[]> {
+    const supabase = await createServiceRoleClient();
+    
+    // Vérifier si la colonne display_on_home existe
+    let query = supabase
+      .from('messages')
+      .select(`
+        *,
+        message_images (
+          id,
+          url,
+          display_order
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    // Essayer de filtrer par display_on_home si la colonne existe
+    try {
+      query = query.eq('display_on_home', true);
+    } catch (e) {
+      // Si la colonne n'existe pas, on ignore le filtre
+    }
+    
+    const { data: messages, error } = await query;
+
+    if (error) {
+      // Si l'erreur est due à la colonne manquante, essayer sans le filtre
+      if (error.message?.includes('display_on_home')) {
+        const { data: messagesWithoutFilter, error: errorWithoutFilter } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            message_images (
+              id,
+              url,
+              display_order
+            )
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (errorWithoutFilter) {
+          throw new Error(`Erreur lors de la récupération des messages: ${errorWithoutFilter.message}`);
+        }
+        
+        return (messagesWithoutFilter || []).map((msg: any) => {
+          const images = (msg.message_images || [])
+            .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+            .map((img: any) => img.url);
+
+          return {
+            id: msg.id,
+            title: msg.title,
+            content: msg.content,
+            images: images.length > 0 ? images : [],
+            userId: msg.user_id || '',
+            userName: '',
+            display_on_home: false,
+            date: msg.created_at,
+            created_at: msg.created_at,
+            updated_at: msg.updated_at,
+          };
+        });
+      }
+      throw new Error(`Erreur lors de la récupération des messages: ${error.message}`);
+    }
+
+    if (!messages || messages.length === 0) {
+      return [];
+    }
+
+    return messages.map((msg: any) => {
+      const images = (msg.message_images || [])
+        .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+        .map((img: any) => img.url);
+
+      return {
+        id: msg.id,
+        title: msg.title,
+        content: msg.content,
+        images: images.length > 0 ? images : [],
+        userId: msg.user_id || '',
+        userName: '',
+        display_on_home: msg.display_on_home ?? false,
+        date: msg.created_at,
+        created_at: msg.created_at,
+        updated_at: msg.updated_at,
+      };
+    });
+  }
+
+  /**
+   * Récupérer le dernier message affiché sur l'accueil (le plus récent par date avec display_on_home = true)
+   * @deprecated Utiliser findAllDisplayedOnHome() pour récupérer tous les messages
    */
   static async findLast(): Promise<Message | null> {
-    const messages = await this.findAll();
-    return messages.length > 0 ? messages[0] : null;
+    const supabase = await createServiceRoleClient();
+    
+    // Vérifier si la colonne display_on_home existe
+    // Si elle n'existe pas, récupérer simplement le dernier message
+    let query = supabase
+      .from('messages')
+      .select(`
+        *,
+        message_images (
+          id,
+          url,
+          display_order
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    // Essayer de filtrer par display_on_home si la colonne existe
+    try {
+      query = query.eq('display_on_home', true);
+    } catch (e) {
+      // Si la colonne n'existe pas, on ignore le filtre et on prend le dernier message
+    }
+    
+    const { data: messages, error } = await query;
+
+    if (error) {
+      // Si l'erreur est due à la colonne manquante, essayer sans le filtre
+      if (error.message?.includes('display_on_home')) {
+        const { data: messagesWithoutFilter, error: errorWithoutFilter } = await supabase
+          .from('messages')
+          .select(`
+            *,
+            message_images (
+              id,
+              url,
+              display_order
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (errorWithoutFilter) {
+          throw new Error(`Erreur lors de la récupération du dernier message: ${errorWithoutFilter.message}`);
+        }
+        
+        if (!messagesWithoutFilter || messagesWithoutFilter.length === 0) {
+          return null;
+        }
+        
+        const msg = messagesWithoutFilter[0];
+        const images = (msg.message_images || [])
+          .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+          .map((img: any) => img.url);
+
+        return {
+          id: msg.id,
+          title: msg.title,
+          content: msg.content,
+          images: images.length > 0 ? images : [],
+          userId: msg.user_id || '',
+          userName: '',
+          display_on_home: false, // Par défaut false si la colonne n'existe pas
+          date: msg.created_at,
+          created_at: msg.created_at,
+          updated_at: msg.updated_at,
+        };
+      }
+      throw new Error(`Erreur lors de la récupération du dernier message: ${error.message}`);
+    }
+
+    if (!messages || messages.length === 0) {
+      return null;
+    }
+
+    const msg = messages[0];
+    const images = (msg.message_images || [])
+      .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+      .map((img: any) => img.url);
+
+    return {
+      id: msg.id,
+      title: msg.title,
+      content: msg.content,
+      images: images.length > 0 ? images : [],
+      userId: msg.user_id || '',
+      userName: '',
+      display_on_home: msg.display_on_home ?? false,
+      date: msg.created_at,
+      created_at: msg.created_at,
+      updated_at: msg.updated_at,
+    };
   }
 
   /**
@@ -77,6 +262,7 @@ export class MessageService {
         title: input.title,
         content: input.content,
         user_id: userIdUuid,
+        display_on_home: input.display_on_home ?? false,
       })
       .select()
       .single();
@@ -120,6 +306,7 @@ export class MessageService {
     const updateFields: Record<string, any> = {};
     if (input.title !== undefined) updateFields.title = input.title;
     if (input.content !== undefined) updateFields.content = input.content;
+    if (input.display_on_home !== undefined) updateFields.display_on_home = input.display_on_home;
 
     const { error: updateError } = await supabase
       .from('messages')
