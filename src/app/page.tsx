@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -438,12 +439,20 @@ export default function Login() {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Mot de passe
-                </label>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Mot de passe
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
                 <div className="mt-1 relative">
                   <input
                     id="password"

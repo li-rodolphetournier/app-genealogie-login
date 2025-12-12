@@ -22,6 +22,7 @@
     "migrate:categories": "tsx scripts/migrate-categories-to-table.ts",
     "update:file-refs": "tsx scripts/update-file-references.ts",
     "test:routes": "tsx scripts/test-routes.ts",
+    "test:password-reset": "tsx scripts/test-password-reset-flow.ts",
     "scan-build": "tsx scripts/scan-build.ts",
     "scan-build:quick": "tsx scripts/scan-build.ts --skip-build",
     "scan-build:lint-only": "tsx scripts/scan-build.ts --skip-build --skip-typecheck",

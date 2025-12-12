@@ -14,7 +14,7 @@ export interface SecurityTest {
 
 async function testSecurityHeaders(): Promise<{ passed: boolean; details?: string; error?: string }> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!baseUrl) {
       if (isProduction()) {
         return {
@@ -23,10 +23,7 @@ async function testSecurityHeaders(): Promise<{ passed: boolean; details?: strin
         };
       }
       // En développement, utiliser localhost comme fallback
-      return {
-        passed: false,
-        error: 'NEXT_PUBLIC_APP_URL n\'est pas défini. Définissez cette variable pour exécuter les tests.',
-      };
+      baseUrl = 'http://localhost:3000';
     }
     // Utiliser GET au lieu de HEAD car certains serveurs ne retournent pas les headers avec HEAD
     const response = await fetch(baseUrl, {
@@ -80,7 +77,7 @@ async function testSecurityHeaders(): Promise<{ passed: boolean; details?: strin
 
 async function testProtectedRoutes(): Promise<{ passed: boolean; details?: string; error?: string }> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!baseUrl) {
       if (isProduction()) {
         return {
@@ -88,10 +85,8 @@ async function testProtectedRoutes(): Promise<{ passed: boolean; details?: strin
           error: 'NEXT_PUBLIC_APP_URL n\'est pas défini en production',
         };
       }
-      return {
-        passed: false,
-        error: 'NEXT_PUBLIC_APP_URL n\'est pas défini. Définissez cette variable pour exécuter les tests.',
-      };
+      // En développement, utiliser localhost comme fallback
+      baseUrl = 'http://localhost:3000';
     }
     const protectedRoutes = ['/accueil', '/users', '/messages'];
     const results: string[] = [];
@@ -145,7 +140,7 @@ async function testProtectedRoutes(): Promise<{ passed: boolean; details?: strin
 
 async function testRateLimiting(): Promise<{ passed: boolean; details?: string; error?: string }> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!baseUrl) {
       if (isProduction()) {
         return {
@@ -153,10 +148,8 @@ async function testRateLimiting(): Promise<{ passed: boolean; details?: string; 
           error: 'NEXT_PUBLIC_APP_URL n\'est pas défini en production',
         };
       }
-      return {
-        passed: false,
-        error: 'NEXT_PUBLIC_APP_URL n\'est pas défini. Définissez cette variable pour exécuter les tests.',
-      };
+      // En développement, utiliser localhost comme fallback
+      baseUrl = 'http://localhost:3000';
     }
     // Le rate limiting est configuré pour 5 tentatives par 15 minutes
     // Faire 6 requêtes séquentiellement pour déclencher le rate limit
@@ -215,7 +208,7 @@ async function testRateLimiting(): Promise<{ passed: boolean; details?: string; 
 
 async function testInputValidation(): Promise<{ passed: boolean; details?: string; error?: string }> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!baseUrl) {
       if (isProduction()) {
         return {
@@ -223,10 +216,8 @@ async function testInputValidation(): Promise<{ passed: boolean; details?: strin
           error: 'NEXT_PUBLIC_APP_URL n\'est pas défini en production',
         };
       }
-      return {
-        passed: false,
-        error: 'NEXT_PUBLIC_APP_URL n\'est pas défini. Définissez cette variable pour exécuter les tests.',
-      };
+      // En développement, utiliser localhost comme fallback
+      baseUrl = 'http://localhost:3000';
     }
     const response = await fetch(`${baseUrl}/api/users`, {
       method: 'POST',

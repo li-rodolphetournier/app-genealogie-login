@@ -94,6 +94,25 @@ export default function EditProfile() {
     }
 
     try {
+      // Si un nouveau mot de passe est fourni, utiliser l'API dédiée
+      if (formData.newPassword && formData.currentPassword) {
+        const passwordResponse = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword,
+          }),
+        });
+
+        if (!passwordResponse.ok) {
+          const errorData = await passwordResponse.json();
+          setError(errorData.error || 'Erreur lors de la modification du mot de passe');
+          return;
+        }
+      }
+
+      // Mettre à jour les autres champs du profil
       const response = await fetch(`/api/users/${user?.login}`, {
         method: 'PUT',
         headers: {
@@ -114,7 +133,12 @@ export default function EditProfile() {
         const fullUserForStorage = { ...user, ...updatedUser };
         // Supabase Auth gère maintenant les sessions, plus besoin de localStorage
         setUser(fullUserForStorage);
-        setSuccess(responseData.message || 'Profil mis à jour avec succès');
+        
+        const successMessage = formData.newPassword 
+          ? 'Profil et mot de passe mis à jour avec succès'
+          : 'Profil mis à jour avec succès';
+        
+        setSuccess(successMessage);
         setFormData(prev => ({
           ...prev,
           email: updatedUser.email || '',
