@@ -1,7 +1,9 @@
 /**
  * Système de logging spécialisé pour l'authentification
- * Permet de tracer tous les événements d'auth pour déboguer les problèmes de déconnexion
+ * Module isolé pour la feature Auth Debug
  */
+
+import { isAuthDebugEnabled } from '../flags';
 
 export type AuthLogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -17,16 +19,21 @@ export type AuthLogEntry = {
 class AuthLogger {
   private logs: AuthLogEntry[] = [];
   private maxLogs = 100; // Garder les 100 derniers logs
-  private isEnabled = true;
+  private isEnabled = false;
   private listeners: Array<(entry: AuthLogEntry) => void> = [];
 
   constructor() {
-    // En production, désactiver les logs sauf si une variable d'environnement est définie
+    // Vérifier si la feature est activée
+    this.isEnabled = isAuthDebugEnabled();
+    
+    // Vérifier aussi les flags côté client
     if (typeof window !== 'undefined') {
-      this.isEnabled = 
-        process.env.NODE_ENV === 'development' || 
-        window.location.search.includes('debug=auth') ||
-        localStorage.getItem('auth-debug') === 'true';
+      const hasDebugParam = window.location.search.includes('debug=auth');
+      const hasLocalStorageFlag = localStorage.getItem('auth-debug') === 'true';
+      
+      if (hasDebugParam || hasLocalStorageFlag) {
+        this.isEnabled = true;
+      }
     }
   }
 
@@ -54,7 +61,7 @@ class AuthLogger {
       try {
         listener(entry);
       } catch (error) {
-        console.error('Erreur dans un listener de log:', error);
+        // Silencieux si la feature est désactivée
       }
     });
 

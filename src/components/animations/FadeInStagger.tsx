@@ -24,6 +24,7 @@ export function FadeInStagger({
       initial="hidden"
       animate="visible"
       variants={{
+        hidden: {},
         visible: {
           transition: {
             staggerChildren: staggerDelay,
@@ -46,6 +47,8 @@ type FadeInStaggerItemProps = {
 export function FadeInStaggerItem({ children, className = '' }: FadeInStaggerItemProps) {
   return (
     <motion.div
+      initial="hidden"
+      animate="visible"
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -59,6 +62,7 @@ export function FadeInStaggerItem({ children, className = '' }: FadeInStaggerIte
       }}
       className={className}
       style={{ display: 'block' }}
+      // Utiliser initial et animate directement pour garantir l'animation
     >
       {children}
     </motion.div>

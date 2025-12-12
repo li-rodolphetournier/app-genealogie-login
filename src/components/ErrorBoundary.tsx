@@ -6,6 +6,7 @@
 'use client';
 
 import React, { Component, ReactNode } from 'react';
+import { BackToHomeButton } from './navigation';
 
 type ErrorBoundaryProps = {
   children: ReactNode;
@@ -103,12 +104,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               >
                 Réessayer
               </button>
-              <button
-                onClick={() => (window.location.href = '/')}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Retour à l'accueil
-              </button>
+              <BackToHomeButton className="flex-1" />
             </div>
           </div>
         </div>

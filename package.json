@@ -24,7 +24,8 @@
     "test:routes": "tsx scripts/test-routes.ts",
     "scan-build": "tsx scripts/scan-build.ts",
     "scan-build:quick": "tsx scripts/scan-build.ts --skip-build",
-    "scan-build:lint-only": "tsx scripts/scan-build.ts --skip-build --skip-typecheck"
+    "scan-build:lint-only": "tsx scripts/scan-build.ts --skip-build --skip-typecheck",
+    "check:production": "tsx scripts/check-production-ready.ts"
   },
   "dependencies": {
     "@nivo/core": "^0.99.0",
@@ -47,6 +48,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-d3-tree": "^3.6.6",
     "react-dom": "^19.2.1",
+    "react-idle-timer": "^5.7.2",
     "uuid": "^13.0.0",
     "zod": "^4.1.13"
   },

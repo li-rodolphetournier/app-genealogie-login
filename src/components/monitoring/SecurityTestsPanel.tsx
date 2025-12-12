@@ -21,13 +21,16 @@ export function SecurityTestsPanel() {
       const response = await fetch('/api/monitoring/tests');
       if (response.ok) {
         const { results: resultsData } = await response.json();
-        setResults(resultsData || []);
+        // Mettre à jour les résultats seulement si on en a reçu
         if (resultsData && resultsData.length > 0) {
+          setResults(resultsData);
           setLastRun(new Date(resultsData[0].timestamp));
         }
+        // Si pas de résultats, ne rien faire (garder les résultats actuels)
       }
     } catch (error) {
       console.error('Erreur lors du chargement des résultats:', error);
+      // En cas d'erreur, ne pas effacer les résultats existants
     }
   };
 
@@ -37,14 +40,26 @@ export function SecurityTestsPanel() {
       const response = await fetch('/api/monitoring/tests', { method: 'POST' });
       if (response.ok) {
         const { results: newResults } = await response.json();
-        setResults(newResults || []);
+        // Afficher immédiatement les résultats retournés par l'API
+        // L'API POST retourne déjà les résultats, pas besoin de recharger
         if (newResults && newResults.length > 0) {
+          setResults(newResults);
           setLastRun(new Date(newResults[0].timestamp));
+        } else {
+          // Si pas de résultats, essayer de recharger depuis la base de données
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await loadResults();
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erreur lors de l\'exécution des tests:', errorData.error || 'Erreur inconnue');
+        // En cas d'erreur, essayer de recharger les résultats existants
+        await loadResults();
       }
-      await loadResults();
     } catch (error) {
       console.error('Erreur lors de l\'exécution des tests:', error);
+      // En cas d'erreur, essayer de recharger les résultats existants
+      await loadResults();
     } finally {
       setLoading(false);
     }

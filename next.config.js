@@ -56,6 +56,14 @@ const nextConfig = {
     // ✅ Bug corrigé dans Next.js 16 : les types générés utilisent maintenant des chemins corrects
     ignoreBuildErrors: false,
   },
+  // Désactiver les source maps en production pour améliorer les performances
+  productionBrowserSourceMaps: false,
+  // Configuration Turbopack pour Next.js 16
+  // Turbopack est activé par défaut dans Next.js 16
+  turbopack: {
+    // Configuration vide pour éviter l'erreur
+    // Les source maps sont gérées automatiquement par Turbopack
+  },
 };
 
 module.exports = withBundleAnalyzer(nextConfig);

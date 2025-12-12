@@ -10,7 +10,8 @@ import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { addSecurityHeaders } from '@/lib/security/headers';
 import { checkRateLimit, getRequestIdentifier, rateLimitConfigs } from '@/lib/security/rate-limit';
-import { logAuth } from '@/lib/utils/auth-logger';
+import { logAuth } from '@/lib/features/auth-debug';
+import { isMockModeEnabled, createMockUser, isMockUserId } from '@/lib/features/mock-auth';
 
 /**
  * Routes publiques (accessibles sans authentification)
@@ -66,6 +67,7 @@ function matchesRoute(pathname: string, routes: readonly string[]): boolean {
 
 /**
  * Vérifie l'authentification avec Supabase
+ * Gère également le mode mock en développement
  */
 async function checkAuth(request: NextRequest) {
   try {
@@ -74,6 +76,59 @@ async function checkAuth(request: NextRequest) {
         headers: request.headers,
       },
     });
+
+    // Vérifier le mode mock (uniquement en développement)
+    const mockId = request.nextUrl.searchParams.get('mock');
+    if (mockId && isMockModeEnabled()) {
+      // Créer un cookie pour le mock
+      const mockUser = createMockUser(mockId);
+      response.cookies.set('mock-user-id', mockId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 heures
+      });
+      
+      // Retourner un utilisateur mock (on simule un user Supabase)
+      const mockSupabaseUser = {
+        id: mockUser.id,
+        email: mockUser.email,
+        created_at: mockUser.createdAt || new Date().toISOString(),
+        updated_at: mockUser.updatedAt || new Date().toISOString(),
+      };
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[MIDDLEWARE] Mode mock activé avec ID: ${mockId}`);
+      }
+      
+      return { 
+        user: mockSupabaseUser as any, 
+        error: null, 
+        response,
+        isMock: true,
+        mockUser 
+      };
+    }
+
+    // Vérifier si un cookie mock existe (pour les requêtes suivantes)
+    const existingMockId = request.cookies.get('mock-user-id')?.value;
+    if (existingMockId && isMockModeEnabled()) {
+      const mockUser = createMockUser(existingMockId);
+      const mockSupabaseUser = {
+        id: mockUser.id,
+        email: mockUser.email,
+        created_at: mockUser.createdAt || new Date().toISOString(),
+        updated_at: mockUser.updatedAt || new Date().toISOString(),
+      };
+      
+      return { 
+        user: mockSupabaseUser as any, 
+        error: null, 
+        response,
+        isMock: true,
+        mockUser 
+      };
+    }
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -117,9 +172,9 @@ async function checkAuth(request: NextRequest) {
       errorMessage: error instanceof Error ? error.message : error ? String(error) : undefined
     });
 
-    return { user, error, response };
+    return { user, error, response, isMock: false };
   } catch (error) {
-    return { user: null, error, response: NextResponse.next() };
+    return { user: null, error, response: NextResponse.next(), isMock: false };
   }
 }
 
@@ -168,7 +223,30 @@ export async function middleware(request: NextRequest) {
 
   // Vérifier l'authentification pour les routes protégées
   if (matchesRoute(pathname, PROTECTED_ROUTES) || matchesRoute(pathname, PROTECTED_API_ROUTES)) {
-    const { user, error, response: authResponse } = await checkAuth(request);
+    // Vérifier le mode mock AVANT checkAuth pour éviter les redirections
+    const mockId = request.nextUrl.searchParams.get('mock');
+    if (mockId && isMockModeEnabled()) {
+      const mockUser = createMockUser(mockId);
+      
+      // Utiliser la réponse existante avec les headers de sécurité
+      response.cookies.set('mock-user-id', mockId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 heures
+      });
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[MIDDLEWARE] Mode mock activé avec ID: ${mockId} pour ${pathname}`);
+      }
+      
+      // Le mock a toujours les droits admin, donc on peut retourner directement la réponse
+      // pour toutes les routes protégées (y compris les routes admin)
+      return response;
+    }
+    
+    const authResult = await checkAuth(request);
+    const { user, error, response: authResponse, isMock, mockUser } = authResult as any;
 
     if (error || !user) {
       logAuth.middleware('Utilisateur non authentifié', { 
@@ -199,38 +277,52 @@ export async function middleware(request: NextRequest) {
 
     // Vérifier les droits administrateur si nécessaire
     if (matchesRoute(pathname, ADMIN_ROUTES) || matchesRoute(pathname, ADMIN_API_ROUTES)) {
-      // Récupérer le profil utilisateur pour vérifier le statut
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() {
-              return request.cookies.getAll();
-            },
-            setAll(_cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-              // Ignorer les modifications de cookies dans le middleware
-            },
-          },
+      // Si c'est un mock, vérifier directement le statut du mockUser
+      if (isMock && mockUser) {
+        if (mockUser.status !== 'administrateur') {
+          if (pathname.startsWith('/')) {
+            return NextResponse.redirect(new URL('/accueil', request.url));
+          }
+          return NextResponse.json(
+            { error: 'Accès refusé : droits administrateur requis' },
+            { status: 403 }
+          );
         }
-      );
-
-      const { data: profile } = await supabase
-        .from('users')
-        .select('status')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.status !== 'administrateur') {
-        // Rediriger ou retourner 403
-        if (pathname.startsWith('/')) {
-          return NextResponse.redirect(new URL('/accueil', request.url));
-        }
-
-        return NextResponse.json(
-          { error: 'Accès refusé : droits administrateur requis' },
-          { status: 403 }
+        // Le mock a toujours les droits admin, continuer
+      } else {
+        // Récupérer le profil utilisateur pour vérifier le statut
+        const supabase = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            cookies: {
+              getAll() {
+                return request.cookies.getAll();
+              },
+              setAll(_cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+                // Ignorer les modifications de cookies dans le middleware
+              },
+            },
+          }
         );
+
+        const { data: profile } = await supabase
+          .from('users')
+          .select('status')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.status !== 'administrateur') {
+          // Rediriger ou retourner 403
+          if (pathname.startsWith('/')) {
+            return NextResponse.redirect(new URL('/accueil', request.url));
+          }
+
+          return NextResponse.json(
+            { error: 'Accès refusé : droits administrateur requis' },
+            { status: 403 }
+          );
+        }
       }
     }
 

@@ -9,8 +9,17 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
-import { logAuth } from '@/lib/utils/auth-logger';
+import { logAuth } from '@/lib/features/auth-debug';
 import type { User } from '@/types/user';
+import { isMockModeEnabled, createMockUser } from '@/lib/features/mock-auth';
+
+// Cache global partagé entre toutes les instances du hook pour éviter les chargements multiples
+const globalAuthCache = {
+  profileLoadingInProgress: false,
+  lastLoadedUserId: null as string | null,
+  lastLoadedUser: null as User | null,
+  loadingPromise: null as Promise<User | null> | null,
+};
 
 type UseAuthOptions = {
   redirectIfUnauthenticated?: boolean;
@@ -43,6 +52,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
     let finalCheckTimeoutId: NodeJS.Timeout | null = null;
     let hasActiveSession = false; // Flag pour savoir si on a détecté une session active
     let userLoaded = false; // Flag pour savoir si l'utilisateur a été chargé avec succès
+    let profileLoadingInProgress = false; // Flag pour éviter les chargements multiples du profil
 
     logAuth.hook('useAuth initialisé', { 
       redirectIfUnauthenticated, 
@@ -50,22 +60,127 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
       pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'
     });
 
+    // Vérifier le mode mock (uniquement en développement)
+    // Vérifier d'abord le paramètre URL
+    let mockId: string | null = null;
+    if (typeof window !== 'undefined' && isMockModeEnabled()) {
+      const urlParams = new URLSearchParams(window.location.search);
+      mockId = urlParams.get('mock');
+      
+      if (mockId) {
+        const mockUser = createMockUser(mockId);
+        logAuth.hook('Mode mock activé depuis URL', { mockId, user: mockUser.login });
+        logger.debug('[useAuth] Mode mock activé avec ID:', mockId);
+        
+        if (mounted) {
+          setUser(mockUser);
+          setIsLoading(false);
+        }
+        
+        // Ne pas continuer avec le chargement normal ni s'abonner à onAuthStateChange si on est en mode mock
+        // Retourner une fonction de nettoyage vide
+        return () => {
+          mounted = false;
+        };
+      }
+      
+      // Si pas de paramètre dans l'URL, vérifier via l'API profile (qui gère le cookie httpOnly)
+      // Faire une vérification rapide pour voir si on est en mode mock
+      const checkMockViaAPI = async () => {
+        try {
+          const profileResponse = await fetch('/api/auth/profile');
+          if (profileResponse.ok) {
+            const { user: profileUser } = await profileResponse.json();
+            // Vérifier si c'est un utilisateur mock (ID commence par "mock-")
+            if (profileUser && profileUser.id && profileUser.id.startsWith('mock-')) {
+              logAuth.hook('Mode mock détecté via API', { userId: profileUser.id, user: profileUser.login });
+              logger.debug('[useAuth] Mode mock détecté via API:', profileUser.id);
+              
+              if (mounted) {
+                setUser(profileUser);
+                setIsLoading(false);
+              }
+              
+              // Ne pas continuer avec le chargement normal
+              return true;
+            }
+          }
+        } catch (error) {
+          // Erreur silencieuse, continuer avec le chargement normal
+          logger.debug('[useAuth] Erreur lors de la vérification mock via API:', error);
+        }
+        return false;
+      };
+      
+      // Vérifier rapidement le mock via l'API avant de continuer
+      checkMockViaAPI().then(isMock => {
+        if (isMock && mounted) {
+          // Si on est en mode mock, ne pas continuer
+          return;
+        }
+      });
+    }
+
     const loadUser = async () => {
       try {
         logAuth.hook('Début du chargement de l\'utilisateur');
         
-        // En production, attendre un peu avant de vérifier la session
+        // Déterminer si on est en production
+        const isProduction = typeof window !== 'undefined' && 
+          (window.location.hostname.includes('vercel') || 
+           window.location.hostname.includes('netlify') ||
+           process.env.NODE_ENV === 'production');
+        
+        // Détecter si on est sur mobile (pour augmenter les délais)
+        const isMobile = typeof window !== 'undefined' && 
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Délai pour attendre que onAuthStateChange ait eu le temps de se déclencher
+        // Sur mobile, augmenter le délai car les cookies peuvent prendre plus de temps
+        const waitForInitialSession = isMobile ? 1000 : (isProduction ? 500 : 200);
+        
+        // Vérifier si on vient juste de se connecter (éviter la boucle)
+        // Si on a un paramètre dans l'URL ou dans sessionStorage, on vient de se connecter
+        const justLoggedIn = typeof window !== 'undefined' && 
+          (sessionStorage.getItem('just-logged-in') === 'true' || 
+           window.location.search.includes('logged-in=true'));
+        
+        if (justLoggedIn) {
+          logAuth.hook('Connexion récente détectée, délai supplémentaire pour propagation des cookies');
+          // Sur mobile, attendre plus longtemps après une connexion
+          await new Promise(resolve => setTimeout(resolve, isMobile ? 2000 : 1500));
+          // Nettoyer le flag
+          sessionStorage.removeItem('just-logged-in');
+        }
+        
+        // Attendre que onAuthStateChange ait eu le temps de se déclencher
+        // Si INITIAL_SESSION s'est déclenché, onAuthStateChange aura déjà chargé l'utilisateur
+        await new Promise(resolve => setTimeout(resolve, waitForInitialSession));
+        
+        // Si l'utilisateur a déjà été chargé par onAuthStateChange, ne rien faire
+        if (userLoaded || hasActiveSession) {
+          logAuth.hook('Utilisateur déjà chargé par onAuthStateChange, skip getUser()');
+          logger.debug('[useAuth] Utilisateur déjà chargé par onAuthStateChange, skip getUser()');
+          // S'assurer que isLoading est à false si l'utilisateur est déjà chargé
+          // Même si user n'est pas encore dans le state, onAuthStateChange va le charger
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
+        }
+        
+        // En production ou sur mobile, attendre un peu plus avant de vérifier la session
         // pour laisser le temps aux cookies de se propager
-        const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
-        if (isProduction) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          logAuth.hook('Délai initial pour propagation des cookies en production');
+        if (isProduction || isMobile) {
+          const cookieDelay = isMobile ? 1000 : 500;
+          await new Promise(resolve => setTimeout(resolve, cookieDelay));
+          logAuth.hook(`Délai initial pour propagation des cookies (${isMobile ? 'mobile' : 'production'})`);
         }
         
         // Timeout de sécurité pour éviter que le chargement reste bloqué
-        // Augmenter le timeout en production pour tenir compte de la latence réseau
+        // Augmenter le timeout en production et sur mobile pour tenir compte de la latence réseau
         // Augmenter aussi le timeout pour laisser le temps à onAuthStateChange de se déclencher
-        const initialTimeout = isProduction ? 15000 : 8000; // 15s en prod, 8s en dev
+        const initialTimeout = isMobile ? 20000 : (isProduction ? 15000 : 8000); // 20s sur mobile, 15s en prod, 8s en dev
         timeoutId = setTimeout(() => {
           if (mounted) {
             // Si l'utilisateur a déjà été chargé, ne rien faire
@@ -75,7 +190,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             // Si on a détecté une session active, ne pas rediriger immédiatement
             // Laisser plus de temps pour la récupération du profil
             if (hasActiveSession) {
-              const secondaryTimeout = isProduction ? 15000 : 10000; // 15s en prod, 10s en dev
+              const secondaryTimeout = isMobile ? 20000 : (isProduction ? 15000 : 10000); // 20s sur mobile, 15s en prod, 10s en dev
               logAuth.warn('HOOK', `Timeout mais session active détectée, attendre encore ${secondaryTimeout / 1000}s...`);
               // Remettre un timeout supplémentaire
               timeoutId = setTimeout(() => {
@@ -111,10 +226,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         }, initialTimeout);
 
         // Créer une promesse avec timeout pour getUser()
-        // Augmenter le timeout sur Vercel pour tenir compte de la latence réseau
-        const timeoutDuration = typeof window !== 'undefined' && window.location.hostname.includes('vercel') 
-          ? 8000 
-          : 4000;
+        // Augmenter le timeout en production et sur mobile pour tenir compte de la latence réseau
+        const timeoutDuration = isMobile ? 15000 : (isProduction ? 10000 : 5000); // 15s sur mobile, 10s en prod, 5s en dev
         
         const authPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => 
@@ -365,7 +478,11 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
           hasActiveSession = true;
           userLoaded = true; // Marquer comme chargé pour éviter les redirections
-          logAuth.session('Session active détectée via événement, chargement direct de l\'utilisateur', { event });
+          logAuth.session('Session active détectée via événement, chargement direct de l\'utilisateur', { 
+            event,
+            userId: session.user.id,
+            email: session.user.email
+          });
           // Annuler les timeouts car on sait qu'il y a une session
           if (timeoutId) {
             clearTimeout(timeoutId);
@@ -376,18 +493,107 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             finalCheckTimeoutId = null;
           }
           
-          // Charger directement l'utilisateur depuis la session
-          try {
+          // Vérifier si l'utilisateur est déjà chargé dans le cache global ou local
+          const cachedUser = globalAuthCache.lastLoadedUserId === session.user.id 
+            ? globalAuthCache.lastLoadedUser 
+            : null;
+          
+          if (mounted && (user || cachedUser)) {
+            const currentUser = user || cachedUser;
+            if (currentUser && currentUser.id === session.user.id) {
+              // L'utilisateur est déjà chargé, vérifier si on a besoin de mettre à jour
+              const needsUpdate = !currentUser.login || currentUser.status === 'utilisateur' || !currentUser.email;
+              if (!needsUpdate) {
+                // Si on a un utilisateur en cache mais pas dans le state local, l'utiliser
+                if (!user && cachedUser) {
+                  setUser(cachedUser);
+                }
+                logAuth.hook('Utilisateur déjà chargé (cache ou local), skip mise à jour', { 
+                  userId: currentUser.id,
+                  login: currentUser.login,
+                  fromCache: !!cachedUser && !user
+                });
+                setIsLoading(false);
+                return;
+              }
+            }
+          }
+          
+          // Créer un utilisateur minimal immédiatement pour éviter que la page reste vide
+          // Seulement si l'utilisateur n'est pas déjà chargé ou si les données sont incomplètes
+          if (mounted && (!user || user.id !== session.user.id || !user.login) && !cachedUser) {
+            const immediateUser: User = {
+              id: session.user.id,
+              login: session.user.email?.split('@')[0] || '',
+              email: session.user.email || '',
+              status: 'utilisateur',
+              description: null,
+              profileImage: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            
+            setUser(immediateUser);
+            setIsLoading(false);
+            logAuth.hook('Utilisateur minimal créé immédiatement depuis session', { 
+              userId: immediateUser.id,
+              email: immediateUser.email
+            });
+          } else if (mounted && cachedUser) {
+            // Utiliser l'utilisateur du cache
+            setUser(cachedUser);
+            setIsLoading(false);
+            logAuth.hook('Utilisateur chargé depuis cache global', { 
+              userId: cachedUser.id,
+              login: cachedUser.login
+            });
+            return; // Pas besoin de charger le profil, il est déjà en cache
+          } else if (mounted) {
+            setIsLoading(false);
+          }
+          
+          // Charger le profil complet en arrière-plan (ne bloque pas l'affichage)
+          // Utiliser le cache global pour éviter les chargements multiples entre instances
+          const needsProfileLoad = mounted && (!user || !user.login || user.status === 'utilisateur') && 
+                                   !globalAuthCache.profileLoadingInProgress &&
+                                   globalAuthCache.lastLoadedUserId !== session.user.id;
+          
+          if (needsProfileLoad) {
+            globalAuthCache.profileLoadingInProgress = true; // Marquer comme en cours globalement
+            globalAuthCache.loadingPromise = (async () => {
+            try {
             logger.debug(`[useAuth] Session trouvée pour user: ${session.user.email}, récupération du profil...`);
-            // Récupérer le profil utilisateur
-            const { data: profile, error: profileError } = await supabase
+            logAuth.hook('Tentative de récupération du profil depuis users', { userId: session.user.id });
+            
+            // Récupérer le profil utilisateur avec timeout
+            const profilePromise = supabase
               .from('users')
               .select('*')
               .eq('id', session.user.id)
               .single();
+            
+            const timeoutPromise = new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout récupération profil')), 5000)
+            );
+            
+            let profileResult;
+            try {
+              profileResult = await Promise.race([profilePromise, timeoutPromise]);
+            } catch (profileErr) {
+              // Si timeout ou erreur, continuer avec un profil vide
+              logAuth.warn('HOOK', 'Erreur ou timeout lors de la récupération du profil', { 
+                error: profileErr instanceof Error ? profileErr.message : 'Erreur inconnue' 
+              });
+              profileResult = { data: null, error: profileErr instanceof Error ? { code: 'TIMEOUT', message: profileErr.message } : null };
+            }
 
-            if (profileError && profileError.code !== 'PGRST116') {
+            const { data: profile, error: profileError } = profileResult || { data: null, error: null };
+
+            if (profileError && profileError.code !== 'PGRST116' && profileError.code !== 'TIMEOUT') {
               logger.error('[useAuth] Erreur lors de la récupération du profil:', profileError);
+              logAuth.warn('HOOK', 'Erreur lors de la récupération du profil (continuation avec données minimales)', { 
+                error: profileError.message 
+              });
             }
 
             const userData: User = {
@@ -403,20 +609,96 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
 
             logAuth.session('Utilisateur chargé directement depuis événement', { 
               login: userData.login, 
-              status: userData.status 
+              status: userData.status,
+              hasProfile: !!profile
             });
             logger.debug(`[useAuth] Utilisateur chargé: ${userData.login}, status: ${userData.status}`);
+            
+            // Mettre à jour le cache global
+            globalAuthCache.lastLoadedUserId = userData.id;
+            globalAuthCache.lastLoadedUser = userData;
+            
             if (mounted) {
-              setUser(userData);
-              setIsLoading(false);
+              // Mettre à jour user avec le profil complet seulement si nécessaire
+              // Éviter les mises à jour inutiles qui causent des re-renders
+              const currentUser = user;
+              const needsUpdate = !currentUser || 
+                                 currentUser.id !== userData.id || 
+                                 currentUser.login !== userData.login || 
+                                 currentUser.status !== userData.status ||
+                                 currentUser.email !== userData.email;
+              
+              if (needsUpdate) {
+                setUser(userData);
+                logAuth.hook('Profil complet chargé et state mis à jour', { 
+                  userId: userData.id, 
+                  login: userData.login,
+                  status: userData.status
+                });
+              } else {
+                logAuth.hook('Profil déjà à jour, skip mise à jour', { 
+                  userId: userData.id
+                });
+              }
+            } else {
+              logAuth.warn('HOOK', 'Composant démonté, state non mis à jour', { userId: userData.id });
             }
+            
+            return userData;
           } catch (error) {
             logAuth.error('HOOK', 'Erreur lors du chargement direct de l\'utilisateur', { 
-              error: error instanceof Error ? error.message : 'Erreur inconnue' 
+              error: error instanceof Error ? error.message : 'Erreur inconnue',
+              stack: error instanceof Error ? error.stack : undefined
             });
             logger.error('[useAuth] Erreur lors du chargement direct:', error);
-            // En cas d'erreur, laisser loadUser() continuer
-            userLoaded = false;
+            // En cas d'erreur, créer un utilisateur minimal depuis la session
+            if (mounted && session?.user) {
+              const fallbackUser: User = {
+                id: session.user.id,
+                login: session.user.email?.split('@')[0] || '',
+                email: session.user.email || '',
+                status: 'utilisateur',
+                description: null,
+                profileImage: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+              setUser(fallbackUser);
+              setIsLoading(false);
+              logAuth.warn('HOOK', 'Utilisateur créé depuis session (profil non trouvé ou erreur)', { 
+                userId: fallbackUser.id,
+                email: fallbackUser.email
+              });
+            }
+            // Ne pas réinitialiser userLoaded pour éviter les redirections
+            return null;
+          } finally {
+            // Réinitialiser le flag global même en cas d'erreur
+            globalAuthCache.profileLoadingInProgress = false;
+            globalAuthCache.loadingPromise = null;
+          }
+            })() as Promise<User | null>;
+            
+            // Attendre le chargement et mettre à jour tous les composants qui écoutent
+            globalAuthCache.loadingPromise.then((loadedUser) => {
+              if (loadedUser && mounted) {
+                setUser(loadedUser);
+              }
+            }).catch(() => {
+              // Erreur déjà gérée dans le try/catch
+            });
+          } else if (globalAuthCache.loadingPromise && globalAuthCache.lastLoadedUserId === session.user.id) {
+            // Un chargement est déjà en cours pour cet utilisateur, attendre le résultat
+            globalAuthCache.loadingPromise.then((loadedUser) => {
+              if (loadedUser && mounted) {
+                setUser(loadedUser);
+                setIsLoading(false);
+              }
+            }).catch(() => {
+              if (mounted) {
+                setIsLoading(false);
+              }
+            });
           }
           return;
         }
@@ -428,6 +710,11 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             pathname: typeof window !== 'undefined' ? window.location.pathname : 'server' 
           });
           logger.debug('[useAuth] Déconnexion explicite détectée');
+          // Réinitialiser le cache global
+          globalAuthCache.profileLoadingInProgress = false;
+          globalAuthCache.lastLoadedUserId = null;
+          globalAuthCache.lastLoadedUser = null;
+          globalAuthCache.loadingPromise = null;
           if (mounted) {
             setUser(null);
             setIsLoading(false);
@@ -465,6 +752,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
 
           logger.debug(`[useAuth] Utilisateur chargé: ${userData.login}, status: ${userData.status}`);
           if (mounted) {
+            // Mettre à jour user et isLoading en même temps
+            // React batch les mises à jour, donc c'est sûr
             setUser(userData);
             setIsLoading(false);
           }
@@ -481,6 +770,12 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   }, [redirectIfUnauthenticated, redirectTo, router, supabase]);
 
   const logout = async () => {
+    // Réinitialiser le cache global lors de la déconnexion
+    globalAuthCache.profileLoadingInProgress = false;
+    globalAuthCache.lastLoadedUserId = null;
+    globalAuthCache.lastLoadedUser = null;
+    globalAuthCache.loadingPromise = null;
+    
     logAuth.logout('Déconnexion initiée', { 
       userId: user?.id,
       pathname: typeof window !== 'undefined' ? window.location.pathname : 'server'

@@ -1,5 +1,7 @@
 'use client';
 
+import { BackToHomeButton } from '@/components/navigation';
+
 type GenealogyHeaderProps = {
   title: string;
   isRefreshing: boolean;
@@ -91,16 +93,13 @@ export function GenealogyHeader({
               +
             </button>
           </div>
-          <a 
-            href="/accueil" 
+          <BackToHomeButton 
+            variant="link" 
             onClick={(e) => {
               e.preventDefault();
               onGoHome(e);
             }}
-            className="text-blue-500 hover:underline"
-          >
-            Retour à l&apos;accueil
-          </a>
+          />
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
-import { logAuth } from '@/lib/utils/auth-logger';
+import { logAuth } from '@/lib/features/auth-debug';
 import { motion } from 'framer-motion';
 import { AnimatedContainer } from '@/components/animations';
 
@@ -25,91 +25,74 @@ export default function Login() {
   useEffect(() => {
     setMounted(true);
     
-    // Attendre un peu avant de vérifier pour laisser le temps aux cookies de se propager
-    const initialDelay = typeof window !== 'undefined' && window.location.hostname.includes('vercel') ? 300 : 100;
+    let mounted = true;
+    let hasRedirected = false;
     
-    // Timeout pour éviter que la vérification reste bloquée
-    const timeoutId = setTimeout(() => {
-      setCheckingAuth(false);
-    }, 8000); // 8 secondes maximum
-    
-    // Vérifier si l'utilisateur est déjà connecté
-    const checkAuth = async () => {
-      // Attendre un peu avant de vérifier
-      await new Promise(resolve => setTimeout(resolve, initialDelay));
-      
-      logAuth.login('Vérification si utilisateur déjà connecté');
-      try {
-        // Créer une promesse avec timeout plus long en production
-        const isProduction = typeof window !== 'undefined' && window.location.hostname.includes('vercel');
-        const timeoutDuration = isProduction ? 6000 : 4000;
+    // Écouter les changements d'authentification au lieu de faire un getUser() avec timeout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted || hasRedirected) return;
         
-        const authPromise = supabase.auth.getUser();
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), timeoutDuration)
-        );
+        logAuth.session(`Événement auth sur page login: ${event}`, { 
+          hasSession: !!session,
+          userEmail: session?.user?.email 
+        });
         
-        let authResult;
-        try {
-          authResult = await Promise.race([authPromise, timeoutPromise]);
-        } catch (error) {
-          // Si timeout, essayer une dernière fois avec un délai
-          if (error instanceof Error && error.message === 'Timeout') {
-            logAuth.warn('LOGIN', 'Timeout initial, nouvelle tentative...');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            try {
-              authResult = await Promise.race([
-                supabase.auth.getUser(),
-                new Promise<never>((_, reject) => 
-                  setTimeout(() => reject(new Error('Timeout')), 3000)
-                ),
-              ]);
-            } catch (retryError) {
-              // Si le retry échoue aussi, considérer qu'il n'y a pas de session
-              // Ne pas logger comme erreur, c'est normal si l'utilisateur n'est pas connecté
-              logAuth.login('Timeout après retry, pas de session active (normal si non connecté)');
-              clearTimeout(timeoutId);
-              setCheckingAuth(false);
-              return;
-            }
-          } else {
-            throw error;
+        // Si l'utilisateur est connecté, rediriger immédiatement
+        if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session?.user)) {
+          const user = session?.user;
+          if (user) {
+            hasRedirected = true;
+            logAuth.login('Utilisateur déjà connecté, redirection vers accueil', { email: user.email });
+            logAuth.redirect('/', '/accueil', 'Utilisateur déjà connecté (onAuthStateChange)');
+            // Utiliser window.location pour forcer une navigation complète
+            window.location.href = '/accueil';
+            return;
           }
         }
         
-        const { data: { user } } = authResult;
-        
-        if (user) {
-          logAuth.login('Utilisateur déjà connecté, redirection vers accueil', { email: user.email });
-          // Utilisateur déjà connecté, rediriger vers l'accueil
-          clearTimeout(timeoutId);
-          setCheckingAuth(false); // Libérer l'écran de chargement avant la redirection
-          logAuth.redirect('/', '/accueil', 'Utilisateur déjà connecté');
-          // Utiliser window.location pour forcer une navigation complète et éviter les blocages
+        // Si déconnexion, s'assurer qu'on reste sur la page de login
+        if (event === 'SIGNED_OUT') {
+          setCheckingAuth(false);
+        }
+      }
+    );
+    
+    // Vérification initiale avec un délai court
+    const checkInitialAuth = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (!mounted || hasRedirected) return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          hasRedirected = true;
+          logAuth.login('Session trouvée lors de la vérification initiale, redirection', { 
+            email: session.user.email 
+          });
+          logAuth.redirect('/', '/accueil', 'Session trouvée (vérification initiale)');
           window.location.href = '/accueil';
           return;
-        } else {
-          logAuth.login('Aucun utilisateur connecté');
         }
       } catch (error) {
-        // Ne logger que les vraies erreurs, pas les timeouts qui sont normaux
-        if (error instanceof Error && error.message !== 'Timeout') {
-          logAuth.warn('LOGIN', 'Erreur lors de la vérification auth', { 
-            error: error.message 
-          });
-        } else {
-          logAuth.login('Timeout lors de la vérification (normal si non connecté)');
-        }
-        // Ignorer les erreurs silencieusement (timeout ou erreur réseau)
-        // L'utilisateur pourra quand même se connecter
-        logger.debug('Vérification auth:', error instanceof Error ? error.message : 'Erreur inconnue');
+        // Ignorer les erreurs, onAuthStateChange gérera la suite
+        logger.debug('[LOGIN] Erreur lors de la vérification initiale:', error);
       } finally {
-        clearTimeout(timeoutId);
-        setCheckingAuth(false);
+        if (mounted && !hasRedirected) {
+          setCheckingAuth(false);
+        }
       }
     };
     
-    void checkAuth();
+    void checkInitialAuth();
+    
+    // Timeout de sécurité pour éviter que la vérification reste bloquée
+    const timeoutId = setTimeout(() => {
+      if (mounted && !hasRedirected) {
+        setCheckingAuth(false);
+      }
+    }, 5000); // 5 secondes maximum
     
     // Vérifier si l'image existe
     const checkLogo = async () => {
@@ -123,7 +106,9 @@ export default function Login() {
     void checkLogo();
     
     return () => {
+      mounted = false;
       clearTimeout(timeoutId);
+      subscription.unsubscribe();
     };
   }, [router, supabase]);
 
@@ -248,11 +233,17 @@ export default function Login() {
           });
           logger.debug('[LOGIN] Session disponible directement, redirection vers /accueil');
           
+          // Détecter si on est sur mobile
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          // Marquer qu'on vient de se connecter (pour éviter la boucle sur mobile)
+          sessionStorage.setItem('just-logged-in', 'true');
+          
           // Libérer l'état de chargement avant la redirection
           setIsLoading(false);
           
-          // Délai pour la propagation des cookies (augmenté en production)
-          const redirectDelay = isProduction ? 1500 : 800;
+          // Délai pour la propagation des cookies (augmenté en production et sur mobile)
+          const redirectDelay = isMobile ? 2500 : (isProduction ? 1500 : 800);
           await new Promise(resolve => setTimeout(resolve, redirectDelay));
           
           logAuth.redirect('/', '/accueil', 'Connexion réussie avec session directe');
@@ -284,10 +275,17 @@ export default function Login() {
           if (verifyUser) {
             logAuth.login('Vérification session OK, redirection vers /accueil', { email: verifyUser.email });
             logger.debug('[LOGIN] Vérification session OK, redirection vers /accueil');
+            
+            // Détecter si on est sur mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Marquer qu'on vient de se connecter (pour éviter la boucle sur mobile)
+            sessionStorage.setItem('just-logged-in', 'true');
+            
             // Libérer l'état de chargement avant la redirection
             setIsLoading(false);
-            // Délai supplémentaire pour la propagation des cookies (augmenté en production)
-            const redirectDelay = isProduction ? 1500 : 800;
+            // Délai supplémentaire pour la propagation des cookies (augmenté en production et sur mobile)
+            const redirectDelay = isMobile ? 2500 : (isProduction ? 1500 : 800);
             await new Promise(resolve => setTimeout(resolve, redirectDelay));
             logAuth.redirect('/', '/accueil', 'Connexion réussie après vérification');
             // Utiliser window.location pour forcer une navigation complète et éviter les blocages

@@ -6,6 +6,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { User } from '@/types/user';
+import { isMockModeEnabled, createMockUser, isMockUserId } from '@/lib/features/mock-auth';
+import { logger } from '@/lib/utils/logger';
 
 export type AuthResult = {
   user: User | null;
@@ -16,10 +18,23 @@ export type AuthResult = {
 
 /**
  * Récupère l'utilisateur authentifié depuis les cookies Supabase
+ * Gère également le mode mock en développement
  */
 export async function getAuthenticatedUser(): Promise<AuthResult> {
   try {
     const cookieStore = await cookies();
+    
+    // Vérifier le mode mock (uniquement en développement)
+    const mockId = cookieStore.get('mock-user-id')?.value;
+    if (mockId && isMockModeEnabled()) {
+      const mockUser = createMockUser(mockId);
+      return {
+        user: mockUser,
+        isAuthenticated: true,
+        isAdmin: true, // Le mock a toujours les droits admin
+        isRedactor: true,
+      };
+    }
     
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -64,6 +79,17 @@ export async function getAuthenticatedUser(): Promise<AuthResult> {
       };
     }
 
+    // Si c'est un ID mock, retourner directement le mock
+    if (isMockUserId(authUser.id) && isMockModeEnabled()) {
+      const mockUser = createMockUser(authUser.id.replace('mock-', ''));
+      return {
+        user: mockUser,
+        isAuthenticated: true,
+        isAdmin: true,
+        isRedactor: true,
+      };
+    }
+
     // Récupérer le profil utilisateur depuis la table users
     const { data: profile, error: profileError } = await supabase
       .from('users')
@@ -99,7 +125,7 @@ export async function getAuthenticatedUser(): Promise<AuthResult> {
       isRedactor: user.status === 'redacteur' || user.status === 'administrateur',
     };
   } catch (error) {
-    console.error('Erreur lors de la vérification de l\'authentification:', error);
+    logger.error('Erreur lors de la vérification de l\'authentification:', error);
     return {
       user: null,
       isAuthenticated: false,

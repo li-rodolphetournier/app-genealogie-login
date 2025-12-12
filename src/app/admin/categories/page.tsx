@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import LoadingIndicator from '@/components/LoadingIndicator';
+import { BackToHomeButton } from '@/components/navigation';
 
 type Category = {
   id: string | null;
@@ -165,12 +166,7 @@ export default function CategoriesManagement() {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Gestion des Catégories</h1>
             <div className="flex gap-2">
-              <button
-                onClick={() => router.push('/accueil')}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Retour à l'accueil
-              </button>
+              <BackToHomeButton useRouter />
               <button
                 onClick={() => handleOpenModal()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

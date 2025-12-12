@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { AnimatedContainer, FadeInStagger, FadeInStaggerItem } from '@/components/animations';
 import { SecurityMonitoringPanel } from '@/components/monitoring/SecurityMonitoringPanel';
 import { SecurityTestsPanel } from '@/components/monitoring/SecurityTestsPanel';
+import { isDevelopment } from '@/lib/utils/env';
 
 type AccueilClientProps = {
   initialLastMessage: Message | null;
@@ -38,10 +39,15 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
         const response = await fetch('/api/genealogie/card-visibility');
         if (response.ok) {
           const visibility = await response.json();
-          setCardVisibility(visibility);
+          // Fusionner avec les valeurs par défaut pour éviter les valeurs manquantes
+          setCardVisibility(prev => ({
+            ...prev,
+            ...visibility,
+          }));
         }
       } catch (error) {
         console.error('Erreur lors du chargement de la visibilité:', error);
+        // En cas d'erreur, garder les valeurs par défaut (toutes visibles)
       } finally {
         setLoadingVisibility(false);
       }
@@ -128,6 +134,23 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
     );
   }
 
+  if (!user && !isLoading) {
+    // Si on n'a pas d'utilisateur et qu'on n'est plus en chargement, 
+    // useAuth devrait rediriger, mais on affiche un message de sécurité
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen bg-gray-50 flex items-center justify-center"
+      >
+        <div className="text-center">
+          <p className="text-gray-600">Vérification de l'authentification...</p>
+        </div>
+      </motion.div>
+    );
+  }
+  
   if (!user) {
     return null; // Redirection gérée par useAuth
   }
@@ -690,8 +713,8 @@ export function AccueilClient({ initialLastMessage }: AccueilClientProps) {
         )}
       </nav>
 
-      {/* Modal de Monitoring de Sécurité (visible uniquement pour les admins) */}
-      {showMonitoring && user?.status === 'administrateur' && (
+      {/* Modal de Monitoring de Sécurité (visible uniquement pour les admins et en développement) */}
+      {showMonitoring && user?.status === 'administrateur' && isDevelopment() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

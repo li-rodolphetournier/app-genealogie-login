@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 
 import GenericImageUploader from '../../components/ImageUploader';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { ProfileImage } from '@/components/ProfileImage';
+import { BackToHomeButton } from '@/components/navigation';
+import { logger } from '@/lib/utils/logger';
 import type { User } from '@/types/user';
 
 export default function EditProfile() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     email: '',
@@ -63,7 +62,7 @@ export default function EditProfile() {
   };
 
   const handleImageUploadError = (errorMessage: string) => {
-    console.error("Upload error:", errorMessage);
+    logger.error('Erreur upload image:', errorMessage);
     setError(`Erreur d'upload: ${errorMessage}`);
     setSuccess(null);
   };
@@ -138,7 +137,7 @@ export default function EditProfile() {
       }
     } catch (error) {
       setError('Erreur lors de la mise à jour du profil');
-      console.error('Erreur:', error);
+      logger.error('Erreur mise à jour profil:', error);
     }
   };
 
@@ -164,12 +163,7 @@ export default function EditProfile() {
                 Mettez à jour vos informations personnelles
               </p>
             </div>
-            <Link
-              href="/accueil"
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Retour à l'accueil
-            </Link>
+            <BackToHomeButton />
           </div>
         </div>
       </header>

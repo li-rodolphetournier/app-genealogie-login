@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { authLogger, type AuthLogEntry } from '@/lib/utils/auth-logger';
+import { authLogger, type AuthLogEntry } from './auth-logger';
 
 export function AuthDebugPanel() {
   const [logs, setLogs] = useState<AuthLogEntry[]>([]);

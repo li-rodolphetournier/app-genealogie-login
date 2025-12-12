@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
+import { BackToHomeButton } from '@/components/navigation';
 import type { Message } from '@/types/message';
 
 type MessagesClientProps = {
@@ -192,26 +193,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             Administration des Messages
           </h1>
-          <button
-            onClick={() => router.push('/accueil')}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            aria-label="Retour à l'accueil"
-          >
-            <svg
-              className="h-5 w-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Retour
-          </button>
+          <BackToHomeButton variant="icon" useRouter label="Retour" />
         </div>
       </header>
 

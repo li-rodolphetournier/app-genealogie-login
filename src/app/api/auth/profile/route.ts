@@ -4,12 +4,24 @@
  */
 
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import type { ErrorResponse } from '@/types/api/responses';
 import type { User } from '@/types/user';
+import { isMockModeEnabled, createMockUser } from '@/lib/features/mock-auth';
+import { logger } from '@/lib/utils/logger';
 
 export async function GET() {
   try {
+    // Vérifier le mode mock (uniquement en développement)
+    const cookieStore = await cookies();
+    const mockId = cookieStore.get('mock-user-id')?.value;
+    
+    if (mockId && isMockModeEnabled()) {
+      const mockUser = createMockUser(mockId);
+      return NextResponse.json({ user: mockUser }, { status: 200 });
+    }
+    
     // D'abord, vérifier l'authentification avec le client normal
     const supabase = await createClient();
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
@@ -60,7 +72,7 @@ export async function GET() {
     }
 
     if (profileError || !profile) {
-      console.error('[API /auth/profile] Erreur lors de la récupération du profil:', profileError);
+      logger.error('[API /auth/profile] Erreur lors de la récupération du profil:', profileError);
       return NextResponse.json<ErrorResponse>(
         { error: 'Erreur lors de la récupération du profil' },
         { status: 500 }
@@ -82,7 +94,7 @@ export async function GET() {
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
-    console.error('[API /auth/profile] Erreur:', error);
+    logger.error('[API /auth/profile] Erreur:', error);
     return NextResponse.json<ErrorResponse>(
       { error: 'Erreur serveur' },
       { status: 500 }

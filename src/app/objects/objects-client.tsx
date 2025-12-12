@@ -8,6 +8,7 @@ import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import ImageWithFallback from '@/components/ImageWithFallback'; // Utilisé dans la vue liste
+import { BackToHomeButton } from '@/components/navigation';
 import type { ObjectData } from '@/types/objects';
 
 type FilterType = 'tous' | 'nom' | 'utilisateur' | 'status';
@@ -204,12 +205,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                   </svg>
                   Créer un objet
                 </Link>
-                <Link
-                  href="/accueil"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Retour à l&apos;accueil
-                </Link>
+                <BackToHomeButton />
               </div>
             </div>
           </div>
