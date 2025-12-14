@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       { message: 'Utilisateur créé avec succès', data: userResponse },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur API create-user:", error);
     const message = error instanceof Error
       ? error.message

@@ -129,13 +129,45 @@ export function useGenealogyData(initialPersons: Person[], apiEndpoint: string =
     }
   }, [refreshData, showToast]);
 
+  const deletePerson = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/genealogie/delete?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await refreshData();
+        const result = await response.json().catch(() => ({ message: 'Personne supprimée avec succès' }));
+        showToast(result.message || 'Personne supprimée avec succès', 'success');
+        return true;
+      } else {
+        const errorData = await response.json().catch(() => ({ error: getErrorMessage('GENEALOGY_PERSON_DELETE_FAILED') }));
+        const errorMessage = errorData.error || getErrorMessage('GENEALOGY_PERSON_DELETE_FAILED');
+        const fullMessage = errorData.details 
+          ? `${errorMessage} (${errorData.details})` 
+          : errorMessage;
+        console.error('Erreur lors de la suppression:', errorData);
+        showToast(fullMessage, 'error');
+        return false;
+      }
+    } catch (error) {
+      console.error('Erreur réseau lors de la suppression :', error);
+      const errorMsg = error instanceof Error 
+        ? `Erreur réseau: ${error.message}` 
+        : getErrorMessage('GENEALOGY_PERSON_DELETE_FAILED');
+      showToast(errorMsg, 'error');
+      return false;
+    }
+  }, [refreshData, showToast]);
+
   return {
     persons,
     setPersons,
     isRefreshing,
     refreshData,
     addPerson,
-    updatePerson
+    updatePerson,
+    deletePerson
   };
 }
 

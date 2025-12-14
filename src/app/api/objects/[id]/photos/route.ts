@@ -77,18 +77,21 @@ export async function POST(
     // Revalider le cache
     revalidatePath(`/objects/${id}`, 'page');
 
-    const mappedPhotos: ObjectPhoto[] = insertedPhotos.map((p: any) => ({
-      id: p.id,
-      url: p.url,
-      description: p.description || [],
-      display_order: p.display_order || 0,
-    }));
+    const mappedPhotos: ObjectPhoto[] = insertedPhotos.map((p: unknown) => {
+      const photo = p as { id: string; url: string; description: string[]; display_order: number };
+      return {
+        id: photo.id,
+        url: photo.url,
+        description: photo.description || [],
+        display_order: photo.display_order || 0,
+      };
+    });
 
     return NextResponse.json<SuccessResponse<{ photos: ObjectPhoto[] }>>(
       { message: 'Photos ajoutées avec succès', data: { photos: mappedPhotos } },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de l\'ajout des photos:', error);
     return NextResponse.json<ErrorResponse>(
       { error: error instanceof Error ? error.message : 'Erreur lors de l\'ajout des photos' },
@@ -152,7 +155,7 @@ export async function DELETE(
       { message: 'Photo supprimée avec succès' },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la suppression de la photo:', error);
     return NextResponse.json<ErrorResponse>(
       { error: error instanceof Error ? error.message : 'Erreur lors de la suppression de la photo' },

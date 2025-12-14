@@ -80,7 +80,8 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
     isRefreshing,
     refreshData,
     addPerson,
-    updatePerson
+    updatePerson,
+    deletePerson
   } = useGenealogyData(initialPersons, '/api/genealogie-alternatives');
   
   const {
@@ -195,6 +196,14 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const success = await deletePerson(id);
+    if (success) {
+      resetForm();
+      setSelectedNodeId(null);
+    }
+  };
+
   const handleNodeClick = (node: TreeNode) => {
     if (node.id === 'root') return;
     const person = persons.find(p => p.id === node.id);
@@ -297,12 +306,14 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
         history={history}
         formData={formData}
         persons={persons}
+        editingId={editingId}
         selectedNode={selectedNode}
         onInputChange={handleInputChange}
         onImageUploadSuccess={handleImageUploadSuccess}
         onImageUploadError={handleImageUploadError}
         onSubmit={isEditing ? handleUpdate : handleSubmit}
         onCancel={resetForm}
+        onDelete={handleDelete}
         onToggleHistory={isAdmin ? toggleHistory : undefined}
       />
 

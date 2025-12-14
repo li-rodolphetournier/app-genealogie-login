@@ -56,13 +56,16 @@ export function ProfileImage({
   }
 
   return (
-    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+    <div 
+      className={`relative rounded-full overflow-hidden ${className}`} 
+      style={{ width: size, height: size }}
+    >
       <Image
         src={src}
         alt={alt}
         width={size}
         height={size}
-        className="rounded-full object-cover"
+        className="object-cover w-full h-full"
         onError={() => {
           setImageError(true);
           setImageLoaded(false);

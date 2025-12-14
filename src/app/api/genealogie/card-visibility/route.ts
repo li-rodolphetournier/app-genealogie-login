@@ -23,12 +23,13 @@ export async function GET() {
 
     // Convertir en objet pour faciliter l'utilisation côté client
     const visibilityMap: Record<string, boolean> = {};
-    (visibility || []).forEach((item: any) => {
-      visibilityMap[item.card_key] = item.is_visible;
+    (visibility || []).forEach((item: unknown) => {
+      const visibilityItem = item as { card_id: string; visible: boolean };
+      visibilityMap[visibilityItem.card_id] = visibilityItem.visible;
     });
 
     return NextResponse.json(visibilityMap, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la lecture de la visibilité:', error);
     return NextResponse.json<ErrorResponse>(
       { error: 'Erreur lors de la lecture de la visibilité' },
@@ -82,11 +83,12 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
-    if (error.message.includes('Accès refusé') || error.message.includes('Non authentifié')) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    if (errorMessage.includes('Accès refusé') || errorMessage.includes('Non authentifié')) {
       return NextResponse.json<ErrorResponse>(
-        { error: error.message },
-        { status: error.message.includes('Non authentifié') ? 401 : 403 }
+        { error: errorMessage },
+        { status: errorMessage.includes('Non authentifié') ? 401 : 403 }
       );
     }
     console.error('Erreur lors de la mise à jour de la visibilité:', error);

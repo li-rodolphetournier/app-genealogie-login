@@ -1,30 +1,55 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import GenericImageUploader from '@/components/ImageUploader';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import type { Person } from '@/types/genealogy';
 
 type GenealogyFormProps = {
   formData: Omit<Person, 'id'>;
   isEditing: boolean;
+  editingId: string | null;
   persons: Person[];
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onImageUploadSuccess: (imageUrl: string) => void;
   onImageUploadError: (errorMessage: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel?: () => void;
+  onDelete?: (id: string) => void;
 };
 
 export function GenealogyForm({
   formData,
   isEditing,
+  editingId,
   persons,
   onInputChange,
   onImageUploadSuccess,
   onImageUploadError,
   onSubmit,
-  onCancel
+  onCancel,
+  onDelete
 }: GenealogyFormProps) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (editingId && onDelete) {
+      onDelete(editingId);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const personName = editingId 
+    ? persons.find(p => p.id === editingId) 
+      ? `${persons.find(p => p.id === editingId)?.prenom} ${persons.find(p => p.id === editingId)?.nom}`
+      : 'cette personne'
+    : 'cette personne';
+
   return (
     <motion.form 
       onSubmit={onSubmit} 
@@ -176,23 +201,43 @@ export function GenealogyForm({
           required
         />
       </div>
-      <div className="flex space-x-2">
-        <button
-          type="submit"
-          className="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-        >
-          {isEditing ? "Mettre à jour" : "Ajouter à l'arbre"}
-        </button>
-        {isEditing && onCancel && (
+      <div className="flex flex-col gap-3">
+        <div className="flex space-x-2">
+          <button
+            type="submit"
+            className="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          >
+            {isEditing ? "Mettre à jour" : "Ajouter à l'arbre"}
+          </button>
+          {isEditing && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600"
+            >
+              Annuler
+            </button>
+          )}
+        </div>
+        {isEditing && editingId && onDelete && (
           <button
             type="button"
-            onClick={onCancel}
-            className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600"
+            onClick={handleDeleteClick}
+            className="w-full bg-red-500 text-white py-2.5 rounded hover:bg-red-600 transition-colors font-medium"
           >
-            Annuler
+            🗑️ Supprimer cette personne
           </button>
         )}
       </div>
+
+      {/* Modal de confirmation de suppression */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmer la suppression"
+        message={`Êtes-vous sûr de vouloir supprimer ${personName} ? Cette action est irréversible et supprimera également toutes les références à cette personne dans l'arbre généalogique.`}
+      />
     </motion.form>
   );
 }

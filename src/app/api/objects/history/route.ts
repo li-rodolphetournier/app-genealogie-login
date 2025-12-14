@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/auth/middleware';
+import { logger } from '@/lib/utils/logger';
 import type { ErrorResponse } from '@/types/api/responses';
 
-// GET - Récupérer l'historique des modifications (seulement administrateurs)
+// GET - Récupérer l'historique des modifications d'objets (seulement administrateurs)
 export async function GET(request: Request) {
   try {
     // Vérifier les droits administrateur
     try {
       await requireAdmin();
     } catch (authError: unknown) {
-      console.error('Erreur d\'authentification:', authError);
+      logger.error('[API /objects/history] Erreur d\'authentification:', authError);
       const errorMessage = authError instanceof Error ? authError.message : 'Erreur d\'authentification';
       return NextResponse.json<ErrorResponse>(
         { error: errorMessage },
@@ -20,22 +21,22 @@ export async function GET(request: Request) {
 
     const supabase = await createServiceRoleClient();
     const { searchParams } = new URL(request.url);
-    const personId = searchParams.get('person_id');
+    const objectId = searchParams.get('object_id');
     const limit = parseInt(searchParams.get('limit') || '100', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     // Construire la requête avec filtres optionnels
-    // Inclure les suppressions de personnes (action='person_deleted')
     let query = supabase
-      .from('genealogy_node_positions_history')
+      .from('objects_history')
       .select(`
         id,
-        person_id,
-        x,
-        y,
+        object_id,
         action,
         updated_at,
         updated_by,
+        old_values,
+        new_values,
+        changed_fields,
         users:updated_by (
           id,
           login,
@@ -45,18 +46,15 @@ export async function GET(request: Request) {
       .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    // Filtrer par personne si spécifié
-    if (personId) {
-      query = query.eq('person_id', personId);
+    // Filtrer par objet si spécifié
+    if (objectId) {
+      query = query.eq('object_id', objectId);
     }
 
     const { data: history, error } = await query;
 
     if (error) {
-      console.error('Erreur lors de la récupération de l\'historique:', error);
-      console.error('Code erreur:', error.code);
-      console.error('Message erreur:', error.message);
-      console.error('Détails erreur:', error.details);
+      logger.error('[API /objects/history] Erreur lors de la récupération de l\'historique:', error);
       return NextResponse.json<ErrorResponse>(
         { error: `Erreur lors de la lecture de l'historique: ${error.message || 'Erreur inconnue'}` },
         { status: 500 }
@@ -67,12 +65,13 @@ export async function GET(request: Request) {
     const formattedHistory = (history || []).map((item: unknown) => {
       const historyItem = item as {
         id: string;
-        person_id: string | null;
-        x: number | string;
-        y: number | string;
+        object_id: string | null;
         action: string;
         updated_at: string;
         updated_by: string | null;
+        old_values: Record<string, unknown> | null;
+        new_values: Record<string, unknown> | null;
+        changed_fields: string[] | null;
         users?: {
           id: string;
           login: string;
@@ -81,9 +80,7 @@ export async function GET(request: Request) {
       };
       return {
         id: historyItem.id,
-        personId: historyItem.person_id,
-        x: parseFloat(historyItem.x.toString()),
-        y: parseFloat(historyItem.y.toString()),
+        objectId: historyItem.object_id,
         action: historyItem.action,
         updatedAt: historyItem.updated_at,
         updatedBy: historyItem.users ? {
@@ -91,6 +88,9 @@ export async function GET(request: Request) {
           login: historyItem.users.login,
           email: historyItem.users.email,
         } : null,
+        oldValues: historyItem.old_values,
+        newValues: historyItem.new_values,
+        changedFields: historyItem.changed_fields || [],
       };
     });
 
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
         { status: errorMessage.includes('Non authentifié') ? 401 : 403 }
       );
     }
-    console.error('Erreur lors de la lecture de l\'historique:', error);
+    logger.error('[API /objects/history] Erreur inattendue:', error);
     return NextResponse.json<ErrorResponse>(
       { error: 'Erreur lors de la lecture de l\'historique' },
       { status: 500 }

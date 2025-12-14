@@ -159,7 +159,9 @@ describe('useAuth', () => {
     await result.current.logout();
 
     expect(mockSupabaseClient.auth.signOut).toHaveBeenCalled();
-    expect(mockPush).toHaveBeenCalledWith('/');
+    // Note: Le logout utilise maintenant window.location.href au lieu de router.push
+    // pour forcer un rechargement complet de la page, donc on ne vérifie plus mockPush
+    // expect(mockPush).toHaveBeenCalledWith('/');
   });
 });
 

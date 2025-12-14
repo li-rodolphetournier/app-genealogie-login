@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       { message: 'Personne ajoutée avec succès', data: personData },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de l\'ajout de la personne:', error);
     return NextResponse.json<ErrorResponse>(
       { error: error instanceof Error ? error.message : getErrorMessage('GENEALOGY_PERSON_ADD_FAILED') },

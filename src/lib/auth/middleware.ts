@@ -97,7 +97,12 @@ export async function getAuthenticatedUser(): Promise<AuthResult> {
       .eq('id', authUser.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError || !profile || !profile.id) {
+      logger.error('Erreur lors de la récupération du profil utilisateur:', {
+        profileError,
+        profile,
+        authUserId: authUser.id
+      });
       return {
         user: null,
         isAuthenticated: false,

@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
     }
 
     // Préparer les données de mise à jour
-    const updateFields: Record<string, any> = {};
+    const updateFields: Record<string, unknown> = {};
     
     if (validation.data.nom !== undefined) updateFields.nom = validation.data.nom;
     if (validation.data.prenom !== undefined) updateFields.prenom = validation.data.prenom;
@@ -94,7 +94,7 @@ export async function PUT(request: Request) {
       { message: 'Personne mise à jour avec succès', data: personData },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la mise à jour de la personne:', error);
     return NextResponse.json<ErrorResponse>(
       { error: error instanceof Error ? error.message : getErrorMessage('GENEALOGY_PERSON_UPDATE_FAILED') },

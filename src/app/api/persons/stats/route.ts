@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     }
 
     // Récupérer tous les IDs de créateurs uniques
-    const creatorIds = [...new Set((persons || []).map((p: any) => p.created_by).filter(Boolean))];
+    const creatorIds = [...new Set((persons || []).map((p: unknown) => (p as { created_by: string | null }).created_by).filter(Boolean))];
     
     // Récupérer les informations des créateurs
     const creatorsMap = new Map<string, { login: string; email: string }>();
@@ -90,10 +90,11 @@ export async function GET(request: Request) {
         .select('id, login, email')
         .in('id', creatorIds);
       
-      (creators || []).forEach((creator: any) => {
-        creatorsMap.set(creator.id, {
-          login: creator.login || 'Inconnu',
-          email: creator.email || '',
+      (creators || []).forEach((creator: unknown) => {
+        const creatorData = creator as { id: string; login: string; email: string };
+        creatorsMap.set(creatorData.id, {
+          login: creatorData.login || 'Inconnu',
+          email: creatorData.email || '',
         });
       });
     }
@@ -101,8 +102,15 @@ export async function GET(request: Request) {
     // Grouper par date (jour)
     const statsByDate = new Map<string, PersonStats>();
 
-    (persons || []).forEach((person: any) => {
-      const date = new Date(person.created_at);
+    (persons || []).forEach((person: unknown) => {
+      const personData = person as {
+        id: string;
+        nom: string;
+        prenom: string;
+        created_at: string;
+        created_by: string | null;
+      };
+      const date = new Date(personData.created_at);
       const dateKey = date.toISOString().split('T')[0]; // Format YYYY-MM-DD
 
       if (!statsByDate.has(dateKey)) {
@@ -117,16 +125,16 @@ export async function GET(request: Request) {
       stat.count += 1;
       
       // Récupérer les informations du créateur depuis la map
-      const creator = person.created_by && creatorsMap.has(person.created_by)
-        ? creatorsMap.get(person.created_by)!
+      const creator = personData.created_by && creatorsMap.has(personData.created_by)
+        ? creatorsMap.get(personData.created_by)!
         : null;
 
       stat.persons.push({
-        id: person.id,
-        nom: person.nom,
-        prenom: person.prenom,
-        created_at: person.created_at,
-        created_by: person.created_by || null,
+        id: personData.id,
+        nom: personData.nom,
+        prenom: personData.prenom,
+        created_at: personData.created_at,
+        created_by: personData.created_by || null,
         creator: creator,
       });
     });
@@ -149,7 +157,7 @@ export async function GET(request: Request) {
       { stats, total, period },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[API /persons/stats] Erreur:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     return NextResponse.json<ErrorResponse>(

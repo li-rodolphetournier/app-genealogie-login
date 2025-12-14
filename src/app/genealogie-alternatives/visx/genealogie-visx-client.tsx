@@ -75,7 +75,8 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     isRefreshing,
     refreshData,
     addPerson,
-    updatePerson
+    updatePerson,
+    deletePerson
   } = useGenealogyData(initialPersons, '/api/genealogie-alternatives');
   
   const {
@@ -173,6 +174,14 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const success = await deletePerson(id);
+    if (success) {
+      resetForm();
+      setSelectedNodeId(null);
+    }
+  };
+
   const handleNodeClick = (node: TreeNode) => {
     if (node.id === 'root') return;
     const person = persons.find(p => p.id === node.id);
@@ -243,12 +252,14 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
         history={history}
         formData={formData}
         persons={persons}
+        editingId={editingId}
         selectedNode={selectedNode}
         onInputChange={handleInputChange}
         onImageUploadSuccess={handleImageUploadSuccess}
         onImageUploadError={handleImageUploadError}
         onSubmit={isEditing ? handleUpdate : handleSubmit}
         onCancel={resetForm}
+        onDelete={handleDelete}
         onToggleHistory={isAdmin ? toggleHistory : undefined}
       />
 

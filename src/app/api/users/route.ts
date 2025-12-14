@@ -301,11 +301,12 @@ export async function POST(request: Request) {
       { message: 'Utilisateur créé avec succès', data: userResponse },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur API create-user:', error);
     
     // Gérer spécifiquement les erreurs de clé dupliquée
-    if (error?.code === '23505' || error?.message?.includes('duplicate key')) {
+    const errorObj = error as { code?: string; message?: string };
+    if (errorObj?.code === '23505' || errorObj?.message?.includes('duplicate key')) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Cet utilisateur existe déjà dans la base de données' },
         { status: 409 }

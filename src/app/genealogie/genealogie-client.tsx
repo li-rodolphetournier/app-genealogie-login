@@ -94,7 +94,8 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     isRefreshing,
     refreshData,
     addPerson,
-    updatePerson
+    updatePerson,
+    deletePerson
   } = useGenealogyData(initialPersons);
   
   const {
@@ -228,6 +229,14 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const success = await deletePerson(id);
+    if (success) {
+      resetForm();
+      setSelectedPersonId(null);
+    }
+  };
+
   const handleNodeClick = (nodeDatum: CustomNodeDatum) => {
     if (nodeDatum.attributes?.id === 'root') return;
 
@@ -283,12 +292,14 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
         history={history}
         formData={formData}
         persons={persons}
+        editingId={editingId}
         selectedNode={selectedNode}
         onInputChange={handleInputChange}
         onImageUploadSuccess={handleImageUploadSuccess}
         onImageUploadError={handleImageUploadError}
         onSubmit={isEditing ? handleUpdate : handleSubmit}
         onCancel={resetForm}
+        onDelete={handleDelete}
         onToggleHistory={isAdmin ? toggleHistory : undefined}
       />
 

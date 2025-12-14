@@ -22,23 +22,38 @@ export async function GET() {
     }
 
     // Mapper les données Supabase vers Person
-    const mappedPersons: Person[] = (persons || []).map((p: any) => ({
-      id: p.id,
-      nom: p.nom,
-      prenom: p.prenom,
-      genre: p.genre as Person['genre'],
-      description: p.description || '',
-      detail: p.detail || undefined,
-      mere: p.mere_id || null,
-      pere: p.pere_id || null,
-      ordreNaissance: p.ordre_naissance || 1,
-      dateNaissance: p.date_naissance || undefined,
-      dateDeces: p.date_deces || null,
-      image: p.image || null,
-    }));
+    const mappedPersons: Person[] = (persons || []).map((p: unknown) => {
+      const person = p as {
+        id: string;
+        prenom: string;
+        nom: string;
+        genre: string;
+        description: string | null;
+        date_naissance: string | null;
+        date_deces: string | null;
+        image: string | null;
+        pere_id: string | null;
+        mere_id: string | null;
+        ordre_naissance: number | null;
+      };
+      return {
+        id: person.id,
+        nom: person.nom,
+        prenom: person.prenom,
+        genre: person.genre as Person['genre'],
+        description: person.description || '',
+        detail: person.description || undefined,
+        mere: person.mere_id || null,
+        pere: person.pere_id || null,
+        ordreNaissance: person.ordre_naissance || 1,
+        dateNaissance: person.date_naissance || '',
+        dateDeces: person.date_deces || null,
+        image: person.image || null,
+      };
+    });
     
     return NextResponse.json<Person[]>(mappedPersons, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la lecture des données généalogiques:', error);
     return NextResponse.json<ErrorResponse>(
       { error: 'Erreur lors de la lecture des données généalogiques' },

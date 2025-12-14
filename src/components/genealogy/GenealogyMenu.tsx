@@ -23,12 +23,14 @@ type GenealogyMenuProps = {
   history: HistoryItem[];
   formData: Omit<Person, 'id'>;
   persons: Person[];
+  editingId: string | null;
   selectedNode: { name: string; description: string; dateNaissance: string; dateDeces: string | null; image: string | null } | null;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onImageUploadSuccess: (imageUrl: string) => void;
   onImageUploadError: (errorMessage: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel?: () => void;
+  onDelete?: (id: string) => void;
   onToggleHistory?: () => void;
 };
 
@@ -41,12 +43,14 @@ export function GenealogyMenu({
   history,
   formData,
   persons,
+  editingId,
   selectedNode,
   onInputChange,
   onImageUploadSuccess,
   onImageUploadError,
   onSubmit,
   onCancel,
+  onDelete,
   onToggleHistory
 }: GenealogyMenuProps) {
   if (!isOpen) return null;
@@ -65,7 +69,7 @@ export function GenealogyMenu({
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4 flex-col gap-4">
               <h2 className="text-xl font-bold">
-                {historyOpen ? "Historique des positions" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
+                {historyOpen ? "Historique de l'arbre" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
               <div className="flex flex-wrap gap-2 w-full justify-center">
                 {!historyOpen && isEditing && onCancel && (
@@ -99,36 +103,52 @@ export function GenealogyMenu({
                   <p className="text-gray-500">Aucun historique disponible</p>
                 ) : (
                   <div className="space-y-3">
-                    {history.map((item) => {
-                      const person = persons.find(p => p.id === item.personId);
-                      return (
-                        <div key={item.id} className="border rounded-lg p-3 bg-gray-50">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="font-semibold">
-                                {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId.substring(0, 8)}...`}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(item.updatedAt).toLocaleString('fr-FR')}
-                              </p>
+                    {history
+                      .filter(item => item.action) // Filtrer les items avec une action valide
+                      .map((item) => {
+                        const person = persons.find(p => p.id === item.personId);
+                        const isPositionDeleted = item.action === 'deleted';
+                        const isPersonDeleted = item.action === 'person_deleted';
+                        const isDeleted = isPositionDeleted || isPersonDeleted;
+                        return (
+                          <div key={item.id} className={`border rounded-lg p-3 ${isDeleted ? 'bg-red-50 border-red-200' : 'bg-gray-50'}`}>
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className={`font-semibold ${isDeleted ? 'text-red-700' : ''}`}>
+                                  {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId?.substring(0, 8) || 'N/A'}...`}
+                                  {isPersonDeleted && ' (supprimée)'}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(item.updatedAt).toLocaleString('fr-FR')}
+                                </p>
+                              </div>
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.action === 'created' ? 'bg-green-100 text-green-800' :
+                                item.action === 'updated' ? 'bg-blue-100 text-blue-800' :
+                                item.action === 'person_deleted' ? 'bg-red-200 text-red-900' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {item.action === 'created' ? 'Créé' : 
+                                 item.action === 'updated' ? 'Modifié' : 
+                                 item.action === 'person_deleted' ? 'Personne supprimée' :
+                                 'Position supprimée'}
+                              </span>
                             </div>
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              item.action === 'created' ? 'bg-green-100 text-green-800' :
-                              item.action === 'updated' ? 'bg-blue-100 text-blue-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {item.action === 'created' ? 'Créé' : item.action === 'updated' ? 'Modifié' : 'Supprimé'}
-                            </span>
+                            <div className="text-sm text-gray-700">
+                              {isPersonDeleted ? (
+                                <p className="text-red-600 font-medium">Personne supprimée de l'arbre</p>
+                              ) : isPositionDeleted ? (
+                                <p className="text-red-600 font-medium">Position supprimée</p>
+                              ) : (
+                                <p>Position: X={item.x.toFixed(2)}, Y={item.y.toFixed(2)}</p>
+                              )}
+                              {item.updatedBy && (
+                                <p className="mt-1">Par: {item.updatedBy.login}</p>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-700">
-                            <p>Position: X={item.x.toFixed(2)}, Y={item.y.toFixed(2)}</p>
-                            {item.updatedBy && (
-                              <p className="mt-1">Par: {item.updatedBy.login}</p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -136,12 +156,14 @@ export function GenealogyMenu({
               <GenealogyForm
                 formData={formData}
                 isEditing={isEditing}
+                editingId={editingId}
                 persons={persons}
                 onInputChange={onInputChange}
                 onImageUploadSuccess={onImageUploadSuccess}
                 onImageUploadError={onImageUploadError}
                 onSubmit={onSubmit}
                 onCancel={onCancel}
+                onDelete={onDelete}
               />
             )}
           </div>

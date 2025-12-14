@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const persons = await GenealogyService.findAll();
     return NextResponse.json<Person[]>(persons, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la récupération des données généalogiques (alternatives):', error);
     return NextResponse.json<ErrorResponse>(
       { error: 'Erreur lors de la lecture des données généalogiques' },
