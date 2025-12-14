@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import LoadingIndicator from '@/components/LoadingIndicator';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 import type { User } from '@/types/user';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
@@ -23,6 +24,7 @@ export default function EditObject() {
 
   const [object, setObject] = useState<ObjectData | null>(null);
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImageUrls, setNewImageUrls] = useState<string[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [removedPhotos, setRemovedPhotos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,15 +92,22 @@ export default function EditObject() {
     void loadData();
   }, [objectId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      setNewImages(filesArray);
+  const handleFileSelect = (files: File[]) => {
+    setNewImages(files);
+    // Créer des previews temporaires pour les nouveaux fichiers
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    const existingValidPreviews = previews.filter(url => !removedPhotos.includes(url) && !url.startsWith('blob:'));
+    setPreviews([...existingValidPreviews, ...newPreviews]);
+  };
 
-      const newPreviews = filesArray.map(file => URL.createObjectURL(file));
-      const existingValidPreviews = previews.filter(url => !removedPhotos.includes(url) && !url.startsWith('blob:'));
-      setPreviews([...existingValidPreviews, ...newPreviews]);
-    }
+  const handleUploadComplete = (urls: string[]) => {
+    setNewImageUrls(urls);
+    // Remplacer les previews blob par les URLs réelles
+    setPreviews((prev) => {
+      const blobPreviews = prev.filter(url => url.startsWith('blob:'));
+      const nonBlobPreviews = prev.filter(url => !url.startsWith('blob:') && !removedPhotos.includes(url));
+      return [...nonBlobPreviews, ...urls];
+    });
   };
 
   const handleRemoveExistingPhoto = (urlToRemove: string) => {
@@ -108,8 +117,15 @@ export default function EditObject() {
 
   const handleRemoveNewPhoto = (indexToRemove: number, previewUrl: string) => {
     setNewImages((prev: File[]) => prev.filter((_, index) => index !== indexToRemove));
-    setPreviews((prev: string[]) => prev.filter(url => url !== previewUrl));
-    URL.revokeObjectURL(previewUrl);
+    setNewImageUrls((prev: string[]) => prev.filter(url => url !== previewUrl));
+    setPreviews((prev: string[]) => {
+      const filtered = prev.filter(url => url !== previewUrl);
+      // Nettoyer les URLs blob si nécessaire
+      if (previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      return filtered;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -120,33 +136,39 @@ export default function EditObject() {
     setError(null);
 
     try {
-      // Uploader les nouvelles images d'abord
-      const newPhotoUrls: string[] = [];
-      for (const file of newImages) {
-        if (file.size > MAX_FILE_SIZE) {
-          throw new Error(`Le fichier ${file.name} dépasse la taille maximale de 2 Mo.`);
-        }
-        
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('folder', 'objects');
-        
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadFormData,
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          // L'API retourne imageUrl ou publicUrl
-          const imageUrl = uploadData.imageUrl || uploadData.url || uploadData.publicUrl;
-          if (!imageUrl) {
-            throw new Error(`Réponse d'upload invalide pour ${file.name}`);
+      // Utiliser les URLs déjà uploadées si disponibles, sinon uploader les fichiers
+      let newPhotoUrls: string[] = [];
+      if (newImageUrls.length > 0) {
+        // Les images ont déjà été uploadées via le FileUploader
+        newPhotoUrls = newImageUrls;
+      } else if (newImages.length > 0) {
+        // Fallback: uploader les fichiers si les URLs ne sont pas encore disponibles
+        for (const file of newImages) {
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error(`Le fichier ${file.name} dépasse la taille maximale de 2 Mo.`);
           }
-          newPhotoUrls.push(imageUrl);
-        } else {
-          const errorData = await uploadResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || `Erreur lors de l'upload de ${file.name}`);
+          
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', file);
+          uploadFormData.append('folder', 'objects');
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            // L'API retourne imageUrl ou publicUrl
+            const imageUrl = uploadData.imageUrl || uploadData.url || uploadData.publicUrl;
+            if (!imageUrl) {
+              throw new Error(`Réponse d'upload invalide pour ${file.name}`);
+            }
+            newPhotoUrls.push(imageUrl);
+          } else {
+            const errorData = await uploadResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || `Erreur lors de l'upload de ${file.name}`);
+          }
         }
       }
 
@@ -216,8 +238,8 @@ export default function EditObject() {
   if (isLoading) {
     return <LoadingIndicator text="Chargement de l'objet à modifier..." />;
   }
-  if (error) return <div className="text-red-500">{error}</div>;
-  if (!object) return <div>Objet non trouvé</div>;
+  if (error) return <div className="text-red-500 dark:text-red-400">{error}</div>;
+  if (!object) return <div className="text-gray-900 dark:text-white">Objet non trouvé</div>;
 
   // Fonction pour créer une nouvelle catégorie
   const handleCreateCategory = async () => {
@@ -281,21 +303,21 @@ export default function EditObject() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow px-6 py-8">
-          <h1 className="text-2xl font-bold mb-6">Modifier l'objet : {object.nom}</h1>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Modifier l'objet : {object.nom}</h1>
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-              <p className="text-red-700">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div>
-                <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="nom" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nom
                 </label>
                 <input
@@ -310,7 +332,7 @@ export default function EditObject() {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Catégorie
                 </label>
                 
@@ -321,7 +343,7 @@ export default function EditObject() {
                   value={object.type || ''}
                   onChange={handleChange}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="">-- Sélectionner une catégorie --</option>
                   {categories.map((category) => (
@@ -339,7 +361,7 @@ export default function EditObject() {
                 
                 {/* Message si aucune catégorie n'est disponible */}
                 {categories.length === 0 && !object.type && (
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                     Aucune catégorie disponible. Créez-en une nouvelle ci-dessous.
                   </p>
                 )}
@@ -351,13 +373,13 @@ export default function EditObject() {
                     onClick={() => {
                       setShowNewCategoryInput(true);
                     }}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                   >
                     + Créer une nouvelle catégorie
                   </button>
                 ) : (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nouvelle catégorie
                     </label>
                     <div className="flex gap-2">
@@ -373,7 +395,7 @@ export default function EditObject() {
                           }
                         }}
                         placeholder="Nom de la nouvelle catégorie"
-                        className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                         autoFocus
                       />
                       <button
@@ -391,7 +413,7 @@ export default function EditObject() {
                           setNewCategory('');
                           setError(null);
                         }}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                        className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500"
                       >
                         Annuler
                       </button>
@@ -401,7 +423,7 @@ export default function EditObject() {
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Statut
                 </label>
                 <select
@@ -409,7 +431,7 @@ export default function EditObject() {
                   id="status"
                   value={object.status}
                   onChange={handleChange}
-                  className="mt-1 block w-full"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   required
                 >
                   <option value="brouillon">Brouillon</option>
@@ -418,7 +440,7 @@ export default function EditObject() {
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description Courte
                 </label>
                 <textarea
@@ -427,12 +449,12 @@ export default function EditObject() {
                   value={object.description || ''}
                   onChange={handleChange}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
               </div>
 
               <div>
-                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description Longue (Détails)
                 </label>
                 <textarea
@@ -441,13 +463,13 @@ export default function EditObject() {
                   value={object.longDescription || ''}
                   onChange={handleChange}
                   rows={6}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="Description détaillée de l'objet..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Photos
                 </label>
                 <div className="grid grid-cols-3 gap-4 mb-4">
@@ -458,7 +480,7 @@ export default function EditObject() {
                         alt={`Aperçu ${index + 1}`}
                         width={200}
                         height={200}
-                        className="object-cover rounded aspect-square"
+                        className="object-cover rounded aspect-square border border-gray-300 dark:border-gray-600"
                       />
                       <button
                         type="button"
@@ -467,13 +489,30 @@ export default function EditObject() {
                           if (isExisting) {
                             handleRemoveExistingPhoto(previewUrl);
                           } else {
-                            const originalFileIndex = newImages.findIndex(file => URL.createObjectURL(file) === previewUrl);
-                            if (originalFileIndex !== -1) {
-                              handleRemoveNewPhoto(originalFileIndex, previewUrl);
+                            // Vérifier si c'est une URL uploadée
+                            const urlIndex = newImageUrls.findIndex(url => url === previewUrl);
+                            if (urlIndex !== -1) {
+                              handleRemoveNewPhoto(urlIndex, previewUrl);
+                            } else {
+                              // Sinon, c'est un fichier local avec blob URL
+                              const originalFileIndex = newImages.findIndex((file, index) => {
+                                const blobUrl = URL.createObjectURL(file);
+                                const existingBlob = previews.find(p => p.startsWith('blob:') && p !== previewUrl);
+                                return previewUrl.startsWith('blob:') && index < newImages.length;
+                              });
+                              if (originalFileIndex !== -1) {
+                                handleRemoveNewPhoto(originalFileIndex, previewUrl);
+                              } else {
+                                // Fallback: chercher par index dans previews
+                                const previewIndex = previews.findIndex(p => p === previewUrl);
+                                if (previewIndex !== -1 && previewIndex < newImages.length) {
+                                  handleRemoveNewPhoto(previewIndex, previewUrl);
+                                }
+                              }
                             }
                           }
                         }}
-                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 bg-red-600 dark:bg-red-700 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 dark:hover:bg-red-600"
                         aria-label="Supprimer l'image"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -484,26 +523,26 @@ export default function EditObject() {
                   ))}
                 </div>
                 <div className="mt-4">
-                  <input
-                    type="file"
-                    multiple
+                  <FileUploader
+                    onFileSelect={handleFileSelect}
+                    onUploadComplete={handleUploadComplete}
+                    onError={(errorMessage) => setError(errorMessage)}
+                    folder="objects"
+                    maxFileSizeMB={2}
+                    multiple={true}
                     accept="image/*"
-                    onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-full file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100"
                   />
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    Formats acceptés : JPG, PNG, GIF (max 2 Mo par fichier)
+                  </p>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => router.push(`/objects/${objectId}`)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
                   disabled={isSaving}
                 >
                   Annuler

@@ -9,6 +9,7 @@ import { useToast } from '@/components/ToastProvider';
 import { getErrorMessage } from '@/lib/errors/messages';
 import { BackToHomeButton } from '@/components/navigation';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import type { Message } from '@/types/message';
 
@@ -64,42 +65,19 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect = (files: File[]) => {
+    // Le FileUploader gère l'upload automatiquement via onUploadComplete
+  };
 
-    if (file.size > 10 * 1024 * 1024) {
-      showToast(getErrorMessage('FILE_TOO_LARGE'), 'error');
-      event.target.value = '';
-      return;
-    }
+  const handleUploadComplete = (urls: string[]) => {
+    setNewMessage(prev => ({
+      ...prev,
+      images: [...prev.images, ...urls]
+    }));
+  };
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', 'messages');
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNewMessage(prev => ({
-          ...prev,
-          images: [...prev.images, data.imageUrl || data.filePath]
-        }));
-      } else {
-        showToast(getErrorMessage('FILE_UPLOAD_FAILED'), 'error');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      showToast(getErrorMessage('FILE_UPLOAD_FAILED'), 'error');
-    }
-
-    // Réinitialiser l'input file
-    event.target.value = '';
+  const handleUploadError = (errorMessage: string) => {
+    showToast(errorMessage || getErrorMessage('FILE_UPLOAD_FAILED'), 'error');
   };
 
   const removeImage = (indexToRemove: number) => {
@@ -251,19 +229,20 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
               </div>
 
               <div>
-                <label htmlFor="image-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Images
                 </label>
-                <input
-                  id="image-upload"
-                  type="file"
+                <FileUploader
+                  onFileSelect={handleFileSelect}
+                  onUploadComplete={handleUploadComplete}
+                  onError={handleUploadError}
+                  folder="messages"
+                  maxFileSizeMB={10}
+                  multiple={true}
                   accept="image/*"
-                  onChange={handleFileSelect}
-                  className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                  aria-describedby="image-help"
                 />
-                <p id="image-help" className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Format accepté : JPG, PNG. Taille maximale : 10MB
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Formats acceptés : JPG, PNG. Taille maximale : 10 Mo par fichier
                 </p>
                 
                 {newMessage.images.length > 0 && (
@@ -276,13 +255,13 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                             alt={`Image ${index + 1}`}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover rounded-md"
+                            className="object-cover rounded-md border border-gray-300 dark:border-gray-600"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          className="absolute top-2 right-2 bg-red-500 dark:bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 hover:bg-red-600 dark:hover:bg-red-700"
                           aria-label={`Supprimer l'image ${index + 1}`}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

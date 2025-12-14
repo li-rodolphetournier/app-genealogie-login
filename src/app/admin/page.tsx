@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 
-import GenericImageUploader from '../../components/ImageUploader';
 import { useAuth } from '@/hooks/use-auth';
 import { ProfileImage } from '@/components/ProfileImage';
 import { BackToHomeButton } from '@/components/navigation';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 import { logger } from '@/lib/utils/logger';
 import type { User } from '@/types/user';
 
@@ -53,16 +53,22 @@ export default function EditProfile() {
     );
   }
 
-  const handleImageUploadSuccess = (imageUrl: string) => {
-    setFormData(prev => ({
-      ...prev,
-      profileImage: imageUrl
-    }));
-    setError(null);
-    setSuccess(null);
+  const handleFileSelect = (files: File[]) => {
+    // Le FileUploader gère l'upload automatiquement via onUploadComplete
   };
 
-  const handleImageUploadError = (errorMessage: string) => {
+  const handleUploadComplete = (urls: string[]) => {
+    if (urls.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        profileImage: urls[0]
+      }));
+      setError(null);
+      setSuccess(null);
+    }
+  };
+
+  const handleUploadError = (errorMessage: string) => {
     logger.error('Erreur upload image:', errorMessage);
     setError(`Erreur d'upload: ${errorMessage}`);
     setSuccess(null);
@@ -267,21 +273,25 @@ export default function EditProfile() {
                 Photo de profil
               </h2>
               <div className="mt-1 flex items-center space-x-4">
-                <ProfileImage
-                  src={formData.profileImage}
-                  alt="Photo de profil actuelle"
-                  fallbackText={user?.login || ''}
-                  size={64}
-                />
-                <GenericImageUploader
-                  onUploadSuccess={handleImageUploadSuccess}
-                  onError={handleImageUploadError}
-                  folder="users"
-                >
-                  <button type="button" className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                    Modifier l'image
-                  </button>
-                </GenericImageUploader>
+                <div className="flex-shrink-0">
+                  <ProfileImage
+                    src={formData.profileImage}
+                    alt="Photo de profil actuelle"
+                    fallbackText={user?.login || ''}
+                    size={96}
+                  />
+                </div>
+                <div className="flex-1">
+                  <FileUploader
+                    onFileSelect={handleFileSelect}
+                    onUploadComplete={handleUploadComplete}
+                    onError={handleUploadError}
+                    folder="users"
+                    maxFileSizeMB={2}
+                    multiple={false}
+                    accept="image/*"
+                  />
+                </div>
               </div>
             </div>
 

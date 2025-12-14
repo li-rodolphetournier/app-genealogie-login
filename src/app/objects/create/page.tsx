@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // Taille maximale de fichier en octets (2 Mo)
 
@@ -20,8 +21,8 @@ export default function CreateObject() {
   const [description, setDescription] = useState('');
   const [longDescription, setLongDescription] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // États pour la gestion des catégories
   const [categories, setCategories] = useState<string[]>([]);
@@ -163,10 +164,17 @@ export default function CreateObject() {
         longDescription,
       };
 
-      // Pour les photos, il faudra les uploader séparément via /api/upload
-      // puis ajouter les URLs aux données de l'objet
-      if (photos.length > 0) {
-        const photoUrls: string[] = [];
+      // Utiliser les URLs déjà uploadées si disponibles, sinon uploader les fichiers
+      if (photoUrls.length > 0) {
+        // Le schéma attend description comme tableau de strings
+        objectData.photos = photoUrls.map((url, index) => ({ 
+          url, 
+          description: [] as string[],
+          display_order: index 
+        }));
+      } else if (photos.length > 0) {
+        // Fallback: uploader les fichiers si les URLs ne sont pas encore disponibles
+        const uploadedUrls: string[] = [];
         for (const photo of photos) {
           const uploadFormData = new FormData();
           uploadFormData.append('file', photo);
@@ -182,7 +190,7 @@ export default function CreateObject() {
             // L'API retourne imageUrl ou publicUrl
             const imageUrl = uploadData.imageUrl || uploadData.url || uploadData.publicUrl;
             if (imageUrl) {
-              photoUrls.push(imageUrl);
+              uploadedUrls.push(imageUrl);
             }
           } else {
             const errorData = await uploadResponse.json().catch(() => ({}));
@@ -190,7 +198,7 @@ export default function CreateObject() {
           }
         }
         // Le schéma attend description comme tableau de strings
-        objectData.photos = photoUrls.map((url, index) => ({ 
+        objectData.photos = uploadedUrls.map((url, index) => ({ 
           url, 
           description: [] as string[],
           display_order: index 
@@ -216,18 +224,12 @@ export default function CreateObject() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const file = e.target.files[0];
-      setPhotos(Array.from(e.target.files));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      if (file) {
-        reader.readAsDataURL(file);
-      }
-    }
+  const handleFileSelect = (files: File[]) => {
+    setPhotos(files);
+  };
+
+  const handleUploadComplete = (urls: string[]) => {
+    setPhotoUrls(urls);
   };
 
   if (!user) {
@@ -362,47 +364,32 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Photos
                 </label>
-                <input
-                  type="file"
-                  multiple
+                <FileUploader
+                  onFileSelect={handleFileSelect}
+                  onUploadComplete={handleUploadComplete}
+                  onError={(errorMessage) => setError(errorMessage)}
+                  folder="objects"
+                  maxFileSizeMB={2}
+                  multiple={true}
                   accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-upload"
-                  lang="fr"
-                  aria-label="Sélectionner des photos"
                 />
-                <label
-                  htmlFor="file-upload"
-                  className="mt-1 block w-full text-sm text-gray-500
-                    cursor-pointer
-                    border border-gray-300 rounded-md
-                    py-2 px-4 flex items-center justify-center
-                    hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  title="Cliquez pour ajouter des photos"
-                  aria-labelledby="file-upload-label"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-blue-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5V21h18v-4.5M3 12l9-9 9 9M12 3v15" />
-                  </svg>
-                  <span id="file-upload-label">Cliquez pour ajouter des photos</span>
-                </label>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Formats acceptés : JPG, PNG, GIF
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Formats acceptés : JPG, PNG, GIF (max 2 Mo par fichier)
                 </p>
-                {imagePreview && (
-                  <div className="mt-2">
-                    <img src={imagePreview} alt="Aperçu" className="h-32 w-auto rounded-md" />
+                {photoUrls.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {photoUrls.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Aperçu ${index + 1}`}
+                          className="h-32 w-full object-cover rounded-md border border-gray-300"
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

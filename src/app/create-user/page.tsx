@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 
-import GenericImageUploader from '../../components/ImageUploader';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 
 type User = {
   login: string;
@@ -39,15 +39,21 @@ export default function CreateUser() {
     setSuccess(null);
   };
 
-  const handleImageUploadSuccess = (imageUrl: string) => {
-    setFormData(prev => ({
-      ...prev,
-      profileImage: imageUrl
-    }));
-    setError(null);
+  const handleFileSelect = (files: File[]) => {
+    // Le FileUploader gère l'upload automatiquement via onUploadComplete
   };
 
-  const handleImageUploadError = (errorMessage: string) => {
+  const handleUploadComplete = (urls: string[]) => {
+    if (urls.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        profileImage: urls[0]
+      }));
+      setError(null);
+    }
+  };
+
+  const handleUploadError = (errorMessage: string) => {
     console.error("Upload error:", errorMessage);
     setError(`Erreur d'upload: ${errorMessage}`);
   };
@@ -255,28 +261,30 @@ export default function CreateUser() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Photo de profil (Optionnel)
                   </label>
                   <div className="mt-1 flex items-center space-x-4">
                     {formData.profileImage ? (
-                      <img src={formData.profileImage} alt="Aperçu" className="h-16 w-16 rounded-full object-cover border border-gray-300 dark:border-gray-600" />
+                      <img src={formData.profileImage} alt="Aperçu" className="h-24 w-24 rounded-full object-cover border border-gray-300 dark:border-gray-600 flex-shrink-0" />
                     ) : (
-                      <span className="inline-block h-16 w-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">
+                      <span className="inline-block h-24 w-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 flex-shrink-0">
                         <svg className="h-full w-full text-gray-300 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                       </span>
                     )}
-                    <GenericImageUploader
-                      onUploadSuccess={handleImageUploadSuccess}
-                      onError={handleImageUploadError}
-                      folder="users"
-                    >
-                      <button type="button" className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-                        Choisir une image
-                      </button>
-                    </GenericImageUploader>
+                    <div className="flex-1">
+                      <FileUploader
+                        onFileSelect={handleFileSelect}
+                        onUploadComplete={handleUploadComplete}
+                        onError={handleUploadError}
+                        folder="users"
+                        maxFileSizeMB={2}
+                        multiple={false}
+                        accept="image/*"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -5,6 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Variables pour le file uploader */
+  --uploader-background: #A3B0C1;
+  --uploader-background-light: #E5E9EE;
+  --uploader-accent: #0570FF;
+  --uploader-easing: cubic-bezier(0.5, 0, 0.5, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -162,4 +167,204 @@ label {
   stroke: #9ca3af;
   stroke-width: 2;
   fill: none;
+}
+
+/* Styles pour le File Uploader */
+.file-uploader {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  padding: 0.75em 1em;
+  min-width: 12em;
+  max-width: 100%;
+  position: relative;
+  height: auto;
+  min-height: 4em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.file-uploader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--uploader-background-light);
+  border-radius: 1em;
+  transition: transform 0.3s var(--uploader-easing);
+  box-shadow: 0 1em 2em rgba(0, 0, 0, 0.1);
+  z-index: 0;
+}
+
+.file-uploader [data-hidden] {
+  transition:
+    all 0.4s var(--uploader-easing),
+    visibility 0s linear 0.4s;
+}
+
+.file-uploader [data-hidden='true'] {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.file-uploader [data-hidden='false'] {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.file-uploader .message,
+.file-uploader .cloud-icon {
+  transition: transform 0.4s var(--uploader-easing);
+}
+
+.file-uploader .cloud-icon {
+  display: grid;
+  grid-template: 1 / 1;
+  flex-shrink: 0;
+  align-self: center;
+  position: relative;
+  z-index: 1;
+  width: 3em;
+  height: 3em;
+}
+
+.file-uploader .cloud-icon svg {
+  width: 3em;
+  height: 3em;
+  grid-area: 1 / 1;
+  stroke: var(--uploader-background);
+  transition: stroke 0.3s var(--uploader-easing);
+}
+
+.file-uploader .cloud-icon .line[data-hidden='true'] {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.file-uploader .cloud-icon .arrow {
+  stroke: var(--uploader-background);
+  transition: stroke 0.3s var(--uploader-easing), transform 0.4s var(--uploader-easing), opacity 0.3s var(--uploader-easing);
+}
+
+.file-uploader .cloud-icon .arrow[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(50%) scale(0.8);
+}
+
+.file-uploader .cloud-icon .arrow[data-hidden='false'] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  stroke: var(--uploader-accent);
+}
+
+.file-uploader[data-state='HOVERING'] .cloud-icon .arrow[data-hidden='false'] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  stroke: var(--uploader-accent);
+}
+
+.file-uploader .check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  width: 2em;
+  height: 2em;
+  margin-left: 0.5em;
+}
+
+.file-uploader .check-icon svg.check {
+  width: 2em;
+  height: 2em;
+  stroke: #22c55e;
+  transition: transform 0.4s var(--uploader-easing), opacity 0.3s var(--uploader-easing);
+}
+
+.file-uploader .check-icon svg.check[data-hidden='true'] {
+  opacity: 0;
+  transform: scale(0.8) rotate(-1turn);
+}
+
+.file-uploader .check-icon svg.check[data-hidden='false'] {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+
+.file-uploader .cloud-icon .check {
+  stroke: #22c55e;
+  transition: stroke 0.3s var(--uploader-easing), transform 0.4s var(--uploader-easing), opacity 0.3s var(--uploader-easing);
+}
+
+.file-uploader .cloud-icon .check[data-hidden='true'] {
+  opacity: 0;
+  transform: scale(0.8) rotate(-1turn);
+}
+
+.file-uploader .cloud-icon .check[data-hidden='false'] {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+
+.file-uploader .message {
+  flex: 1;
+  text-align: center;
+  align-self: center;
+  position: relative;
+  z-index: 1;
+}
+
+.file-uploader .message .message-text {
+  display: block;
+  font-size: 1em;
+  color: var(--foreground);
+}
+
+.file-uploader .progress-container {
+  width: 100%;
+}
+
+.file-uploader .progress {
+  width: 100%;
+}
+
+.file-uploader .progress::-webkit-progress-bar {
+  background: #C8D2DE;
+}
+
+.file-uploader .progress::-webkit-progress-value,
+.file-uploader .progress::-moz-progress-value {
+  background: var(--uploader-accent);
+}
+
+/* États du file uploader */
+.file-uploader[data-state='IDLE'] .cloud-icon svg.cloud {
+  stroke: var(--uploader-background);
+}
+
+.file-uploader[data-state='UPLOADING'] .cloud-icon svg.cloud,
+.file-uploader[data-state='SUCCESS'] .cloud-icon svg.cloud {
+  stroke: var(--uploader-accent);
+}
+
+.file-uploader[data-state='HOVERING'] {
+  cursor: pointer;
+}
+
+.file-uploader[data-state='HOVERING'] .cloud-icon svg.cloud {
+  stroke: var(--uploader-accent);
+}
+
+.file-uploader[data-state='UPLOADING'] {
+  cursor: wait;
+}
+
+.file-uploader[data-state='SUCCESS'] .arrow[data-hidden] {
+  transform: rotate(1turn) scale(0.8);
 }

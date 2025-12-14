@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import GenericImageUploader from '@/components/ImageUploader';
+import { FileUploader } from '@/components/file-uploader';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import type { Person } from '@/types/genealogy';
 
@@ -145,28 +145,33 @@ export function GenealogyForm({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Photo de profil</label>
-        <GenericImageUploader
-          onUploadSuccess={onImageUploadSuccess}
-          onError={onImageUploadError}
-          onUploadStart={() => {}}
-        >
-          <button 
-            type="button" 
-            className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-          >
-            Choisir une image
-          </button>
-        </GenericImageUploader>
-        {formData.image && (
-          <div className="mt-2">
-            <img
-              src={formData.image}
-              alt="Preview"
-              className="w-20 h-20 object-cover rounded-full"
+        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Photo de profil</label>
+        <div className="flex items-center space-x-4 flex-wrap">
+          {formData.image && (
+            <div className="flex-shrink-0">
+              <img
+                src={formData.image}
+                alt="Preview"
+                className="h-24 w-24 object-cover rounded-full border border-gray-300 dark:border-gray-600"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <FileUploader
+              onFileSelect={() => {}}
+              onUploadComplete={(urls) => {
+                if (urls.length > 0) {
+                  onImageUploadSuccess(urls[0]);
+                }
+              }}
+              onError={onImageUploadError}
+              folder="genealogie"
+              maxFileSizeMB={2}
+              multiple={false}
+              accept="image/*"
             />
           </div>
-        )}
+        </div>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date de naissance</label>

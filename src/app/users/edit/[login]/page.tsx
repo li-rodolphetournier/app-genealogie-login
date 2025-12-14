@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ProfileImage } from '@/components/ProfileImage';
 import { PageTransition } from '@/components/animations';
+import { FileUploader } from '@/components/file-uploader';
 
 type User = {
   login: string;
@@ -30,6 +31,7 @@ export default function EditUser() {
   });
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -55,9 +57,19 @@ export default function EditUser() {
     fetchUser();
   }, [login]);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setPhotoFile(e.target.files[0]);
+  const handleFileSelect = (files: File[]) => {
+    if (files.length > 0) {
+      setPhotoFile(files[0]);
+    }
+  };
+
+  const handleUploadComplete = (urls: string[]) => {
+    if (urls.length > 0) {
+      setUploadedImageUrl(urls[0]);
+      setFormData(prev => ({
+        ...prev,
+        profileImage: urls[0]
+      }));
     }
   };
 
@@ -65,10 +77,11 @@ export default function EditUser() {
     e.preventDefault();
 
     try {
-      let profileImageUrl = formData.profileImage;
+      // Utiliser l'URL déjà uploadée si disponible, sinon utiliser celle du formulaire
+      let profileImageUrl = uploadedImageUrl || formData.profileImage;
 
-      // Si une nouvelle photo a été sélectionnée, l'uploader d'abord
-      if (photoFile) {
+      // Si une nouvelle photo a été sélectionnée mais pas encore uploadée, l'uploader
+      if (photoFile && !uploadedImageUrl) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', photoFile);
         uploadFormData.append('folder', 'users');
@@ -121,105 +134,118 @@ export default function EditUser() {
 
   return (
     <PageTransition>
-      <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">
-        Modifier l&apos;utilisateur {formData.login || login}
-      </h1>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+            Modifier l&apos;utilisateur {formData.login || login}
+          </h1>
 
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Login:</label>
+              <input
+                type="text"
+                id="login"
+                name="login"
+                value={formData.login}
+                onChange={(e) => setFormData({ ...formData, login: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                required
+                minLength={3}
+                maxLength={50}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description:</label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                rows={4}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Statut:</label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                required
+              >
+                <option value="utilisateur">Utilisateur</option>
+                <option value="administrateur">Administrateur</option>
+              </select>
+            </div>
+
         <div>
-          <label htmlFor="login" className="block mb-1">Login:</label>
-          <input
-            type="text"
-            id="login"
-            name="login"
-            value={formData.login}
-            onChange={(e) => setFormData({ ...formData, login: e.target.value })}
-            className="w-full border rounded p-2"
-            required
-            minLength={3}
-            maxLength={50}
-          />
+          <label className="block mb-1 text-gray-700 dark:text-gray-300">Photo de profil:</label>
+          <div className="mt-1 flex items-center space-x-4">
+            <div className="flex-shrink-0">
+              <ProfileImage
+                src={uploadedImageUrl || formData.profileImage}
+                alt="Photo de profil actuelle"
+                fallbackText={user?.login || 'User'}
+                size={96}
+                className=""
+              />
+            </div>
+            <div className="flex-1">
+              <FileUploader
+                onFileSelect={handleFileSelect}
+                onUploadComplete={handleUploadComplete}
+                onError={(errorMessage) => setError(errorMessage)}
+                folder="users"
+                maxFileSizeMB={2}
+                multiple={false}
+                accept="image/*"
+              />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="email" className="block mb-1">Email:</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full border rounded p-2"
-            required
-          />
+            <div className="flex justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Link
+                href={`/users/${login}`}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                Annuler
+              </Link>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              >
+                Enregistrer les modifications
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div>
-          <label htmlFor="description" className="block mb-1">Description:</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full border rounded p-2"
-            rows={4}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="status" className="block mb-1">Statut:</label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            className="w-full border rounded p-2"
-            required
-          >
-            <option value="utilisateur">Utilisateur</option>
-            <option value="administrateur">Administrateur</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1">Photo de profil:</label>
-          <ProfileImage
-            src={formData.profileImage}
-            alt="Photo de profil actuelle"
-            fallbackText={user?.login || 'User'}
-            size={128}
-            className="mb-2"
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="w-full"
-          />
-        </div>
-
-        <div className="flex justify-between mt-6">
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Enregistrer les modifications
-          </button>
-          <Link
-            href={`/users/${login}`}
-            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-          >
-            Annuler
-          </Link>
-        </div>
-      </form>
+      </div>
       </div>
     </PageTransition>
   );
