@@ -106,13 +106,13 @@ export default function CreateObject() {
   if (user.status !== 'administrateur') {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Accès refusé
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 Seuls les administrateurs peuvent créer des objets.
               </p>
               <button
@@ -236,21 +236,21 @@ export default function CreateObject() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow px-6 py-8">
-          <h1 className="text-2xl font-bold mb-6">Créer un nouvel objet</h1>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Créer un nouvel objet</h1>
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-              <p className="text-red-700">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               <div>
-                <label htmlFor="nom" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="nom" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nom de l'objet
                 </label>
                 <input
@@ -265,7 +265,7 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Catégorie
                 </label>
                 
@@ -279,7 +279,7 @@ export default function CreateObject() {
                     setError(null);
                   }}
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                 >
                   <option value="">-- Sélectionner une catégorie --</option>
                   {categories.map((category) => (
@@ -302,8 +302,8 @@ export default function CreateObject() {
                     + Créer une nouvelle catégorie
                   </button>
                 ) : (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+                    <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nouvelle catégorie
                     </label>
                     <div className="flex gap-2">
@@ -347,7 +347,7 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   État de publication
                 </label>
                 <select
@@ -362,7 +362,7 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Photos
                 </label>
                 <input
@@ -397,7 +397,7 @@ export default function CreateObject() {
                   </svg>
                   <span id="file-upload-label">Cliquez pour ajouter des photos</span>
                 </label>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Formats acceptés : JPG, PNG, GIF
                 </p>
                 {imagePreview && (
@@ -408,7 +408,7 @@ export default function CreateObject() {
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description Courte
                 </label>
                 <textarea
@@ -416,13 +416,13 @@ export default function CreateObject() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="Description brève de l'objet"
                 />
               </div>
 
               <div>
-                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Description Longue (Détails)
                 </label>
                 <textarea
@@ -430,7 +430,7 @@ export default function CreateObject() {
                   value={longDescription}
                   onChange={(e) => setLongDescription(e.target.value)}
                   rows={6}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   placeholder="Description détaillée de l'objet..."
                 />
               </div>
@@ -439,7 +439,7 @@ export default function CreateObject() {
                 <button
                   type="button"
                   onClick={() => router.push('/objects')}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
                   Annuler
                 </button>

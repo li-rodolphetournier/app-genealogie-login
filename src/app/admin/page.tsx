@@ -47,7 +47,7 @@ export default function EditProfile() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Chargement...</p>
         </div>
       </div>
     );
@@ -177,15 +177,15 @@ export default function EditProfile() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
-      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Modifier mon profil
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Mettez à jour vos informations personnelles
               </p>
             </div>
@@ -211,13 +211,13 @@ export default function EditProfile() {
               </div>
             )}
 
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Informations personnelles
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email
                   </label>
                   <input
@@ -232,7 +232,7 @@ export default function EditProfile() {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Description
                   </label>
                   <textarea
@@ -246,7 +246,7 @@ export default function EditProfile() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label htmlFor="detail" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="detail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Détail (Plusieurs paragraphes)
                   </label>
                   <textarea
@@ -262,8 +262,8 @@ export default function EditProfile() {
               </div>
             </div>
 
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Photo de profil
               </h2>
               <div className="mt-1 flex items-center space-x-4">
@@ -278,15 +278,15 @@ export default function EditProfile() {
                   onError={handleImageUploadError}
                   folder="users"
                 >
-                  <button type="button" className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  <button type="button" className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
                     Modifier l'image
                   </button>
                 </GenericImageUploader>
               </div>
             </div>
 
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Modifier le mot de passe
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

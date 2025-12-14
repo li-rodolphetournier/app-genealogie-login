@@ -116,7 +116,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
   // Vérifier que l'utilisateur est administrateur (après tous les hooks)
   if (user?.status !== 'administrateur') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Accès refusé : droits administrateur requis</p>
         </div>
@@ -152,15 +152,15 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
   const getActionColor = (action: string) => {
     switch (action) {
       case 'created':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800';
       case 'updated':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800';
       case 'deleted':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
       case 'person_deleted':
-        return 'bg-red-200 text-red-900 border-red-300';
+        return 'bg-red-200 dark:bg-red-900/30 text-red-900 dark:text-red-300 border-red-300 dark:border-red-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600';
     }
   };
 
@@ -177,11 +177,11 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Historique de l'application</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Historique de l'application</h1>
             <BackToHomeButton variant="button" />
           </div>
         </div>
@@ -189,15 +189,15 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Onglets */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex -mb-px">
               <button
                 onClick={() => setActiveTab('positions')}
                 className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'positions'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 Historique des positions
@@ -206,8 +206,8 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                 onClick={() => setActiveTab('objects')}
                 className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'objects'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 Historique des objets
@@ -217,19 +217,19 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
         </div>
 
         {/* Filtres */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Filtre par personne (uniquement pour les positions) */}
             {activeTab === 'positions' && (
               <div>
-                <label htmlFor="person-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="person-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filtrer par personne
                 </label>
                 <select
                   id="person-filter"
                   value={selectedPersonId || ''}
                   onChange={(e) => setSelectedPersonId(e.target.value || null)}
-                  className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
                 >
                   <option value="">Toutes les personnes</option>
                   {initialPersons.map(person => (
@@ -243,14 +243,14 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
 
             {/* Filtre par action */}
             <div>
-              <label htmlFor="action-filter" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="action-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Filtrer par action
               </label>
               <select
                 id="action-filter"
                 value={filterAction}
                 onChange={(e) => setFilterAction(e.target.value as typeof filterAction)}
-                className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
               >
                 <option value="all">Toutes les actions</option>
                 <option value="created">Créations</option>
@@ -263,22 +263,22 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
         </div>
 
         {/* Liste de l'historique */}
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           {loading ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">Chargement de l'historique...</p>
+              <p className="text-gray-500 dark:text-gray-400">Chargement de l'historique...</p>
             </div>
           ) : activeTab === 'positions' ? (
             filteredPositionHistory.length === 0 && positionHistory.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500 mb-4">Aucun historique de positions disponible</p>
-                <p className="text-sm text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun historique de positions disponible</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
                   Si vous venez de créer la table, déplacez quelques cartes dans l'arbre généalogique pour générer de l'historique.
                 </p>
               </div>
             ) : filteredPositionHistory.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500">Aucun résultat pour les filtres sélectionnés</p>
+                <p className="text-gray-500 dark:text-gray-400">Aucun résultat pour les filtres sélectionnés</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -288,19 +288,19 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="p-6 hover:bg-gray-50 transition-colors"
+                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className={`text-lg font-semibold ${!item.personId ? 'text-red-700 italic' : 'text-gray-900'}`}>
+                          <h3 className={`text-lg font-semibold ${!item.personId ? 'text-red-700 dark:text-red-400 italic' : 'text-gray-900 dark:text-white'}`}>
                             {getPersonName(item.personId)}
                           </h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getActionColor(item.action)}`}>
                             {getActionLabel(item.action)}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                           {item.action === 'person_deleted' ? (
                             <p className="text-red-600 font-medium">Personne supprimée de l'arbre généalogique</p>
                           ) : (
@@ -332,14 +332,14 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
           ) : (
             filteredObjectHistory.length === 0 && objectHistory.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500 mb-4">Aucun historique d'objets disponible</p>
-                <p className="text-sm text-gray-400">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun historique d'objets disponible</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
                   L'historique des objets sera enregistré automatiquement lors des créations, modifications et suppressions.
                 </p>
               </div>
             ) : filteredObjectHistory.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500">Aucun résultat pour les filtres sélectionnés</p>
+                <p className="text-gray-500 dark:text-gray-400">Aucun résultat pour les filtres sélectionnés</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -349,12 +349,12 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="p-6 hover:bg-gray-50 transition-colors"
+                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className={`text-lg font-semibold ${!item.objectId ? 'text-red-700 italic' : 'text-gray-900'}`}>
+                          <h3 className={`text-lg font-semibold ${!item.objectId ? 'text-red-700 dark:text-red-400 italic' : 'text-gray-900 dark:text-white'}`}>
                             {item.objectId ? `Objet ${item.objectId}` : 'Objet supprimé'}
                             {item.newValues?.nom != null && `: ${String(item.newValues.nom)}`}
                             {item.oldValues?.nom != null && item.newValues?.nom == null && `: ${String(item.oldValues.nom)}`}
@@ -363,7 +363,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                             {getActionLabel(item.action)}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                           {item.action === 'deleted' ? (
                             <p className="text-red-600 font-medium">Objet supprimé</p>
                           ) : item.action === 'updated' && item.changedFields.length > 0 ? (
@@ -382,7 +382,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                                   const oldValue = item.oldValues?.[field];
                                   const newValue = item.newValues?.[field];
                                   return (
-                                    <li key={field} className="text-gray-700">
+                                    <li key={field} className="text-gray-700 dark:text-gray-300">
                                       <span className="font-medium">{fieldLabels[field] || field}:</span>{' '}
                                       {oldValue !== undefined && oldValue !== null ? (
                                         <span className="line-through text-red-600">{String(oldValue)}</span>
@@ -437,25 +437,25 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
         {/* Statistiques */}
         {!loading && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Total des modifications {activeTab === 'positions' ? '(positions)' : '(objets)'}
               </p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {activeTab === 'positions' ? positionHistory.length : objectHistory.length}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Créations</p>
-              <p className="text-2xl font-bold text-green-600">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Créations</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {activeTab === 'positions' 
                   ? positionHistory.filter(h => h.action === 'created').length
                   : objectHistory.filter(h => h.action === 'created').length}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <p className="text-sm text-gray-600">Modifications</p>
-              <p className="text-2xl font-bold text-blue-600">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Modifications</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {activeTab === 'positions'
                   ? positionHistory.filter(h => h.action === 'updated').length
                   : objectHistory.filter(h => h.action === 'updated').length}

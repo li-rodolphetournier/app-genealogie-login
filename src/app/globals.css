@@ -14,10 +14,21 @@
   }
 }
 
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Styles pour tous les champs de saisie */
@@ -31,9 +42,10 @@ input[type="url"],
 input[type="search"],
 textarea,
 select {
-  @apply border-2 border-gray-300 rounded-md shadow-sm px-4 py-2 w-full
-  focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
-  hover:border-gray-400
+  @apply border-2 border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-4 py-2 w-full
+  bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+  focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-opacity-50
+  hover:border-gray-400 dark:hover:border-gray-500
   outline-none;
 }
 
@@ -62,12 +74,12 @@ select:invalid {
 input:disabled,
 textarea:disabled,
 select:disabled {
-  @apply bg-gray-100 cursor-not-allowed;
+  @apply bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400;
 }
 
 /* Style pour les labels */
 label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
 }
 
 /* Style pour les groupes de champs */
@@ -137,4 +149,17 @@ label {
 .embla__slide {
   flex: 0 0 100%;
   min-width: 0;
+}
+
+/* Styles pour react-d3-tree - liens entre les nœuds */
+.rd3t-link {
+  stroke: #888;
+  stroke-width: 2;
+  fill: none;
+}
+
+.dark .rd3t-link {
+  stroke: #9ca3af;
+  stroke-width: 2;
+  fill: none;
 }

@@ -162,11 +162,11 @@ export default function CategoriesManagement() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow px-6 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Gestion des Catégories</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Catégories</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleOpenModal()}
@@ -179,30 +179,30 @@ export default function CategoriesManagement() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-              <p className="text-red-700">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
+              <p className="text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
-              <p className="text-green-700">{success}</p>
+            <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-400 p-4 mb-4">
+              <p className="text-green-700 dark:text-green-300">{success}</p>
             </div>
           )}
 
           {categories.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">Aucune catégorie trouvée.</p>
-              <p className="text-sm text-gray-400">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">Aucune catégorie trouvée.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
                 Si vous venez de créer la table, exécutez la migration pour migrer les catégories existantes.
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Nom
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -213,22 +213,22 @@ export default function CategoriesManagement() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {categories.map((category) => (
                     <tr key={category.id || category.name}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{category.name}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-500">
-                          {category.description || <span className="italic text-gray-400">Aucune description</span>}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {category.description || <span className="italic text-gray-400 dark:text-gray-500">Aucune description</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleOpenModal(category)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                           >
                             Modifier
                           </button>
@@ -237,13 +237,13 @@ export default function CategoriesManagement() {
                               <button
                                 onClick={() => handleDelete(category.id!)}
                                 disabled={isSubmitting}
-                                className="text-red-600 hover:text-red-900 disabled:text-gray-400"
+                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 disabled:text-gray-400 dark:disabled:text-gray-500"
                               >
                                 Confirmer
                               </button>
                               <button
                                 onClick={() => setDeleteConfirm(null)}
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
                               >
                                 Annuler
                               </button>
@@ -251,7 +251,7 @@ export default function CategoriesManagement() {
                           ) : (
                             <button
                               onClick={() => setDeleteConfirm(category.id || null)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                             >
                               Supprimer
                             </button>
@@ -268,16 +268,16 @@ export default function CategoriesManagement() {
 
         {/* Modal pour ajouter/modifier */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                   {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
                 </h3>
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Nom *
                       </label>
                       <input
@@ -286,12 +286,12 @@ export default function CategoriesManagement() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                         placeholder="Nom de la catégorie"
                       />
                     </div>
                     <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Description
                       </label>
                       <textarea
@@ -299,7 +299,7 @@ export default function CategoriesManagement() {
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                         placeholder="Description de la catégorie (optionnel)"
                       />
                     </div>
@@ -308,7 +308,7 @@ export default function CategoriesManagement() {
                     <button
                       type="button"
                       onClick={handleCloseModal}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                     >
                       Annuler
                     </button>

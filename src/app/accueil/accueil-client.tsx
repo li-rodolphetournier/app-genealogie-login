@@ -162,13 +162,13 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gray-50"
+      className="min-h-screen bg-gray-50 dark:bg-gray-900"
     >
       <AnimatedContainer variant="slideDown" delay={0.1}>
-        <header className="bg-white shadow-sm" role="banner">
+        <header className="bg-white dark:bg-gray-800 shadow-sm" role="banner">
           <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <motion.h1
-              className="text-2xl font-bold text-gray-900"
+              className="text-2xl font-bold text-gray-900 dark:text-white"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.4 }}
@@ -181,7 +181,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <span className="text-gray-600">
+              <span className="text-gray-600 dark:text-gray-300">
                 Bienvenue <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
               </span>
               {user?.status === 'administrateur' && isDevelopment() && (

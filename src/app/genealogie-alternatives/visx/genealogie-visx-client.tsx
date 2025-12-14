@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { hierarchy } from 'd3-hierarchy';
 import { Tree } from '@visx/hierarchy';
 import { Group } from '@visx/group';
@@ -48,7 +48,27 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [translate, setTranslate] = useState({ x: 400, y: 100 });
+  const [svgBackgroundFill, setSvgBackgroundFill] = useState('#f9fafb');
   const svgRef = useRef<SVGSVGElement>(null);
+  
+  // Détecter le thème pour le fond SVG
+  useEffect(() => {
+    const updateSvgBackground = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setSvgBackgroundFill(isDark ? '#111827' : '#f9fafb');
+    };
+    
+    updateSvgBackground();
+    
+    // Observer les changements de classe sur l'élément html
+    const observer = new MutationObserver(updateSvgBackground);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
   
   const { user } = useAuth({
     redirectIfUnauthenticated: true,
@@ -218,9 +238,9 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
 
   if (!root) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500">Aucune donnée généalogique disponible</p>
+          <p className="text-gray-500 dark:text-gray-400">Aucune donnée généalogique disponible</p>
         </div>
       </div>
     );
@@ -233,7 +253,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
 
   return (
     <motion.div 
-      className="w-screen h-screen overflow-hidden bg-gray-100 flex"
+      className="w-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -294,7 +314,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
             style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
             onMouseDown={handleMouseDown}
           >
-            <rect width="100%" height="100%" fill="#f9fafb" />
+            <rect width="100%" height="100%" fill={svgBackgroundFill} />
             <g transform={`translate(${translate.x}, ${translate.y}) scale(${zoomLevel})`}>
               <Group top={0} left={0}>
                 <Tree<TreeNode>

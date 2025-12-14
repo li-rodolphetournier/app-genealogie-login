@@ -215,11 +215,11 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header avec bouton retour */}
-      <header className="bg-white shadow">
+      <header className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Administration des Messages
           </h1>
           <BackToHomeButton variant='button' className="px-6 py-3 text-base bg-blue-600 hover:bg-blue-700" />
@@ -229,14 +229,14 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Formulaire de création/modification */}
-        <div className="bg-white rounded-lg shadow-sm mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6" id="form-title">
+            <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white" id="form-title">
               {editingMessageId ? 'Modifier le message' : 'Créer un nouveau message'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6" aria-labelledby="form-title">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Titre
                 </label>
                 <input
@@ -244,14 +244,14 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   type="text"
                   value={newMessage.title}
                   onChange={(e) => setNewMessage(prev => ({ ...prev, title: e.target.value }))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-orange-500 dark:focus:border-orange-400 sm:text-sm"
                   required
                   aria-required="true"
                 />
               </div>
 
               <div>
-                <label htmlFor="image-upload" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="image-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Images
                 </label>
                 <input
@@ -262,7 +262,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
                   aria-describedby="image-help"
                 />
-                <p id="image-help" className="mt-1 text-sm text-gray-500">
+                <p id="image-help" className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Format accepté : JPG, PNG. Taille maximale : 10MB
                 </p>
                 
@@ -296,7 +296,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
               </div>
 
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contenu
                 </label>
                 <textarea
@@ -304,7 +304,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   value={newMessage.content}
                   onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
                   rows={6}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-orange-500 dark:focus:border-orange-400 sm:text-sm"
                   required
                   aria-required="true"
                 />
@@ -316,9 +316,9 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   type="checkbox"
                   checked={newMessage.display_on_home}
                   onChange={(e) => setNewMessage(prev => ({ ...prev, display_on_home: e.target.checked }))}
-                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-orange-600 dark:text-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 border-gray-300 dark:border-gray-600 rounded"
                 />
-                <label htmlFor="display_on_home" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="display_on_home" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                   Afficher sur la page d'accueil
                 </label>
               </div>
@@ -337,7 +337,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                    className="inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:focus:ring-orange-400"
                   >
                     Annuler
                   </button>
@@ -348,16 +348,16 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
         </div>
 
         {/* Liste des messages */}
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Messages publiés</h2>
+            <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Messages publiés</h2>
             <div className="space-y-6">
               {messages.map((message) => (
-                <div key={message.id} className="border-b pb-4 last:border-b-0 relative">
+                <div key={message.id} className="border-b dark:border-gray-700 pb-4 last:border-b-0 relative">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-medium">{message.title}</h3>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{message.title}</h3>
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="checkbox"
@@ -389,15 +389,15 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                                 showToast('Erreur lors de la mise à jour', 'error');
                               }
                             }}
-                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-orange-600 dark:text-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400 border-gray-300 dark:border-gray-600 rounded"
                             title={message.display_on_home ? "Masquer de l'accueil" : "Afficher sur l'accueil"}
                           />
-                          <span className="ml-2 text-xs text-gray-500">
+                          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                             {message.display_on_home ? '✓ Accueil' : 'Accueil'}
                           </span>
                         </label>
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(message.date).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
@@ -465,7 +465,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                   <div className="prose max-w-none whitespace-pre-wrap">
                     {message.content}
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     Publié par {message.userName}
                   </p>
                 </div>

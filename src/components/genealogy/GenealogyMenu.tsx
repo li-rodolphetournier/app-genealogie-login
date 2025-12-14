@@ -58,7 +58,7 @@ export function GenealogyMenu({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed left-0 top-0 h-full bg-white shadow-lg z-10"
+        className="fixed left-0 top-0 h-full bg-white dark:bg-gray-800 shadow-lg z-10"
         style={{ width: '24rem' }}
         initial={{ x: -384 }}
         animate={{ x: 0 }}
@@ -68,7 +68,7 @@ export function GenealogyMenu({
         {canEdit ? (
           <div className="h-full p-6 overflow-y-auto">
             <div className="flex justify-between items-center mb-4 flex-col gap-4">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {historyOpen ? "Historique de l'arbre" : (isEditing ? "Modifier une personne" : "Ajouter une personne")}
               </h2>
               <div className="flex flex-wrap gap-2 w-full justify-center">
@@ -98,9 +98,9 @@ export function GenealogyMenu({
             {historyOpen ? (
               <div className="space-y-4">
                 {loadingHistory ? (
-                  <p className="text-gray-500">Chargement de l'historique...</p>
+                  <p className="text-gray-500 dark:text-gray-400">Chargement de l'historique...</p>
                 ) : history.length === 0 ? (
-                  <p className="text-gray-500">Aucun historique disponible</p>
+                  <p className="text-gray-500 dark:text-gray-400">Aucun historique disponible</p>
                 ) : (
                   <div className="space-y-3">
                     {history
@@ -111,22 +111,22 @@ export function GenealogyMenu({
                         const isPersonDeleted = item.action === 'person_deleted';
                         const isDeleted = isPositionDeleted || isPersonDeleted;
                         return (
-                          <div key={item.id} className={`border rounded-lg p-3 ${isDeleted ? 'bg-red-50 border-red-200' : 'bg-gray-50'}`}>
+                          <div key={item.id} className={`border rounded-lg p-3 ${isDeleted ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}`}>
                             <div className="flex justify-between items-start mb-2">
                               <div>
-                                <p className={`font-semibold ${isDeleted ? 'text-red-700' : ''}`}>
+                                <p className={`font-semibold ${isDeleted ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-white'}`}>
                                   {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId?.substring(0, 8) || 'N/A'}...`}
                                   {isPersonDeleted && ' (supprimée)'}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                   {new Date(item.updatedAt).toLocaleString('fr-FR')}
                                 </p>
                               </div>
                               <span className={`px-2 py-1 rounded text-xs ${
-                                item.action === 'created' ? 'bg-green-100 text-green-800' :
-                                item.action === 'updated' ? 'bg-blue-100 text-blue-800' :
-                                item.action === 'person_deleted' ? 'bg-red-200 text-red-900' :
-                                'bg-red-100 text-red-800'
+                                item.action === 'created' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                                item.action === 'updated' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                                item.action === 'person_deleted' ? 'bg-red-200 dark:bg-red-900/30 text-red-900 dark:text-red-300' :
+                                'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                               }`}>
                                 {item.action === 'created' ? 'Créé' : 
                                  item.action === 'updated' ? 'Modifié' : 
@@ -134,7 +134,7 @@ export function GenealogyMenu({
                                  'Position supprimée'}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-700">
+                            <div className="text-sm text-gray-700 dark:text-gray-300">
                               {isPersonDeleted ? (
                                 <p className="text-red-600 font-medium">Personne supprimée de l'arbre</p>
                               ) : isPositionDeleted ? (
@@ -171,25 +171,25 @@ export function GenealogyMenu({
           <div className="h-full p-6 overflow-y-auto">
             {selectedNode ? (
               <>
-                <h2 className="text-xl font-bold mb-6">Détails de la personne</h2>
+                <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Détails de la personne</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nom complet</label>
-                    <p className="w-full border rounded p-2 bg-gray-50">{selectedNode.name}</p>
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nom complet</label>
+                    <p className="w-full border rounded p-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">{selectedNode.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Description</label>
-                    <p className="w-full border rounded p-2 bg-gray-50">{selectedNode.description || 'Aucune description'}</p>
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Description</label>
+                    <p className="w-full border rounded p-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">{selectedNode.description || 'Aucune description'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Date de naissance</label>
-                    <p className="w-full border rounded p-2 bg-gray-50">
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date de naissance</label>
+                    <p className="w-full border rounded p-2 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                       {selectedNode.dateNaissance ? new Date(selectedNode.dateNaissance).toLocaleDateString() : 'Non renseignée'}
                     </p>
                   </div>
                   {selectedNode.dateDeces && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Date de décès</label>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date de décès</label>
                       <p className="w-full border rounded p-2 bg-gray-50">
                         {new Date(selectedNode.dateDeces).toLocaleDateString()}
                       </p>
@@ -197,7 +197,7 @@ export function GenealogyMenu({
                   )}
                   {selectedNode.image && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Photo</label>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Photo</label>
                       <img
                         src={selectedNode.image}
                         alt={selectedNode.name}
@@ -209,7 +209,7 @@ export function GenealogyMenu({
               </>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   Sélectionnez une personne pour voir ses informations
                 </p>
               </div>

@@ -184,16 +184,16 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
-      <div className="fixed top-0 left-0 right-0 z-10 bg-white shadow-sm">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
         <header className="w-full">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Liste des objets
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Gérez et consultez tous les objets disponibles
                 </p>
               </div>
@@ -215,7 +215,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
           </div>
         </header>
 
-        <div className="w-full border-t border-gray-200">
+        <div className="w-full border-t border-gray-200 dark:border-gray-700">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col space-y-4">
               <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -225,7 +225,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full rounded-md border-2 border-gray-300 pl-4 pr-12 py-2 focus:border-blue-500 focus:ring-blue-500"
+                      className="block w-full rounded-md border-2 border-gray-300 dark:border-gray-600 pl-4 pr-12 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                       placeholder="Rechercher..."
                     />
                   </div>
@@ -233,7 +233,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -242,7 +242,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                   </button>
                   <button
                     onClick={toggleSortDirection}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     <svg className={`h-5 w-5 mr-2 transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
@@ -251,7 +251,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                   </button>
                   <button
                     onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     {viewMode === 'grid' ? (
                       <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -268,17 +268,17 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
               </div>
 
               {showFilters && (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="filter-field" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="filter-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Champ de Recherche
                       </label>
                       <select
                         id="filter-field"
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value as FilterType)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="tous">Tous les champs</option>
                         <option value="nom">Nom</option>
@@ -288,14 +288,14 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                     </div>
 
                     <div>
-                      <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Filtrer par Type
                       </label>
                       <select
                         id="filter-type"
                         value={selectedTypeFilter}
                         onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="tous">Tous les Types</option>
                         {availableTypes.map(type => (
@@ -305,14 +305,14 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                     </div>
 
                     <div>
-                      <label htmlFor="sort-field" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="sort-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Trier par
                       </label>
                       <select
                         id="sort-field"
                         value={sortType}
                         onChange={(e) => setSortType(e.target.value as SortType)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="nom">Nom</option>
                         <option value="type">Type</option>
@@ -324,7 +324,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                 </div>
               )}
 
-              <div className="text-sm text-gray-500 pt-2">
+              <div className="text-sm text-gray-500 dark:text-gray-400 pt-2">
                 {filteredObjects.length} objet{filteredObjects.length !== 1 ? 's' : ''} trouvé{filteredObjects.length !== 1 ? 's' : ''}
               </div>
             </div>
@@ -336,10 +336,10 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
         <div className="max-w-full mx-auto">
           {filteredObjects.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-gray-500">Aucun objet ne correspond aux filtres sélectionnés.</p>
+              <p className="text-gray-500 dark:text-gray-400">Aucun objet ne correspond aux filtres sélectionnés.</p>
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
                 {filteredObjects.map((object) => (
                   <ObjectCard
@@ -352,7 +352,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
               </div>
             </div>
           ) : (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
               <ul className="divide-y divide-gray-200">
                 {filteredObjects.map((object) => (
                   <li key={object.id} className="p-4 hover:bg-gray-50">

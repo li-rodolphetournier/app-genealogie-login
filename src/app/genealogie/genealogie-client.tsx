@@ -273,7 +273,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
 
   return (
     <motion.div 
-      className="w-screen h-screen overflow-hidden bg-gray-100 flex"
+      className="w-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -333,7 +333,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
         >
           {treeData ? (
             <div 
-              className="w-full h-full bg-white"
+              className="w-full h-full bg-white dark:bg-gray-900"
               style={{ width: '100%', height: '100%', position: 'relative', minHeight: '600px' }}
             >
               <motion.div

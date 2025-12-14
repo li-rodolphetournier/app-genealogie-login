@@ -322,10 +322,10 @@ export default function Login() {
 
   if (!mounted || checkingAuth) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Vérification...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Vérification...</p>
         </div>
       </div>
     );
@@ -337,7 +337,7 @@ export default function Login() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-white flex flex-col justify-center py-12 sm:px-6 lg:px-8"
+      className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
     >
       <AnimatedContainer variant="fadeIn" delay={0.1}>
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -366,7 +366,7 @@ export default function Login() {
 
           {/* Titre */}
           <motion.h1
-            className="text-center text-3xl font-bold tracking-tight text-gray-900 mb-2"
+            className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-2"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -374,7 +374,7 @@ export default function Login() {
             Bienvenue
           </motion.h1>
           <motion.p
-            className="text-center text-sm text-gray-600 mb-8"
+            className="text-center text-sm text-gray-600 dark:text-gray-300 mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.4 }}
@@ -387,7 +387,7 @@ export default function Login() {
       <AnimatedContainer variant="scale" delay={0.5}>
         <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
           <motion.div
-            className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200"
+            className="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200 dark:border-gray-700"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.4 }}
@@ -396,13 +396,13 @@ export default function Login() {
             {error && (
               <motion.div
                 role="alert"
-                className="bg-red-50 border-l-4 border-red-500 p-4 mb-6"
+                className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-6"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <p className="text-red-700">{error}</p>
+                <p className="text-red-700 dark:text-red-300">{error}</p>
               </motion.div>
             )}
 
@@ -418,7 +418,7 @@ export default function Login() {
               <div>
                 <label
                   htmlFor="login"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Identifiant
                 </label>
@@ -431,7 +431,7 @@ export default function Login() {
                     required
                     value={formData.login}
                     onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                     disabled={isLoading}
                     aria-required="true"
                     aria-invalid={error ? "true" : "false"}
@@ -444,13 +444,13 @@ export default function Login() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Mot de passe
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-800"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                   >
                     Mot de passe oublié ?
                   </Link>
@@ -464,7 +464,7 @@ export default function Login() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
                     disabled={isLoading}
                     aria-required="true"
                     aria-invalid={error ? "true" : "false"}
@@ -526,7 +526,7 @@ export default function Login() {
       {/* Footer */}
       <AnimatedContainer variant="fadeIn" delay={0.8}>
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             En cas de problème de connexion, contactez l&apos;administrateur
           </p>
         </div>

@@ -51,23 +51,23 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* En-tête fixe */}
-      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Liste des utilisateurs
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Gérez les utilisateurs de l&apos;application
               </p>
             </div>
             <div className="flex space-x-4">
               <button
                 onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label={`Basculer en mode ${viewMode === 'grid' ? 'liste' : 'grille'}`}
               >
                 {viewMode === 'grid' ? (
@@ -97,12 +97,12 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
       <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           {viewMode === 'grid' ? (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
                 {users.map((user) => (
                   <div
                     key={user.login}
-                    className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
                   >
                     <div className="p-6">
                       <div className="flex flex-col items-center space-y-4">
@@ -113,10 +113,10 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                           size={128}
                         />
                         <div className="text-center">
-                          <h2 className="text-xl font-semibold text-gray-900">
+                          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {user.login}
                           </h2>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                         </div>
                       </div>
 
@@ -152,10 +152,10 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
               </div>
             </div>
           ) : (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <ul className="divide-y divide-gray-200">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {users.map((user) => (
-                  <li key={user.login} className="p-4 hover:bg-gray-50">
+                  <li key={user.login} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div className="flex items-center space-x-4">
                       <ProfileImage
                         src={user.profileImage}
@@ -164,10 +164,10 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                         size={48}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                           {user.login}
                         </p>
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                           {user.email}
                         </p>
                       </div>
@@ -205,7 +205,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
 
           {users.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">Aucun utilisateur trouvé</p>
+              <p className="text-gray-500 dark:text-gray-400">Aucun utilisateur trouvé</p>
             </div>
           )}
         </div>

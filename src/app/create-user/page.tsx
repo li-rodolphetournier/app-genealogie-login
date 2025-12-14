@@ -105,22 +105,22 @@ export default function CreateUser() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
-      <header className="fixed top-0 left-0 right-0 bg-white shadow-sm z-10">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Créer un nouvel utilisateur
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Remplissez les informations pour créer un nouvel utilisateur
               </p>
             </div>
             <div className="flex space-x-4">
               <Link
                 href="/users"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Annuler
               </Link>
@@ -133,25 +133,25 @@ export default function CreateUser() {
         <div className="max-w-full mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div role="alert" className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              <div role="alert" className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
                 <strong className="font-bold">Erreur !</strong>
                 <span className="block sm:inline"> {error}</span>
               </div>
             )}
             {success && (
-              <div role="status" className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+              <div role="status" className="bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded relative">
                 <strong className="font-bold">Succès !</strong>
                 <span className="block sm:inline"> {success}</span>
               </div>
             )}
 
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Informations de l&apos;utilisateur
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="login" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="login" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Login
                   </label>
                   <input
@@ -160,14 +160,14 @@ export default function CreateUser() {
                     name="login"
                     value={formData.login}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     required
                     aria-required="true"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Email
                   </label>
                   <input
@@ -176,14 +176,14 @@ export default function CreateUser() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     required
                     aria-required="true"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Mot de passe
                   </label>
                   <input
@@ -192,7 +192,7 @@ export default function CreateUser() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     required
                     aria-required="true"
                     minLength={6}
@@ -200,7 +200,7 @@ export default function CreateUser() {
                 </div>
 
                 <div>
-                  <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Statut
                   </label>
                   <select
@@ -208,7 +208,7 @@ export default function CreateUser() {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     required
                     aria-required="true"
                   >
@@ -220,13 +220,13 @@ export default function CreateUser() {
               </div>
             </div>
 
-            <div className="bg-white shadow-sm rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Informations complémentaires
               </h2>
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Description (Courte)
                   </label>
                   <textarea
@@ -235,12 +235,12 @@ export default function CreateUser() {
                     value={formData.description}
                     onChange={handleChange}
                     rows={3}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="detail" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="detail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Détail (Plusieurs paragraphes)
                   </label>
                   <textarea
@@ -249,21 +249,21 @@ export default function CreateUser() {
                     value={formData.detail}
                     onChange={handleChange}
                     rows={6}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                     placeholder="Entrez des informations plus détaillées ici..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Photo de profil (Optionnel)
                   </label>
                   <div className="mt-1 flex items-center space-x-4">
                     {formData.profileImage ? (
-                      <img src={formData.profileImage} alt="Aperçu" className="h-16 w-16 rounded-full object-cover border border-gray-300" />
+                      <img src={formData.profileImage} alt="Aperçu" className="h-16 w-16 rounded-full object-cover border border-gray-300 dark:border-gray-600" />
                     ) : (
-                      <span className="inline-block h-16 w-16 rounded-full overflow-hidden bg-gray-100 border border-gray-300">
-                        <svg className="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                      <span className="inline-block h-16 w-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">
+                        <svg className="h-full w-full text-gray-300 dark:text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                       </span>
@@ -273,7 +273,7 @@ export default function CreateUser() {
                       onError={handleImageUploadError}
                       folder="users"
                     >
-                      <button type="button" className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                      <button type="button" className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
                         Choisir une image
                       </button>
                     </GenericImageUploader>

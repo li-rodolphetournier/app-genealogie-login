@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import type { Person } from '@/types/genealogy';
 import type { Position } from '@/utils/genealogy-tree-utils';
 import { LinkVertical } from '@visx/shape';
@@ -27,6 +28,32 @@ export function TreeLinksRenderer({
   useVisx = false,
   style = 'default'
 }: TreeLinksRendererProps) {
+  const [isDark, setIsDark] = useState(false);
+  
+  // Détecter le thème pour les couleurs des liens
+  useEffect(() => {
+    const updateTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    updateTheme();
+    
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  // Couleurs adaptées au thème
+  const coupleLinkColor = isDark ? '#f87171' : '#e11d48'; // Rose/rouge pour les couples
+  const pereLinkColor = isDark ? '#60a5fa' : '#2563eb'; // Bleu pour le père
+  const mereLinkColor = isDark ? '#f472b6' : '#ec4899'; // Rose pour la mère
+  const centerLinkColor = isDark ? '#9ca3af' : '#6b7280'; // Gris pour les liens centraux
+  const centerPointColor = isDark ? '#9ca3af' : '#6b7280'; // Gris pour le point central
+  
   const links: React.ReactElement[] = [];
 
   // Liens horizontaux entre les parents (couples)
@@ -43,7 +70,7 @@ export function TreeLinksRenderer({
         y1={perePos.y}
         x2={merePos.x - nodeWidth / 2}
         y2={merePos.y}
-        stroke="#e11d48"
+        stroke={coupleLinkColor}
         strokeWidth="2"
         strokeDasharray="3,3"
         strokeOpacity={0.7}
@@ -72,7 +99,7 @@ export function TreeLinksRenderer({
               source: { x: perePos.x, y: perePos.y },
               target: { x: childPos.x, y: childPos.y }
             }}
-            stroke="#2563eb"
+            stroke={pereLinkColor}
             strokeWidth="2"
             fill="none"
             strokeOpacity={0.7}
@@ -87,7 +114,7 @@ export function TreeLinksRenderer({
               source: { x: merePos.x, y: merePos.y },
               target: { x: childPos.x, y: childPos.y }
             }}
-            stroke="#ec4899"
+            stroke={mereLinkColor}
             strokeWidth="2"
             fill="none"
             strokeOpacity={0.7}
@@ -100,7 +127,7 @@ export function TreeLinksRenderer({
             key={`pere-link-${pereId}-${child.id}`}
             d={linkPath(perePos.x, perePos.y, childPos.x, childPos.y)}
             fill="none"
-            stroke="#2563eb"
+            stroke={pereLinkColor}
             strokeWidth="2"
             strokeOpacity={0.7}
             strokeDasharray={child.dateDeces ? "5,5" : undefined}
@@ -114,7 +141,7 @@ export function TreeLinksRenderer({
             key={`mere-link-${mereId}-${child.id}`}
             d={linkPath(merePos.x, merePos.y, childPos.x, childPos.y)}
             fill="none"
-            stroke="#ec4899"
+            stroke={mereLinkColor}
             strokeWidth="2"
             strokeOpacity={0.7}
             strokeDasharray={child.dateDeces ? "5,5" : undefined}
@@ -135,7 +162,7 @@ export function TreeLinksRenderer({
               source: { x: perePos.x, y: perePos.y },
               target: { x: centerX, y: centerY }
             }}
-            stroke="#2563eb"
+            stroke={pereLinkColor}
             strokeWidth="2"
             fill="none"
             strokeOpacity={0.7}
@@ -149,7 +176,7 @@ export function TreeLinksRenderer({
               source: { x: merePos.x, y: merePos.y },
               target: { x: centerX, y: centerY }
             }}
-            stroke="#ec4899"
+            stroke={mereLinkColor}
             strokeWidth="2"
             fill="none"
             strokeOpacity={0.7}
@@ -162,7 +189,7 @@ export function TreeLinksRenderer({
             cx={centerX}
             cy={centerY}
             r={3}
-            fill="#6b7280"
+            fill={centerPointColor}
           />
         );
         
@@ -177,7 +204,7 @@ export function TreeLinksRenderer({
                 source: { x: centerX, y: centerY },
                 target: { x: childPos.x, y: childPos.y }
               }}
-              stroke="#6b7280"
+              stroke={centerLinkColor}
               strokeWidth="2"
               fill="none"
               strokeOpacity={0.7}
@@ -191,7 +218,7 @@ export function TreeLinksRenderer({
             key={`pere-to-center-${coupleKey}`}
             d={linkPath(perePos.x, perePos.y, centerX, centerY)}
             fill="none"
-            stroke="#2563eb"
+            stroke={pereLinkColor}
             strokeWidth="2"
             strokeOpacity={0.7}
             strokeLinecap={style === 'treecharts' ? "round" : undefined}
@@ -204,7 +231,7 @@ export function TreeLinksRenderer({
             key={`mere-to-center-${coupleKey}`}
             d={linkPath(merePos.x, merePos.y, centerX, centerY)}
             fill="none"
-            stroke="#ec4899"
+            stroke={mereLinkColor}
             strokeWidth="2"
             strokeOpacity={0.7}
             strokeLinecap={style === 'treecharts' ? "round" : undefined}
@@ -218,7 +245,7 @@ export function TreeLinksRenderer({
             cx={centerX}
             cy={centerY}
             r={3}
-            fill="#6b7280"
+            fill={centerPointColor}
           />
         );
         
@@ -231,7 +258,7 @@ export function TreeLinksRenderer({
               key={`center-to-child-${coupleKey}-${child.id}`}
               d={linkPath(centerX, centerY, childPos.x, childPos.y)}
               fill="none"
-              stroke="#6b7280"
+              stroke={centerLinkColor}
               strokeWidth="2"
               strokeOpacity={0.7}
               strokeDasharray={child.dateDeces ? "5,5" : undefined}
@@ -263,7 +290,7 @@ export function TreeLinksRenderer({
                   source: { x: perePos.x, y: perePos.y },
                   target: { x: childPos.x, y: childPos.y }
                 }}
-                stroke="#2563eb"
+                stroke={pereLinkColor}
                 strokeWidth="2"
                 fill="none"
                 strokeOpacity={0.7}
@@ -276,7 +303,7 @@ export function TreeLinksRenderer({
                 key={`pere-link-${pereId}-${child.id}`}
                 d={linkPath(perePos.x, perePos.y, childPos.x, childPos.y)}
                 fill="none"
-                stroke="#2563eb"
+                stroke={pereLinkColor}
                 strokeWidth="2"
                 strokeOpacity={0.7}
                 strokeDasharray={child.dateDeces ? "5,5" : undefined}
@@ -304,7 +331,7 @@ export function TreeLinksRenderer({
                   source: { x: merePos.x, y: merePos.y },
                   target: { x: childPos.x, y: childPos.y }
                 }}
-                stroke="#ec4899"
+                stroke={mereLinkColor}
                 strokeWidth="2"
                 fill="none"
                 strokeOpacity={0.7}
@@ -317,7 +344,7 @@ export function TreeLinksRenderer({
                 key={`mere-link-${mereId}-${child.id}`}
                 d={linkPath(merePos.x, merePos.y, childPos.x, childPos.y)}
                 fill="none"
-                stroke="#ec4899"
+                stroke={mereLinkColor}
                 strokeWidth="2"
                 strokeOpacity={0.7}
                 strokeDasharray={child.dateDeces ? "5,5" : undefined}

@@ -60,43 +60,43 @@ export function GenealogyForm({
       key={isEditing ? `edit-${formData.prenom}` : 'add'}
     >
       <div>
-        <label className="block text-sm font-medium mb-1">Prénom</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Prénom</label>
         <input
           type="text"
           name="prenom"
           value={formData.prenom}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Nom</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nom</label>
         <input
           type="text"
           name="nom"
           value={formData.nom}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Si non renseigné, le nom du père sera utilisé
         </p>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Genre</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Genre</label>
         <select
           name="genre"
           value={formData.genre}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
         </select>
       </div>
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Description (Courte)
         </label>
         <textarea 
@@ -105,16 +105,16 @@ export function GenealogyForm({
           value={formData.description} 
           onChange={onInputChange} 
           rows={3} 
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+          className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 sm:text-sm" 
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Père</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Père</label>
         <select
           name="pere"
           value={formData.pere || ''}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
           <option value="">Aucun</option>
           {persons
@@ -127,12 +127,12 @@ export function GenealogyForm({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Mère</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Mère</label>
         <select
           name="mere"
           value={formData.mere || ''}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
           <option value="">Aucune</option>
           {persons
@@ -145,7 +145,7 @@ export function GenealogyForm({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Photo de profil</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Photo de profil</label>
         <GenericImageUploader
           onUploadSuccess={onImageUploadSuccess}
           onError={onImageUploadError}
@@ -153,7 +153,7 @@ export function GenealogyForm({
         >
           <button 
             type="button" 
-            className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
           >
             Choisir une image
           </button>
@@ -169,34 +169,34 @@ export function GenealogyForm({
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Date de naissance</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date de naissance</label>
         <input
           type="date"
           name="dateNaissance"
           value={formData.dateNaissance}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Date de décès</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Date de décès</label>
         <input
           type="date"
           name="dateDeces"
           value={formData.dateDeces || ''}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Ordre de naissance</label>
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Ordre de naissance</label>
         <input
           type="number"
           name="ordreNaissance"
           value={formData.ordreNaissance}
           onChange={onInputChange}
-          className="w-full border rounded p-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           min="1"
           required
         />
