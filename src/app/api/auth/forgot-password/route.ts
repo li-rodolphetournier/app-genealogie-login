@@ -119,8 +119,10 @@ export async function POST(request: Request) {
     // Note: resetPasswordForEmail ne révèle pas si l'utilisateur existe ou non (sécurité)
     // On utilise un client normal car resetPasswordForEmail nécessite un client public
     const publicSupabase = await createClient();
+    const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`;
+    logger.debug(`[API /auth/forgot-password] URL de redirection utilisée: ${redirectUrl}`);
     const { error } = await publicSupabase.auth.resetPasswordForEmail(userEmail, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     // Stocker le message d'erreur avant la vérification pour le logging

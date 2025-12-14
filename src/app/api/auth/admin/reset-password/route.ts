@@ -55,11 +55,13 @@ export async function POST(request: Request) {
     }
 
     // Générer le lien de réinitialisation
+    const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`;
+    console.log(`[API /auth/admin/reset-password] URL de redirection utilisée: ${redirectUrl}`);
     const { data, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: targetUser.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`,
+        redirectTo: redirectUrl,
       },
     });
 
