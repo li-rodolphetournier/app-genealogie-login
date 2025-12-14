@@ -112,7 +112,7 @@ export default function CreateUser() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
+      <header role="banner" className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -135,7 +135,7 @@ export default function CreateUser() {
         </div>
       </header>
 
-      <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+      <main role="main" className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
@@ -294,7 +294,7 @@ export default function CreateUser() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}`}
+                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}`}
               >
                 {isSubmitting ? (
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

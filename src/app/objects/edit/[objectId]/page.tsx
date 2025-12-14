@@ -303,7 +303,7 @@ export default function EditObject() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Modifier l'objet : {object.nom}</h1>
@@ -549,7 +549,7 @@ export default function EditObject() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   disabled={isSaving}
                 >
                   {isSaving && (
@@ -565,7 +565,7 @@ export default function EditObject() {
           </form>
         </div>
       </div>
-      </div>
+      </main>
     </PageTransition>
   );
 } 

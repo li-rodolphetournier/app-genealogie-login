@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   if (success) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30">
@@ -55,29 +55,29 @@ export default function ForgotPasswordPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
+              <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
                 Email envoyé
-              </h2>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              </h1>
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                 Si cet email/login existe, un lien de réinitialisation a été envoyé.
                 Vérifiez votre boîte de réception.
               </p>
               <Link
                 href="/"
-                className="mt-6 inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                className="mt-6 inline-block text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
               >
                 Retour à la connexion
               </Link>
             </div>
           </div>
-        </div>
+        </main>
       </PageTransition>
     );
   }
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Mot de passe oublié
@@ -108,19 +108,19 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
             >
               {isLoading ? 'Envoi...' : 'Envoyer le lien de réinitialisation'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+            <Link href="/" className="text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium">
               Retour à la connexion
             </Link>
           </div>
         </div>
-      </div>
+      </main>
     </PageTransition>
   );
 }

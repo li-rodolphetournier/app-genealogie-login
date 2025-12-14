@@ -195,17 +195,17 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header avec bouton retour */}
-      <header className="bg-white dark:bg-gray-800 shadow">
+      <header role="banner" className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Administration des Messages
           </h1>
-          <BackToHomeButton variant='button' className="px-6 py-3 text-base bg-blue-600 hover:bg-blue-700" />
+          <BackToHomeButton variant='button' className="px-6 py-3 text-base bg-blue-700 hover:bg-blue-800" />
       
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Formulaire de création/modification */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8">
           <div className="p-6">
@@ -385,7 +385,7 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
                     <div className="flex gap-2 ml-4">
                       <button
                         onClick={() => handleEdit(message)}
-                        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
+                        className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition-colors"
                         title="Modifier"
                       >
                         <svg 

@@ -123,7 +123,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
             }}
           />
           <motion.p
-            className="mt-4 text-gray-600"
+            className="mt-4 text-gray-700"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -146,7 +146,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
         className="min-h-screen bg-gray-50 flex items-center justify-center"
       >
         <div className="text-center">
-          <p className="text-gray-600">Vérification de l'authentification...</p>
+          <p className="text-gray-700">Vérification de l'authentification...</p>
         </div>
       </motion.div>
     );
@@ -157,15 +157,16 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gray-50 dark:bg-gray-900"
-    >
+    <main role="main">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-gray-50 dark:bg-gray-900"
+      >
       <AnimatedContainer variant="slideDown" delay={0.1}>
-        <header className="bg-white dark:bg-gray-800 shadow-sm" role="banner">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-400 dark:border-gray-700" role="banner">
           <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
             <motion.h1
               className="text-2xl font-bold text-gray-900 dark:text-white"
@@ -181,7 +182,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <span className="text-gray-600 dark:text-gray-300">
+              <span className="text-gray-700 dark:text-gray-300">
                 Bienvenue <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
               </span>
               {user?.status === 'administrateur' && isDevelopment() && (
@@ -231,7 +232,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
             >
               <Link
                 href="/objects"
-                className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                 aria-label="Accéder à la liste des objets"
               >
                 <div className="flex items-center space-x-4">
@@ -241,8 +242,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-medium text-gray-900">Liste des objets</h2>
-                    <p className="mt-1 text-sm text-gray-500">Voir tous les objets disponibles</p>
+                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Liste des objets</h2>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir tous les objets disponibles</p>
                   </div>
                 </div>
               </Link>
@@ -259,7 +260,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               >
                 <Link
                   href="/objects/create"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                   aria-label="Créer un nouvel objet"
                 >
                   <div className="flex items-center space-x-4">
@@ -269,8 +270,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-xl font-medium text-gray-900">Créer un objet</h2>
-                      <p className="mt-1 text-sm text-gray-500">Ajouter un nouvel objet</p>
+                      <h2 className="text-xl font-medium text-gray-900 dark:text-white">Créer un objet</h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Ajouter un nouvel objet</p>
                     </div>
                   </div>
                 </Link>
@@ -289,7 +290,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 >
                   <Link
                     href="/users"
-                    className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                    className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                     aria-label="Accéder à la gestion des utilisateurs"
                   >
                     <div className="flex items-center space-x-4">
@@ -299,8 +300,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                         </svg>
                       </div>
                       <div>
-                        <h2 className="text-xl font-medium text-gray-900">Gestion des utilisateurs</h2>
-                        <p className="mt-1 text-sm text-gray-500">Administrer les comptes utilisateurs</p>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Gestion des utilisateurs</h2>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Administrer les comptes utilisateurs</p>
                       </div>
                     </div>
                   </Link>
@@ -315,7 +316,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 >
                   <Link
                     href="/admin/categories"
-                    className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-teal-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                    className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-teal-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                     aria-label="Accéder à la gestion des catégories"
                   >
                     <div className="flex items-center space-x-4">
@@ -325,8 +326,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                         </svg>
                       </div>
                       <div>
-                        <h2 className="text-xl font-medium text-gray-900">Gestion des catégories</h2>
-                        <p className="mt-1 text-sm text-gray-500">Créer, modifier et supprimer les catégories</p>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Gestion des catégories</h2>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Créer, modifier et supprimer les catégories</p>
                       </div>
                     </div>
                   </Link>
@@ -341,7 +342,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 >
                   <Link
                     href="/chart"
-                    className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                    className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                     aria-label="Accéder aux statistiques"
                   >
                     <div className="flex items-center space-x-4">
@@ -351,8 +352,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                         </svg>
                       </div>
                       <div>
-                        <h2 className="text-xl font-medium text-gray-900">Statistiques</h2>
-                        <p className="mt-1 text-sm text-gray-500">Voir les statistiques des objets</p>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Statistiques</h2>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir les statistiques des objets</p>
                       </div>
                     </div>
                   </Link>
@@ -386,7 +387,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 )}
                 <Link
                   href="/genealogie"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                   aria-label="Accéder à l'arbre généalogique"
                 >
                   <div className="flex items-center space-x-4">
@@ -396,8 +397,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-xl font-medium text-gray-900">Généalogie</h2>
-                      <p className="mt-1 text-sm text-gray-500">Visualiser l&apos;arbre généalogique</p>
+                      <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie</h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Visualiser l&apos;arbre généalogique</p>
                     </div>
                   </div>
                 </Link>
@@ -431,7 +432,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 )}
                 <Link
                   href="/genealogie-alternatives/visx"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-emerald-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-emerald-200"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-emerald-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                   aria-label="Accéder à l'arbre généalogique avec Visx"
                 >
                   <div className="flex items-center space-x-4">
@@ -442,12 +443,12 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-medium text-gray-900">Généalogie Visx</h2>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Visx</h2>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                           Alternative 1
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Arbre avec Visx - Bundle léger</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec Visx - Bundle léger</p>
                     </div>
                   </div>
                 </Link>
@@ -480,7 +481,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 )}
                 <Link
                   href="/genealogie-alternatives/nivo"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-cyan-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-cyan-200 opacity-75"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-cyan-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700 opacity-75"
                   aria-label="Accéder à l'arbre généalogique avec Nivo"
                 >
                   <div className="flex items-center space-x-4">
@@ -491,7 +492,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-medium text-gray-900">Généalogie Nivo</h2>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Nivo</h2>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800">
                           Alternative 2
                         </span>
@@ -499,7 +500,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                           À venir
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Arbre avec Nivo - Composants prêts à l&apos;emploi</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec Nivo - Composants prêts à l&apos;emploi</p>
                     </div>
                   </div>
                 </Link>
@@ -532,7 +533,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 )}
                 <Link
                   href="/genealogie-alternatives/treecharts"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-amber-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-amber-200 opacity-75"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-amber-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700 opacity-75"
                   aria-label="Accéder à l'arbre généalogique avec TreeCharts"
                 >
                   <div className="flex items-center space-x-4">
@@ -543,7 +544,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-medium text-gray-900">Généalogie TreeCharts</h2>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie TreeCharts</h2>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                           Alternative 3
                         </span>
@@ -551,7 +552,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                           À venir
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Arbre avec TreeCharts - Spécialisé généalogie</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec TreeCharts - Spécialisé généalogie</p>
                     </div>
                   </div>
                 </Link>
@@ -569,7 +570,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               >
                 <Link
                   href="/genealogie/historique"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-violet-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border-2 border-violet-200"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-violet-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                   aria-label="Consulter l'historique des positions"
                 >
                   <div className="flex items-center space-x-4">
@@ -579,8 +580,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-xl font-medium text-gray-900">Historique des modifications</h2>
-                      <p className="mt-1 text-sm text-gray-500">Consulter l'historique de création et modifications des positions</p>
+                      <h2 className="text-xl font-medium text-gray-900 dark:text-white">Historique des modifications</h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Consulter l'historique de création et modifications des positions</p>
                     </div>
                   </div>
                 </Link>
@@ -597,7 +598,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
             >
               <Link
                 href="/admin"
-                className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-pink-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-pink-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                 aria-label="Modifier mon profil"
               >
                 <div className="flex items-center space-x-4">
@@ -617,8 +618,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-medium text-gray-900">Mon profil</h2>
-                    <p className="mt-1 text-sm text-gray-500">Modifier mes informations personnelles</p>
+                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Mon profil</h2>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Modifier mes informations personnelles</p>
                   </div>
                 </div>
               </Link>
@@ -635,7 +636,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               >
                 <Link
                   href="/messages"
-                  className="group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full"
+                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
                   aria-label="Accéder à l'administration des messages"
                 >
                   <div className="flex items-center space-x-4">
@@ -655,8 +656,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-xl font-medium text-gray-900">Administration des messages</h2>
-                      <p className="mt-1 text-sm text-gray-500">Gérer les messages et annonces</p>
+                      <h2 className="text-xl font-medium text-gray-900 dark:text-white">Administration des messages</h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Gérer les messages et annonces</p>
                     </div>
                   </div>
                 </Link>
@@ -670,7 +671,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
         {displayedMessages.length > 0 && (
           <AnimatedContainer variant="slideUp" delay={0.6} className="mt-12">
             <motion.h2
-              className="text-2xl font-bold mb-6"
+              className="text-2xl font-bold mb-6 text-gray-900 dark:text-white"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.4 }}
@@ -681,16 +682,16 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               {displayedMessages.map((message, index) => (
                 <motion.div
                   key={message.id}
-                  className="bg-white rounded-lg shadow-md p-6"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-400 dark:border-gray-700"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {message.title}
                     </h3>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       {new Date(message.date).toLocaleDateString('fr-FR')}
                     </span>
                   </div>
@@ -705,15 +706,15 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                   )}
 
                   <div className="prose max-w-none">
-                    <p className="text-gray-700 whitespace-pre-wrap">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                       {message.content}
                     </p>
                   </div>
 
                   {message.userName && (
-                    <div className="mt-4 text-sm text-gray-500">
-                      Publié par {message.userName}
-                    </div>
+                      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                        Publié par {message.userName}
+                      </div>
                   )}
                 </motion.div>
               ))}
@@ -752,7 +753,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
           </motion.div>
         </div>
       )}
-    </motion.div>
+      </motion.div>
+    </main>
   );
 }
 

@@ -316,7 +316,7 @@ export async function DELETE(
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: findError } = await supabase
       .from('users')
-      .select('id')
+      .select('id, status')
       .eq('login', login)
       .single();
 
@@ -324,6 +324,14 @@ export async function DELETE(
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
+      );
+    }
+
+    // Empêcher la suppression des administrateurs
+    if (existingUser.status === 'administrateur') {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Impossible de supprimer un administrateur' },
+        { status: 403 }
       );
     }
 

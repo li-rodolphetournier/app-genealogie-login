@@ -145,7 +145,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
       return (
         <Link
           href={`/objects/${object.id}`}
-          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+          className="text-blue-700 hover:text-blue-900 font-medium text-sm"
         >
           Voir détails
         </Link>
@@ -156,7 +156,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
       <div className="flex space-x-2">
         <Link
           href={`/objects/${object.id}`}
-          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+          className="text-blue-700 hover:text-blue-900 font-medium text-sm"
         >
           Voir détails
         </Link>
@@ -186,7 +186,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
-        <header className="w-full">
+        <header role="banner" className="w-full">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between items-center">
               <div>
@@ -201,7 +201,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                 {userStatus === 'administrateur' && (
                   <Link
                     href="/objects/create"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -214,125 +214,126 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
             </div>
           </div>
         </header>
+      </div>
 
-        <div className="w-full border-t border-gray-200 dark:border-gray-700">
-          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col space-y-4">
-              <div className="flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex-1 min-w-[200px]">
-                  <div className="relative rounded-md shadow-sm">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="block w-full rounded-md border-2 border-gray-300 dark:border-gray-600 pl-4 pr-12 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      placeholder="Rechercher..."
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  >
-                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    Filtres {showFilters ? '(Masquer)' : '(Afficher)'}
-                  </button>
-                  <button
-                    onClick={toggleSortDirection}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  >
-                    <svg className={`h-5 w-5 mr-2 transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                    </svg>
-                    Trier ({sortType})
-                  </button>
-                  <button
-                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  >
-                    {viewMode === 'grid' ? (
-                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      </svg>
-                    ) : (
-                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                      </svg>
-                    )}
-                    {viewMode === 'grid' ? 'Vue liste' : 'Vue grille'}
-                  </button>
-                </div>
-              </div>
-
-              {showFilters && (
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label htmlFor="filter-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Champ de Recherche
-                      </label>
-                      <select
-                        id="filter-field"
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value as FilterType)}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      >
-                        <option value="tous">Tous les champs</option>
-                        <option value="nom">Nom</option>
-                        <option value="utilisateur">Utilisateur</option>
-                        <option value="status">Statut</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Filtrer par Type
-                      </label>
-                      <select
-                        id="filter-type"
-                        value={selectedTypeFilter}
-                        onChange={(e) => setSelectedTypeFilter(e.target.value)}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      >
-                        <option value="tous">Tous les Types</option>
-                        {availableTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="sort-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Trier par
-                      </label>
-                      <select
-                        id="sort-field"
-                        value={sortType}
-                        onChange={(e) => setSortType(e.target.value as SortType)}
-                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                      >
-                        <option value="nom">Nom</option>
-                        <option value="type">Type</option>
-                        <option value="utilisateur">Utilisateur</option>
-                        <option value="status">Statut</option>
-                      </select>
+      <main role="main" className="pt-[210px] pb-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto">
+          <div className="w-full border-t border-gray-200 dark:border-gray-700 mb-6">
+            <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-wrap gap-4 items-center justify-between">
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="relative rounded-md shadow-sm">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full rounded-md border-2 border-gray-300 dark:border-gray-600 pl-4 pr-12 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        placeholder="Rechercher..."
+                      />
                     </div>
                   </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    >
+                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                      </svg>
+                      Filtres {showFilters ? '(Masquer)' : '(Afficher)'}
+                    </button>
+                    <button
+                      onClick={toggleSortDirection}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    >
+                      <svg className={`h-5 w-5 mr-2 transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                      </svg>
+                      Trier ({sortType})
+                    </button>
+                    <button
+                      onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    >
+                      {viewMode === 'grid' ? (
+                        <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                      )}
+                      {viewMode === 'grid' ? 'Vue liste' : 'Vue grille'}
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              <div className="text-sm text-gray-500 dark:text-gray-400 pt-2">
-                {filteredObjects.length} objet{filteredObjects.length !== 1 ? 's' : ''} trouvé{filteredObjects.length !== 1 ? 's' : ''}
+                {showFilters && (
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label htmlFor="filter-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Champ de Recherche
+                        </label>
+                        <select
+                          id="filter-field"
+                          value={filterType}
+                          onChange={(e) => setFilterType(e.target.value as FilterType)}
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                          <option value="tous">Tous les champs</option>
+                          <option value="nom">Nom</option>
+                          <option value="utilisateur">Utilisateur</option>
+                          <option value="status">Statut</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Filtrer par Type
+                        </label>
+                        <select
+                          id="filter-type"
+                          value={selectedTypeFilter}
+                          onChange={(e) => setSelectedTypeFilter(e.target.value)}
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                          <option value="tous">Tous les Types</option>
+                          {availableTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label htmlFor="sort-field" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Trier par
+                        </label>
+                        <select
+                          id="sort-field"
+                          value={sortType}
+                          onChange={(e) => setSortType(e.target.value as SortType)}
+                          className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        >
+                          <option value="nom">Nom</option>
+                          <option value="type">Type</option>
+                          <option value="utilisateur">Utilisateur</option>
+                          <option value="status">Statut</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-gray-500 dark:text-gray-400 pt-2">
+                  {filteredObjects.length} objet{filteredObjects.length !== 1 ? 's' : ''} trouvé{filteredObjects.length !== 1 ? 's' : ''}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <main className="pt-[210px] pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           {filteredObjects.length === 0 ? (
             <div className="text-center py-10">

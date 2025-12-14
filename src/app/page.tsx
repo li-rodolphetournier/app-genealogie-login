@@ -325,20 +325,21 @@ export default function Login() {
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">Vérification...</p>
+          <p className="mt-4 text-gray-700 dark:text-gray-300">Vérification...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
-    >
+    <main role="main">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
+      >
       <AnimatedContainer variant="fadeIn" delay={0.1}>
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           {hasLogo && (
@@ -374,7 +375,7 @@ export default function Login() {
             Bienvenue
           </motion.h1>
           <motion.p
-            className="text-center text-sm text-gray-600 dark:text-gray-300 mb-8"
+            className="text-center text-sm text-gray-700 dark:text-gray-300 mb-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.4 }}
@@ -450,7 +451,7 @@ export default function Login() {
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                    className="text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
                   >
                     Mot de passe oublié ?
                   </Link>
@@ -477,7 +478,7 @@ export default function Login() {
                 <motion.button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
                   aria-busy={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
@@ -526,11 +527,12 @@ export default function Login() {
       {/* Footer */}
       <AnimatedContainer variant="fadeIn" delay={0.8}>
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
             En cas de problème de connexion, contactez l&apos;administrateur
           </p>
         </div>
       </AnimatedContainer>
-    </motion.div>
+      </motion.div>
+    </main>
   );
 }

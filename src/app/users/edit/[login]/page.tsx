@@ -134,7 +134,7 @@ export default function EditUser() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
@@ -199,6 +199,7 @@ export default function EditUser() {
                 required
               >
                 <option value="utilisateur">Utilisateur</option>
+                <option value="redacteur">Rédacteur</option>
                 <option value="administrateur">Administrateur</option>
               </select>
             </div>
@@ -238,7 +239,7 @@ export default function EditUser() {
               </Link>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Enregistrer les modifications
               </button>
@@ -246,7 +247,7 @@ export default function EditUser() {
           </form>
         </div>
       </div>
-      </div>
+      </main>
     </PageTransition>
   );
 } 

@@ -9,6 +9,7 @@ import ConfirmDeleteModal from '@/components/ConfirmDeleteModal';
 import { ProfileImage } from '@/components/ProfileImage';
 import { BackToHomeButton } from '@/components/navigation';
 import { PageTransition } from '@/components/animations';
+import { useAuth } from '@/hooks/use-auth';
 import type { User } from '@/types/user';
 
 type UsersClientProps = {
@@ -17,10 +18,18 @@ type UsersClientProps = {
 
 export function UsersClient({ initialUsers }: UsersClientProps) {
   const { showToast } = useToast();
+  const { user: currentUser } = useAuth();
   const [users] = useState<User[]>(initialUsers);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  
+  const isAdmin = currentUser?.status === 'administrateur';
+  
+  // Fonction pour vérifier si un utilisateur peut être supprimé
+  const canDeleteUser = (user: User) => {
+    return isAdmin && user.status !== 'administrateur';
+  };
 
   const handleDeleteClick = (userLogin: string) => {
     setUserToDelete(userLogin);
@@ -36,9 +45,15 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
       });
 
       if (response.ok) {
-        window.location.reload();
+        showToast('Utilisateur supprimé avec succès', 'success');
+        // Recharger la page après un court délai pour voir le message de succès
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       } else {
-        showToast(getErrorMessage('USER_DELETE_FAILED'), 'error');
+        const data = await response.json().catch(() => ({}));
+        const errorMessage = data.error || getErrorMessage('USER_DELETE_FAILED');
+        showToast(errorMessage, 'error');
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -53,7 +68,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* En-tête fixe */}
-      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
+      <header role="banner" className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -83,7 +98,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
               </button>
               <Link
                 href="/create-user"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Créer un utilisateur
               </Link>
@@ -94,7 +109,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
       </header>
 
       {/* Contenu principal */}
-      <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+      <main role="main" className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           {viewMode === 'grid' ? (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
@@ -135,16 +150,24 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                       <div className="mt-4 flex justify-center space-x-2">
                         <Link
                           href={`/users/${user.login}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                          className="text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
                         >
                           Voir détails
                         </Link>
                         <Link
                           href={`/users/edit/${user.login}`}
-                          className="text-green-600 hover:text-green-800 font-medium text-sm"
+                          className="text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm"
                         >
                           Modifier
                         </Link>
+                        {canDeleteUser(user) && (
+                          <button
+                            onClick={() => handleDeleteClick(user.login)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm"
+                          >
+                            Supprimer
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -184,16 +207,24 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                         <div className="flex space-x-2">
                           <Link
                             href={`/users/${user.login}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                            className="text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
                           >
                             Voir
                           </Link>
                           <Link
                             href={`/users/edit/${user.login}`}
-                            className="text-green-600 hover:text-green-800 font-medium text-sm"
+                            className="text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm"
                           >
                             Modifier
                           </Link>
+                          {canDeleteUser(user) && (
+                            <button
+                              onClick={() => handleDeleteClick(user.login)}
+                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm"
+                            >
+                              Supprimer
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -218,7 +249,7 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
           setUserToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
-        message={`Êtes-vous sûr de vouloir supprimer l'utilisateur ${userToDelete} ?`}
+        message={userToDelete ? `Êtes-vous sûr de vouloir supprimer l'utilisateur "${userToDelete}" ? Cette action est irréversible.` : ''}
       />
       </div>
     </PageTransition>

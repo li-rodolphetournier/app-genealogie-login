@@ -118,7 +118,7 @@ export function GenealogyMenu({
                                   {person ? `${person.prenom} ${person.nom}` : `Personne ${item.personId?.substring(0, 8) || 'N/A'}...`}
                                   {isPersonDeleted && ' (supprimée)'}
                                 </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                <p className="text-sm text-gray-700 dark:text-gray-400">
                                   {new Date(item.updatedAt).toLocaleString('fr-FR')}
                                 </p>
                               </div>

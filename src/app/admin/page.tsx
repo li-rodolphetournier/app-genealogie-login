@@ -47,7 +47,7 @@ export default function EditProfile() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">Chargement...</p>
+          <p className="mt-4 text-gray-700 dark:text-gray-300">Chargement...</p>
         </div>
       </div>
     );
@@ -184,7 +184,7 @@ export default function EditProfile() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
+      <header role="banner" className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -200,7 +200,7 @@ export default function EditProfile() {
         </div>
       </header>
 
-      <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+      <main role="main" className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (

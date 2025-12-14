@@ -272,12 +272,13 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
   } : null;
 
   return (
-    <motion.div 
-      className="w-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <main role="main">
+      <motion.div 
+        className="w-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       <MenuToggleButton 
         isOpen={isMenuOpen} 
         onToggle={() => setIsMenuOpen(!isMenuOpen)} 
@@ -380,7 +381,8 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
           )}
         </motion.div>
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </main>
   );
 }
 

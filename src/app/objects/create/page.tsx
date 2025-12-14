@@ -100,31 +100,38 @@ export default function CreateObject() {
   };
 
   if (isLoading || !user) {
-    return <div>Chargement...</div>;
+    return (
+      <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Créer un nouvel objet</h1>
+          <div>Chargement...</div>
+        </div>
+      </main>
+    );
   }
 
   // Vérifier que l'utilisateur est administrateur
   if (user.status !== 'administrateur') {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Accès refusé
-              </h2>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              </h1>
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                 Seuls les administrateurs peuvent créer des objets.
               </p>
               <button
                 onClick={() => router.push('/objects')}
-                className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="mt-6 inline-block px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800"
               >
                 Retour à la liste
               </button>
             </div>
           </div>
-        </div>
+        </main>
       </PageTransition>
     );
   }
@@ -238,9 +245,9 @@ export default function CreateObject() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
+      <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Créer un nouvel objet</h1>
 
           {error && (
@@ -299,7 +306,7 @@ export default function CreateObject() {
                       setShowNewCategoryInput(true);
                       setType('');
                     }}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="mt-2 text-sm text-blue-700 hover:text-blue-900 underline font-medium"
                   >
                     + Créer une nouvelle catégorie
                   </button>
@@ -432,16 +439,16 @@ export default function CreateObject() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800"
                 >
                   Créer l'objet
                 </button>
               </div>
             </div>
           </form>
+          </div>
         </div>
-      </div>
-      </div>
+      </main>
     </PageTransition>
   );
 }
