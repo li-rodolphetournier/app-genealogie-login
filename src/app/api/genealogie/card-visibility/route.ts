@@ -24,8 +24,8 @@ export async function GET() {
     // Convertir en objet pour faciliter l'utilisation côté client
     const visibilityMap: Record<string, boolean> = {};
     (visibility || []).forEach((item: unknown) => {
-      const visibilityItem = item as { card_id: string; visible: boolean };
-      visibilityMap[visibilityItem.card_id] = visibilityItem.visible;
+      const visibilityItem = item as { card_key: string; is_visible: boolean };
+      visibilityMap[visibilityItem.card_key] = visibilityItem.is_visible;
     });
 
     return NextResponse.json(visibilityMap, { status: 200 });

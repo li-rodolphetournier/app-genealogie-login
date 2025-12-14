@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeToggle } from './ThemeToggle';
+import { ThemeToggle } from './theme';
 
 export function GlobalHeader() {
   return (

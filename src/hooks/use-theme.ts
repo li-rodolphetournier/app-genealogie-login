@@ -37,6 +37,6 @@ export function useTheme() {
     }
   };
 
-  return { theme, toggleTheme, mounted };
+  return { theme, setTheme, toggleTheme, mounted };
 }
 

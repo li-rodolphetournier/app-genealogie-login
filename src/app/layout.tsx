@@ -45,6 +45,13 @@ export default function RootLayout({
                 const shouldBeDark = theme === 'dark' || (!theme && prefersDark);
                 if (shouldBeDark) {
                   document.documentElement.classList.add('dark');
+                  if (!theme) {
+                    localStorage.setItem('theme', 'dark');
+                  }
+                } else {
+                  if (!theme) {
+                    localStorage.setItem('theme', 'light');
+                  }
                 }
               })();
             `,

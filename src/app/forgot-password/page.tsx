@@ -50,8 +50,8 @@ export default function ForgotPasswordPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30">
+                <svg className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
               </p>
               <Link
                 href="/"
-                className="mt-6 inline-block text-blue-600 hover:text-blue-800"
+                className="mt-6 inline-block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Retour à la connexion
               </Link>
@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Mot de passe oublié
           </h1>
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/" className="text-sm text-blue-600 hover:text-blue-800">
+            <Link href="/" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
               Retour à la connexion
             </Link>
           </div>
