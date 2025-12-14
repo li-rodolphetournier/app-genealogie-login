@@ -5,6 +5,7 @@ import { uploadFile, STORAGE_BUCKETS, ensureBucketExists } from '@/lib/supabase/
 import { userUpdateSchema } from '@/lib/validations';
 import { validateWithSchema, createValidationErrorResponse } from '@/lib/validations/utils';
 import { getErrorMessage } from '@/lib/errors/messages';
+import { getAuthenticatedUser } from '@/lib/auth/middleware';
 import type { User, UserResponse } from '@/types/user';
 import type { ErrorResponse, SuccessResponse } from '@/types/api/responses';
 
@@ -18,6 +19,15 @@ export async function GET(
   context: RouteContext
 ) {
   try {
+    // Vérifier l'authentification
+    const auth = await getAuthenticatedUser();
+    if (!auth.isAuthenticated || !auth.user) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
     const { login } = await context.params;
     const supabase = await createServiceRoleClient();
 
@@ -31,6 +41,19 @@ export async function GET(
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
+      );
+    }
+
+    // Vérifier les permissions :
+    // - Les utilisateurs peuvent voir leur propre profil
+    // - Les administrateurs peuvent voir tous les profils
+    const isOwnProfile = auth.user.login === login;
+    const isAdmin = auth.user.status === 'administrateur';
+
+    if (!isOwnProfile && !isAdmin) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Accès non autorisé. Vous ne pouvez consulter que votre propre profil.' },
+        { status: 403 }
       );
     }
 
@@ -63,6 +86,15 @@ export async function PUT(
   context: RouteContext
 ) {
   try {
+    // Vérifier l'authentification
+    const auth = await getAuthenticatedUser();
+    if (!auth.isAuthenticated || !auth.user) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
     const { login } = await context.params;
     
     // Vérifier le Content-Type pour déterminer si c'est FormData ou JSON
@@ -141,7 +173,7 @@ export async function PUT(
     // Vérifier que l'utilisateur existe
     const { data: existingUser, error: findError } = await supabase
       .from('users')
-      .select('id')
+      .select('id, login')
       .eq('login', login)
       .single();
 
@@ -149,6 +181,27 @@ export async function PUT(
       return NextResponse.json<ErrorResponse>(
         { error: getErrorMessage('USER_NOT_FOUND') },
         { status: 404 }
+      );
+    }
+
+    // Vérifier les permissions :
+    // - Les utilisateurs peuvent modifier leur propre profil (mais pas leur statut)
+    // - Les administrateurs peuvent modifier tous les profils
+    const isOwnProfile = auth.user.login === login;
+    const isAdmin = auth.user.status === 'administrateur';
+
+    if (!isOwnProfile && !isAdmin) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Accès non autorisé. Vous ne pouvez modifier que votre propre profil.' },
+        { status: 403 }
+      );
+    }
+
+    // Les utilisateurs non-admin ne peuvent pas modifier leur statut
+    if (!isAdmin && validation.data.status !== undefined) {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Accès non autorisé. Seuls les administrateurs peuvent modifier le statut.' },
+        { status: 403 }
       );
     }
 
@@ -183,7 +236,8 @@ export async function PUT(
     if (validation.data.profileImage !== undefined) {
       updateData.profile_image = validation.data.profileImage || null;
     }
-    if (validation.data.status !== undefined) {
+    // Seuls les administrateurs peuvent modifier le statut
+    if (validation.data.status !== undefined && isAdmin) {
       updateData.status = validation.data.status;
     }
     // Note: nom, prenom, dateNaissance ne sont pas dans le schéma Supabase users
@@ -247,6 +301,15 @@ export async function DELETE(
   context: RouteContext
 ) {
   try {
+    // Vérifier que l'utilisateur est admin
+    const auth = await getAuthenticatedUser();
+    if (!auth.user || auth.user.status !== 'administrateur') {
+      return NextResponse.json<ErrorResponse>(
+        { error: 'Accès non autorisé. Administrateur requis.' },
+        { status: 403 }
+      );
+    }
+
     const { login } = await context.params;
     const supabase = await createServiceRoleClient();
 

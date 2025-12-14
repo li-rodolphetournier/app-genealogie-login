@@ -1,0 +1,31 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "timeout": 30000,
+    "wait": 2000,
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    },
+    "includeWarnings": true,
+    "includeNotices": true
+  },
+  "urls": [
+    {
+      "url": "http://localhost:3000/?theme=light",
+      "name": "Page de connexion - Light"
+    },
+    {
+      "url": "http://localhost:3000/?theme=dark",
+      "name": "Page de connexion - Dark"
+    },
+    {
+      "url": "http://localhost:3000/accueil?theme=light",
+      "name": "Page d'accueil - Light"
+    },
+    {
+      "url": "http://localhost:3000/accueil?theme=dark",
+      "name": "Page d'accueil - Dark"
+    }
+  ]
+}
+

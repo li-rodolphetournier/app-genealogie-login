@@ -26,7 +26,10 @@
     "scan-build": "tsx scripts/scan-build.ts",
     "scan-build:quick": "tsx scripts/scan-build.ts --skip-build",
     "scan-build:lint-only": "tsx scripts/scan-build.ts --skip-build --skip-typecheck",
-    "check:production": "tsx scripts/check-production-ready.ts"
+    "check:production": "tsx scripts/check-production-ready.ts",
+    "audit:a11y": "tsx scripts/audit-accessibility.ts",
+    "audit:a11y:playwright": "playwright test e2e/accessibility.spec.ts",
+    "audit:a11y:pa11y": "pa11y --config .pa11yrc.json"
   },
   "dependencies": {
     "@nivo/core": "^0.99.0",
@@ -55,6 +58,8 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.11.0",
+    "@axe-core/playwright": "^4.11.0",
     "@eslint/eslintrc": "^3.3.3",
     "@next/bundle-analyzer": "^16.0.7",
     "@playwright/test": "^1.57.0",
@@ -65,6 +70,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/formidable": "^3.4.5",
     "@types/node": "^20.19.25",
+    "@types/pa11y": "^5.3.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8",
@@ -78,6 +84,7 @@
     "eslint-config-next": "16.0.7",
     "jsdom": "^27.2.0",
     "madge": "^8.0.0",
+    "pa11y": "^9.0.1",
     "playwright": "^1.57.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.18",
