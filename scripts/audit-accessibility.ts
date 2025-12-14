@@ -40,6 +40,15 @@ const pa11yConfig = {
   },
 };
 
+type Pa11yIssue = {
+  code: string;
+  type: string;
+  typeCode: number;
+  message: string;
+  context?: string;
+  selector?: string;
+};
+
 interface AuditResult {
   page: string;
   name: string;
@@ -84,9 +93,9 @@ async function runPa11yAudit(
       browser: 'chromium',
     });
 
-    const errors = result.issues.filter(i => i.type === 'error');
-    const warnings = result.issues.filter(i => i.type === 'warning');
-    const notices = result.issues.filter(i => i.type === 'notice');
+    const errors = (result.issues as Pa11yIssue[]).filter((i: Pa11yIssue) => i.type === 'error');
+    const warnings = (result.issues as Pa11yIssue[]).filter((i: Pa11yIssue) => i.type === 'warning');
+    const notices = (result.issues as Pa11yIssue[]).filter((i: Pa11yIssue) => i.type === 'notice');
 
     // Calculer un score (100 - (erreurs * 10 + warnings * 2 + notices))
     const score = Math.max(0, 100 - (errors.length * 10 + warnings.length * 2 + notices.length));
@@ -100,7 +109,7 @@ async function runPa11yAudit(
       errors: errors.length,
       warnings: warnings.length,
       notices: notices.length,
-      issues: result.issues.map(issue => ({
+      issues: (result.issues as Pa11yIssue[]).map((issue: Pa11yIssue) => ({
         code: issue.code,
         type: issue.type,
         typeCode: issue.typeCode,
@@ -168,8 +177,8 @@ async function generateReport(results: AuditResult[]): Promise<string> {
       report += `### ${result.name} (${result.mode}, ${result.device})\n\n`;
       report += `**URL** : ${result.url}\n\n`;
 
-      const errors = result.issues.filter(i => i.type === 'error');
-      const warnings = result.issues.filter(i => i.type === 'warning');
+      const errors = result.issues.filter((i: { type: string }) => i.type === 'error');
+      const warnings = result.issues.filter((i: { type: string }) => i.type === 'warning');
 
       if (errors.length > 0) {
         report += `#### 🔴 Erreurs (${errors.length})\n\n`;
@@ -203,8 +212,8 @@ async function generateReport(results: AuditResult[]): Promise<string> {
   report += `## 🎯 Recommandations Prioritaires\n\n`;
 
   const criticalIssues = results
-    .flatMap(r => r.issues.filter(i => i.type === 'error'))
-    .filter(i => 
+    .flatMap(r => r.issues.filter((i: { type: string }) => i.type === 'error'))
+    .filter((i: { code: string }) => 
       i.code.includes('color-contrast') || 
       i.code.includes('button-name') ||
       i.code.includes('image-alt')
