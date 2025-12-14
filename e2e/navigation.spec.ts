@@ -29,9 +29,20 @@ test.describe('Navigation', () => {
   });
 
   test('devrait afficher la page 404 pour une route inexistante', async ({ page }) => {
-    await page.goto('/route-inexistante');
+    await page.goto('/route-inexistante-12345');
     
-    await expect(page.getByText(/404|page non trouvée|not found/i)).toBeVisible({
+    // Attendre que la page soit chargée
+    await page.waitForLoadState('networkidle');
+    
+    // Chercher le titre h1 avec "404" de manière spécifique
+    const notFoundHeading = page.getByRole('heading', { name: '404' }).first();
+    await expect(notFoundHeading).toBeVisible({
+      timeout: 10000,
+    });
+    
+    // Vérifier aussi le sous-titre "Page non trouvée"
+    const notFoundSubtitle = page.getByRole('heading', { name: /page non trouvée/i }).first();
+    await expect(notFoundSubtitle).toBeVisible({
       timeout: 5000,
     });
   });

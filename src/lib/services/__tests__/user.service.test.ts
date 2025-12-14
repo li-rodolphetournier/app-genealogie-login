@@ -145,5 +145,347 @@ describe('UserService', () => {
       expect(user).toBeNull();
     });
   });
+
+  describe('findByLoginWithPassword', () => {
+    it('devrait retourner null (compatibilité Supabase Auth)', async () => {
+      const result = await UserService.findByLoginWithPassword('user1');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('create', () => {
+    it('devrait créer un utilisateur avec succès', async () => {
+      const mockAuthUser = {
+        user: {
+          id: 'auth-user-id',
+          email: 'newuser@example.com',
+        },
+      };
+
+      const mockNewUser = {
+        id: 'auth-user-id',
+        login: 'newuser',
+        email: 'newuser@example.com',
+        status: 'utilisateur' as const,
+        profile_image: null,
+        description: null,
+        detail: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      };
+
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null, // Pas d'utilisateur existant
+          error: { code: 'PGRST116' }, // Not found
+        }),
+      };
+
+      const mockInsertQuery = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockNewUser,
+          error: null,
+        }),
+      };
+
+      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
+        data: mockAuthUser,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockCheckQuery)
+        .mockReturnValueOnce(mockInsertQuery);
+
+      const input = {
+        login: 'newuser',
+        email: 'newuser@example.com',
+        status: 'utilisateur' as const,
+        password: 'password123',
+      };
+
+      const result = await UserService.create(input);
+
+      expect(result).not.toBeNull();
+      expect(result.login).toBe('newuser');
+      expect(result.email).toBe('newuser@example.com');
+      expect(mockSupabaseClient.auth.admin.createUser).toHaveBeenCalled();
+    });
+
+    it('devrait rejeter si l\'utilisateur existe déjà', async () => {
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { login: 'existing', email: 'existing@example.com' },
+          error: null,
+        }),
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockCheckQuery);
+
+      const input = {
+        login: 'existing',
+        email: 'existing@example.com',
+        status: 'utilisateur' as const,
+        password: 'password123',
+      };
+
+      await expect(UserService.create(input)).rejects.toThrow('Utilisateur ou email déjà utilisé');
+    });
+
+    it('devrait gérer les erreurs lors de la création Auth', async () => {
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { code: 'PGRST116' },
+        }),
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockCheckQuery);
+      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
+        data: null,
+        error: { message: 'Auth error' },
+      });
+
+      const input = {
+        login: 'newuser',
+        email: 'newuser@example.com',
+        status: 'utilisateur' as const,
+        password: 'password123',
+      };
+
+      await expect(UserService.create(input)).rejects.toThrow('Erreur lors de la création de l\'utilisateur');
+    });
+
+    it('devrait nettoyer l\'utilisateur Auth si la création du profil échoue', async () => {
+      const mockAuthUser = {
+        user: {
+          id: 'auth-user-id',
+          email: 'newuser@example.com',
+        },
+      };
+
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { code: 'PGRST116' },
+        }),
+      };
+
+      const mockInsertQuery = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Profile creation error' },
+        }),
+      };
+
+      mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
+        data: mockAuthUser,
+        error: null,
+      });
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockCheckQuery)
+        .mockReturnValueOnce(mockInsertQuery);
+
+      const input = {
+        login: 'newuser',
+        email: 'newuser@example.com',
+        status: 'utilisateur' as const,
+        password: 'password123',
+      };
+
+      await expect(UserService.create(input)).rejects.toThrow('Erreur lors de la création du profil');
+      expect(mockSupabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith('auth-user-id');
+    });
+  });
+
+  describe('update', () => {
+    it('devrait mettre à jour un utilisateur avec succès', async () => {
+      const mockExistingUser = {
+        id: 'user-id',
+      };
+
+      const mockUpdatedUser = {
+        id: 'user-id',
+        login: 'user1',
+        email: 'updated@example.com',
+        status: 'administrateur' as const,
+        profile_image: null,
+        description: 'Nouvelle description',
+        detail: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-02T00:00:00Z',
+      };
+
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockExistingUser,
+          error: null,
+        }),
+      };
+
+      const mockUpdateQuery = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUpdatedUser,
+          error: null,
+        }),
+      };
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockCheckQuery)
+        .mockReturnValueOnce(mockUpdateQuery);
+
+      const input = {
+        email: 'updated@example.com',
+        status: 'administrateur' as const,
+        description: 'Nouvelle description',
+      };
+
+      const result = await UserService.update('user1', input);
+
+      expect(result).not.toBeNull();
+      expect(result.email).toBe('updated@example.com');
+      expect(result.status).toBe('administrateur');
+    });
+
+    it('devrait rejeter si l\'utilisateur n\'existe pas', async () => {
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Not found' },
+        }),
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockCheckQuery);
+
+      const input = { email: 'updated@example.com' };
+
+      await expect(UserService.update('nonexistent', input)).rejects.toThrow('Utilisateur non trouvé');
+    });
+
+    it('devrait gérer les erreurs lors de la mise à jour', async () => {
+      const mockExistingUser = { id: 'user-id' };
+
+      const mockCheckQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockExistingUser,
+          error: null,
+        }),
+      };
+
+      const mockUpdateQuery = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Update error' },
+        }),
+      };
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockCheckQuery)
+        .mockReturnValueOnce(mockUpdateQuery);
+
+      const input = { email: 'updated@example.com' };
+
+      await expect(UserService.update('user1', input)).rejects.toThrow('Erreur lors de la mise à jour');
+    });
+  });
+
+  describe('delete', () => {
+    it('devrait supprimer un utilisateur avec succès', async () => {
+      const mockUser = { id: 'user-id' };
+
+      const mockFindQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUser,
+          error: null,
+        }),
+      };
+
+      const mockDeleteQuery = {
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      };
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockFindQuery)
+        .mockReturnValueOnce(mockDeleteQuery);
+
+      await UserService.delete('user1');
+
+      expect(mockSupabaseClient.from).toHaveBeenCalledWith('users');
+      expect(mockDeleteQuery.delete).toHaveBeenCalled();
+    });
+
+    it('devrait rejeter si l\'utilisateur n\'existe pas', async () => {
+      const mockFindQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Not found' },
+        }),
+      };
+
+      mockSupabaseClient.from.mockReturnValueOnce(mockFindQuery);
+
+      await expect(UserService.delete('nonexistent')).rejects.toThrow('Utilisateur non trouvé');
+    });
+
+    it('devrait gérer les erreurs lors de la suppression', async () => {
+      const mockUser = { id: 'user-id' };
+
+      const mockFindQuery = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockUser,
+          error: null,
+        }),
+      };
+
+      const mockDeleteQuery = {
+        delete: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({
+          error: { message: 'Delete error' },
+        }),
+      };
+
+      mockSupabaseClient.from
+        .mockReturnValueOnce(mockFindQuery)
+        .mockReturnValueOnce(mockDeleteQuery);
+
+      await expect(UserService.delete('user1')).rejects.toThrow('Erreur lors de la suppression');
+    });
+  });
 });
 
