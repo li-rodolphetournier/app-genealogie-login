@@ -223,30 +223,58 @@ describe('useAuth', () => {
       email: 'test@example.com',
     };
 
+    const mockProfile = {
+      id: '1',
+      login: 'testuser',
+      email: 'test@example.com',
+      status: 'utilisateur',
+      description: null,
+      profile_image: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: mockUser },
       error: null,
     });
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      status: 500,
+    // Configurer le mock Supabase pour retourner le profil lors du fallback
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === 'users') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: mockProfile,
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: null,
+            }),
+          })),
+        })),
+      };
     });
 
-    mockSupabaseClient.from.mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              id: '1',
-              login: 'testuser',
-              email: 'test@example.com',
-              status: 'utilisateur',
-            },
-            error: null,
-          }),
-        })),
-      })),
+    // Configurer le mock fetch pour retourner une erreur API
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url === '/api/auth/profile') {
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          statusText: 'Internal Server Error',
+        } as Response);
+      }
+      return Promise.reject(new Error('Unexpected fetch call'));
     });
 
     const { result } = renderHook(() => useAuth());
