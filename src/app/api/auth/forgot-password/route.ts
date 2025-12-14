@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     // On utilise un client normal car resetPasswordForEmail nécessite un client public
     const publicSupabase = await createClient();
     const { error } = await publicSupabase.auth.resetPasswordForEmail(userEmail, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`,
     });
 
     // Stocker le message d'erreur avant la vérification pour le logging

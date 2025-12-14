@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       type: 'recovery',
       email: targetUser.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`,
       },
     });
 
