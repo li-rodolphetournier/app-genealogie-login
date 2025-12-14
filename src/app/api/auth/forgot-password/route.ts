@@ -120,7 +120,7 @@ export async function POST(request: Request) {
     // On utilise un client normal car resetPasswordForEmail nécessite un client public
     const publicSupabase = await createClient();
     const redirectUrl = `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://genealogie-famille.vercel.app'}/reset-password`;
-    logger.debug(`[API /auth/forgot-password] URL de redirection utilisée: ${redirectUrl}`);
+    console.log(`[API /auth/forgot-password] URL de redirection utilisée: ${redirectUrl}`);
     const { error } = await publicSupabase.auth.resetPasswordForEmail(userEmail, {
       redirectTo: redirectUrl,
     });
