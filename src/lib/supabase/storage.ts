@@ -49,6 +49,7 @@ export const STORAGE_BUCKETS = {
   USERS: 'users',
   GENEALOGY: 'genealogy',
   UPLOADS: 'uploads', // Bucket général pour les uploads divers
+  LIGHTHOUSE_REPORTS: 'lighthouse-reports', // Bucket pour les rapports Lighthouse
 } as const;
 
 export type StorageBucket = typeof STORAGE_BUCKETS[keyof typeof STORAGE_BUCKETS];
@@ -161,7 +162,9 @@ export async function ensureBucketExists(bucket: StorageBucket, isPublic = true)
     const { error: createError } = await supabase.storage.createBucket(bucket, {
       public: isPublic,
       fileSizeLimit: 10 * 1024 * 1024, // 10MB
-      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+      allowedMimeTypes: bucket === 'lighthouse-reports' 
+        ? ['application/json', 'text/html']
+        : ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     });
 
     if (createError) {

@@ -17,11 +17,21 @@ function loadTemplateCSS(template: ThemeTemplate): void {
   const existingLinks = document.querySelectorAll('link[data-theme-template]');
   existingLinks.forEach((link) => link.remove());
 
-  // Créer et ajouter le nouveau lien CSS
+  // Vérifier si le CSS est déjà chargé (via le script inline dans layout.tsx)
+  const existingLink = document.querySelector(`link[href="${TEMPLATE_CSS_MAP[template]}"]`);
+  if (existingLink) {
+    // Le CSS est déjà chargé par le script inline, juste mettre à jour l'attribut
+    existingLink.setAttribute('data-theme-template', template);
+    document.documentElement.setAttribute('data-theme-template', template);
+    return;
+  }
+
+  // Créer et ajouter le nouveau lien CSS (chargement asynchrone pour ne pas bloquer)
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = TEMPLATE_CSS_MAP[template];
   link.setAttribute('data-theme-template', template);
+  // Ne pas attendre le chargement du CSS, oncharge est optionnel
   document.head.appendChild(link);
 
   // Exposer le template courant sur html pour debug/styles ciblés
@@ -33,8 +43,40 @@ export function useTheme() {
   const [template, setTemplateState] = useState<ThemeTemplate>('default');
   const [mounted, setMounted] = useState(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const hasLoadedServerTemplateRef = useRef(false);
 
   useEffect(() => {
+    // Définir mounted immédiatement pour permettre le rendu du composant
+    // Le CSS est déjà chargé par le script inline dans layout.tsx
+    setMounted(true);
+
+    // Récupérer le thème depuis localStorage ou la préférence système
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    const localGlobalTemplate = localStorage.getItem('themeTemplateGlobal') as
+      | ThemeTemplate
+      | null;
+    const savedTemplate = localStorage.getItem('themeTemplate') as ThemeTemplate | null;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    const initialTemplate = localGlobalTemplate || savedTemplate || 'default';
+
+    setThemeState(initialTheme);
+    setTemplateState(initialTemplate);
+    
+    // Appliquer le thème au document immédiatement
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    // Charger le CSS du template de manière asynchrone (ne bloque pas le rendu)
+    // Le CSS est normalement déjà chargé par le script inline, mais on s'assure qu'il est bien appliqué
+    setTimeout(() => {
+      loadTemplateCSS(initialTemplate);
+    }, 0);
+
     // Préparer le canal de broadcast entre onglets
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       channelRef.current = new BroadcastChannel('theme-template');
@@ -81,28 +123,49 @@ export function useTheme() {
 
     window.addEventListener('storage', handleStorage);
 
-    setMounted(true);
-    // Récupérer le thème depuis localStorage ou la préférence système
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    const globalTemplate = localStorage.getItem('themeTemplateGlobal') as ThemeTemplate | null;
-    const savedTemplate = localStorage.getItem('themeTemplate') as ThemeTemplate | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-    const initialTemplate = globalTemplate || savedTemplate || 'default';
-    
-    setThemeState(initialTheme);
-    setTemplateState(initialTemplate);
-    
-    // Charger le CSS du template
-    loadTemplateCSS(initialTemplate);
-    
-    // Appliquer le thème au document
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Charger éventuellement le template global défini côté serveur
+    // (n'écrase pas les préférences locales existantes)
+    const loadServerTemplate = async () => {
+      try {
+        if (hasLoadedServerTemplateRef.current) return;
+        hasLoadedServerTemplateRef.current = true;
+
+        const response = await fetch('/api/theme/default-template', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { template?: string };
+        const serverTemplate = (data.template || 'default') as ThemeTemplate;
+
+        const currentGlobal = localStorage.getItem('themeTemplateGlobal') as
+          | ThemeTemplate
+          | null;
+        const currentLocal = localStorage.getItem('themeTemplate') as ThemeTemplate | null;
+
+        // N'appliquer que si aucun choix explicite n'existe encore
+        if (!currentGlobal && !currentLocal) {
+          setTemplateState(serverTemplate);
+          localStorage.setItem('themeTemplate', serverTemplate);
+          localStorage.setItem('themeTemplateGlobal', serverTemplate);
+          loadTemplateCSS(serverTemplate);
+        }
+      } catch (error) {
+        // Silencieux en cas d'erreur réseau / API
+        // On reste sur le template local ou par défaut
+        // eslint-disable-next-line no-console
+        console.debug('[useTheme] Impossible de charger le template global', error);
+      }
+    };
+
+    // Lancer le chargement du template global après le premier rendu
+    setTimeout(() => {
+      void loadServerTemplate();
+    }, 0);
 
     return () => {
       window.removeEventListener('storage', handleStorage);

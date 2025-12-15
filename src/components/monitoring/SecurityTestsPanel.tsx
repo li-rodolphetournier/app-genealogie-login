@@ -10,13 +10,46 @@ export function SecurityTestsPanel() {
   const [loading, setLoading] = useState(false);
   const [lastRun, setLastRun] = useState<Date | null>(null);
   const [loadingLighthouse, setLoadingLighthouse] = useState(false);
-  const [lighthouseSummary, setLighthouseSummary] = useState<string | null>(null);
+  const [lighthouseReport, setLighthouseReport] = useState<{
+    timestamp: string;
+    scores: {
+      performance: number | null;
+      accessibility: number | null;
+      bestPractices: number | null;
+      seo: number | null;
+    };
+    metrics: {
+      fcp: { value: number; displayValue: string; score: number | null } | null;
+      lcp: { value: number; displayValue: string; score: number | null } | null;
+      tbt: { value: number; displayValue: string; score: number | null } | null;
+      speedIndex: { value: number; displayValue: string; score: number | null } | null;
+      cls: { value: number; displayValue: string; score: number | null } | null;
+    };
+  } | null>(null);
 
   useEffect(() => {
     loadResults();
-    const interval = setInterval(loadResults, 60000); // Rafraîchir toutes les minutes
+    loadLighthouseReport();
+    const interval = setInterval(() => {
+      loadResults();
+      loadLighthouseReport();
+    }, 60000); // Rafraîchir toutes les minutes
     return () => clearInterval(interval);
   }, []);
+
+  const loadLighthouseReport = async () => {
+    try {
+      const response = await fetch('/api/monitoring/lighthouse');
+      if (response.ok) {
+        const { report } = await response.json();
+        if (report) {
+          setLighthouseReport(report);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du rapport Lighthouse:', error);
+    }
+  };
 
   const loadResults = async () => {
     try {
@@ -39,16 +72,28 @@ export function SecurityTestsPanel() {
   const runLighthouse = async () => {
     setLoadingLighthouse(true);
     try {
-      // Ici on affiche simplement la commande à exécuter côté terminal,
-      // pour éviter de charger Lighthouse dans le bundle Next.js (très lourd).
-      setLighthouseSummary(
-        'Pour lancer les tests de performance Lighthouse, exécute la commande :\n' +
-        'tsx scripts/lighthouse-test.ts http://localhost:3000'
-      );
-      console.log('Commande Lighthouse : tsx scripts/lighthouse-test.ts http://localhost:3000');
+      // Rafraîchir le rapport après un délai pour laisser le temps au script de s'exécuter
+      await loadLighthouseReport();
+      
+      // Afficher aussi la commande pour référence
+      console.log('Pour lancer un nouveau test Lighthouse, exécute : tsx scripts/lighthouse-test.ts http://localhost:3000');
     } finally {
       setLoadingLighthouse(false);
     }
+  };
+
+  const getScoreColor = (score: number | null) => {
+    if (score === null) return 'text-gray-500';
+    if (score >= 90) return 'text-green-600';
+    if (score >= 50) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBgColor = (score: number | null) => {
+    if (score === null) return 'bg-gray-100';
+    if (score >= 90) return 'bg-green-100';
+    if (score >= 50) return 'bg-yellow-100';
+    return 'bg-red-100';
   };
 
   const runTests = async () => {
@@ -190,11 +235,114 @@ export function SecurityTestsPanel() {
         )}
       </div>
 
-      {lighthouseSummary && (
-        <div className="mt-6 p-4 rounded-lg border border-purple-500 bg-purple-50 whitespace-pre-line text-sm text-purple-900">
-          {lighthouseSummary}
+      {/* Rapport Lighthouse */}
+      <div className="mt-6 p-4 rounded-lg border border-purple-200 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-purple-900 dark:text-purple-100">Rapport Lighthouse</h3>
+          <button
+            onClick={loadLighthouseReport}
+            className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            🔄 Actualiser
+          </button>
         </div>
-      )}
+
+        {lighthouseReport ? (
+          <div className="space-y-4">
+            {/* Scores globaux */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className={`p-3 rounded-lg ${getScoreBgColor(lighthouseReport.scores.performance)}`}>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Performance</div>
+                <div className={`text-2xl font-bold ${getScoreColor(lighthouseReport.scores.performance)}`}>
+                  {lighthouseReport.scores.performance ?? 'N/A'}
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg ${getScoreBgColor(lighthouseReport.scores.accessibility)}`}>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Accessibilité</div>
+                <div className={`text-2xl font-bold ${getScoreColor(lighthouseReport.scores.accessibility)}`}>
+                  {lighthouseReport.scores.accessibility ?? 'N/A'}
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg ${getScoreBgColor(lighthouseReport.scores.bestPractices)}`}>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Best Practices</div>
+                <div className={`text-2xl font-bold ${getScoreColor(lighthouseReport.scores.bestPractices)}`}>
+                  {lighthouseReport.scores.bestPractices ?? 'N/A'}
+                </div>
+              </div>
+              <div className={`p-3 rounded-lg ${getScoreBgColor(lighthouseReport.scores.seo)}`}>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">SEO</div>
+                <div className={`text-2xl font-bold ${getScoreColor(lighthouseReport.scores.seo)}`}>
+                  {lighthouseReport.scores.seo ?? 'N/A'}
+                </div>
+              </div>
+            </div>
+
+            {/* Métriques détaillées */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100">Métriques de Performance</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                {lighthouseReport.metrics.fcp && (
+                  <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
+                    <span className="text-gray-700 dark:text-gray-300">First Contentful Paint</span>
+                    <span className={`font-semibold ${getScoreColor(lighthouseReport.metrics.fcp.score)}`}>
+                      {lighthouseReport.metrics.fcp.displayValue}
+                    </span>
+                  </div>
+                )}
+                {lighthouseReport.metrics.lcp && (
+                  <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
+                    <span className="text-gray-700 dark:text-gray-300">Largest Contentful Paint</span>
+                    <span className={`font-semibold ${getScoreColor(lighthouseReport.metrics.lcp.score)}`}>
+                      {lighthouseReport.metrics.lcp.displayValue}
+                    </span>
+                  </div>
+                )}
+                {lighthouseReport.metrics.tbt && (
+                  <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
+                    <span className="text-gray-700 dark:text-gray-300">Total Blocking Time</span>
+                    <span className={`font-semibold ${getScoreColor(lighthouseReport.metrics.tbt.score)}`}>
+                      {lighthouseReport.metrics.tbt.displayValue}
+                    </span>
+                  </div>
+                )}
+                {lighthouseReport.metrics.speedIndex && (
+                  <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
+                    <span className="text-gray-700 dark:text-gray-300">Speed Index</span>
+                    <span className={`font-semibold ${getScoreColor(lighthouseReport.metrics.speedIndex.score)}`}>
+                      {lighthouseReport.metrics.speedIndex.displayValue}
+                    </span>
+                  </div>
+                )}
+                {lighthouseReport.metrics.cls && (
+                  <div className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
+                    <span className="text-gray-700 dark:text-gray-300">Cumulative Layout Shift</span>
+                    <span className={`font-semibold ${getScoreColor(lighthouseReport.metrics.cls.score)}`}>
+                      {lighthouseReport.metrics.cls.displayValue}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-purple-200 dark:border-purple-700">
+              💡 Pour générer un nouveau rapport, exécute dans le terminal :{' '}
+              <code className="bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
+                tsx scripts/lighthouse-test.ts http://localhost:3000
+              </code>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-600 dark:text-gray-400">
+            <p className="mb-2">Aucun rapport Lighthouse disponible.</p>
+            <p className="text-sm">
+              Pour générer un rapport, exécute dans le terminal :{' '}
+              <code className="bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
+                tsx scripts/lighthouse-test.ts http://localhost:3000
+              </code>
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

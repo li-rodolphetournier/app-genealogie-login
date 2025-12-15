@@ -250,35 +250,6 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
             </motion.div>
           </FadeInStaggerItem>
 
-          {/* Créer un objet - accessible aux rédacteurs et administrateurs */}
-          {user.status === 'administrateur' && (
-            <FadeInStaggerItem>
-              <motion.div
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                whileTap={{ scale: 0.98 }}
-                style={{ display: 'block', height: '100%' }}
-              >
-                <Link
-                  href="/objects/create"
-                  className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
-                  aria-label="Créer un nouvel objet"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-indigo-500 flex items-center justify-center">
-                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-medium text-gray-900 dark:text-white">Créer un objet</h2>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Ajouter un nouvel objet</p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            </FadeInStaggerItem>
-          )}
-
           {/* Administration - accessible aux administrateurs */}
           {user.status === 'administrateur' && (
             <>

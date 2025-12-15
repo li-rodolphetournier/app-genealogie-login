@@ -228,7 +228,7 @@ export default function CategoriesManagement() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleOpenModal(category)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                            className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
                             Modifier
                           </button>
@@ -237,13 +237,13 @@ export default function CategoriesManagement() {
                               <button
                                 onClick={() => handleDelete(category.id!)}
                                 disabled={isSubmitting}
-                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 disabled:text-gray-400 dark:disabled:text-gray-500"
+                                className="px-3 py-1 text-xs border border-red-300 dark:border-red-600 rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                               >
                                 Confirmer
                               </button>
                               <button
                                 onClick={() => setDeleteConfirm(null)}
-                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
+                                className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                               >
                                 Annuler
                               </button>
@@ -251,7 +251,7 @@ export default function CategoriesManagement() {
                           ) : (
                             <button
                               onClick={() => setDeleteConfirm(category.id || null)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                              className="px-3 py-1 text-xs border border-red-300 dark:border-red-600 rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             >
                               Supprimer
                             </button>

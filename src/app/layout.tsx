@@ -91,14 +91,14 @@ export default function RootLayout({
             <AnimatePresence mode="wait">
               {children}
             </AnimatePresence>
+            {/* Menu flottant de personnalisation du thème */}
+            <ThemeFloatingMenu />
           </ToastProvider>
         </ErrorBoundary>
         {/* Gestion du timeout de session et de l'inactivité */}
         <SessionTimeoutProvider />
         {/* Panneau de debug d'authentification (uniquement en dev ou si activé) */}
         <AuthDebugPanelWrapper />
-        {/* Menu flottant de personnalisation du thème */}
-        <ThemeFloatingMenu />
         {/* Script pour désenregistrer tout service worker fantôme */}
         <script
           dangerouslySetInnerHTML={{
