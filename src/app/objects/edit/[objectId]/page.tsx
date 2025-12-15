@@ -378,7 +378,7 @@ export default function EditObject() {
                     + Créer une nouvelle catégorie
                   </button>
                 ) : (
-                  <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+                  <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-600">
                     <label htmlFor="newCategory" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nouvelle catégorie
                     </label>
@@ -395,14 +395,14 @@ export default function EditObject() {
                           }
                         }}
                         placeholder="Nom de la nouvelle catégorie"
-                        className="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        className="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
                         autoFocus
                       />
                       <button
                         type="button"
                         onClick={handleCreateCategory}
                         disabled={isCreatingCategory || !newCategory.trim()}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
                       >
                         {isCreatingCategory ? 'Ajout...' : 'Valider'}
                       </button>

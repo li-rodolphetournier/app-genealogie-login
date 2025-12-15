@@ -315,7 +315,7 @@ export default function CategoriesManagement() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? 'Enregistrement...' : editingCategory ? 'Modifier' : 'Créer'}
                     </button>

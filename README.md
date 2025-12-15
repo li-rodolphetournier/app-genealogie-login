@@ -21,9 +21,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## 🧪 Tests
 
-Le projet utilise une infrastructure de tests complète avec Vitest pour les tests unitaires et Playwright pour les tests E2E.
+Le projet utilise une infrastructure de tests complète avec **Vitest** pour les tests unitaires/intégration et **Playwright** pour les tests E2E.
 
-### Tests Unitaires
+### Tests unitaires / intégration
 
 ```bash
 # Lancer tous les tests en mode watch
@@ -39,10 +39,14 @@ npm run test:coverage
 npm test -- --run
 ```
 
-**Couverture actuelle** :
-- ✅ 17 fichiers de tests
-- ✅ ~67 tests unitaires
-- ✅ Composants, hooks, services, utilitaires
+**Couverture actuelle (Vitest)** :
+- ✅ **84 fichiers de tests** (~400 tests)
+- ✅ Routes API (auth, categories, users, create-user, messages, persons, theme, upload, monitoring, objects, csrf…)
+- ✅ Hooks (auth, thème, généalogie, localStorage, timeout, auto-hide, debounce, CSRF…)
+- ✅ Composants (UI générique, formulaires, carrousels, thèmes, monitoring, modales…)
+- ✅ Services / utilitaires (monitoring, sécurité, Lighthouse/Redis, erreurs, logger, Supabase compat…)
+
+📄 Détails et organisation : `README_TESTS.md` et `ANALYSE_TESTS_MANQUANTS.md`.
 
 ### Tests E2E
 
