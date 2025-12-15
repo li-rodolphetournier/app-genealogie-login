@@ -150,20 +150,20 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                       <div className="mt-4 flex justify-center space-x-2">
                         <Link
                           href={`/users/${user.login}`}
-                          className="text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
+                          className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                           Voir détails
                         </Link>
                         <Link
                           href={`/users/edit/${user.login}`}
-                          className="text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm"
+                          className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                           Modifier
                         </Link>
                         {canDeleteUser(user) && (
                           <button
                             onClick={() => handleDeleteClick(user.login)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm"
+                            className="px-3 py-1 text-xs border border-red-300 dark:border-red-600 rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           >
                             Supprimer
                           </button>
@@ -207,20 +207,20 @@ export function UsersClient({ initialUsers }: UsersClientProps) {
                         <div className="flex space-x-2">
                           <Link
                             href={`/users/${user.login}`}
-                            className="text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
+                            className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
-                            Voir
+                            Voir détails
                           </Link>
                           <Link
                             href={`/users/edit/${user.login}`}
-                            className="text-green-700 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm"
+                            className="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           >
                             Modifier
                           </Link>
                           {canDeleteUser(user) && (
                             <button
                               onClick={() => handleDeleteClick(user.login)}
-                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm"
+                              className="px-3 py-1 text-xs border border-red-300 dark:border-red-600 rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             >
                               Supprimer
                             </button>
