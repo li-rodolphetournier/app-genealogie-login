@@ -45,6 +45,7 @@ next-env.d.ts
 # documentation and cursor rules
 /cursorrules
 /documentation
+/\.cursor/
 
 # migrations
 /supabase/migrations/

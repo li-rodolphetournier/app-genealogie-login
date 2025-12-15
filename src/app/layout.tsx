@@ -41,6 +41,13 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png?v=2" />
+        {/* Preload du logo pour améliorer le LCP */}
+        <link 
+          rel="preload" 
+          href="/uploads/login/armoirie.png" 
+          as="image" 
+          fetchPriority="high"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

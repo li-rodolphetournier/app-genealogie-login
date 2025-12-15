@@ -9,6 +9,8 @@ export function SecurityTestsPanel() {
   const [results, setResults] = useState<SecurityTestResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastRun, setLastRun] = useState<Date | null>(null);
+  const [loadingLighthouse, setLoadingLighthouse] = useState(false);
+  const [lighthouseSummary, setLighthouseSummary] = useState<string | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -31,6 +33,21 @@ export function SecurityTestsPanel() {
     } catch (error) {
       console.error('Erreur lors du chargement des résultats:', error);
       // En cas d'erreur, ne pas effacer les résultats existants
+    }
+  };
+
+  const runLighthouse = async () => {
+    setLoadingLighthouse(true);
+    try {
+      // Ici on affiche simplement la commande à exécuter côté terminal,
+      // pour éviter de charger Lighthouse dans le bundle Next.js (très lourd).
+      setLighthouseSummary(
+        'Pour lancer les tests de performance Lighthouse, exécute la commande :\n' +
+        'tsx scripts/lighthouse-test.ts http://localhost:3000'
+      );
+      console.log('Commande Lighthouse : tsx scripts/lighthouse-test.ts http://localhost:3000');
+    } finally {
+      setLoadingLighthouse(false);
     }
   };
 
@@ -106,7 +123,24 @@ export function SecurityTestsPanel() {
             ) : (
               <>
                 <span>▶️</span>
-                Lancer les tests
+                Tests sécurité
+              </>
+            )}
+          </button>
+          <button
+            onClick={runLighthouse}
+            disabled={loadingLighthouse}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loadingLighthouse ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Lighthouse...
+              </>
+            ) : (
+              <>
+                <span>⚡</span>
+                Perf Lighthouse
               </>
             )}
           </button>
@@ -155,6 +189,12 @@ export function SecurityTestsPanel() {
           ))
         )}
       </div>
+
+      {lighthouseSummary && (
+        <div className="mt-6 p-4 rounded-lg border border-purple-500 bg-purple-50 whitespace-pre-line text-sm text-purple-900">
+          {lighthouseSummary}
+        </div>
+      )}
     </div>
   );
 }

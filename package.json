@@ -1,6 +1,6 @@
 {
-  "name": "rect_login_ai",
-  "version": "0.1.0",
+  "name": "Généalogie de Famille",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -29,7 +29,9 @@
     "check:production": "tsx scripts/check-production-ready.ts",
     "audit:a11y": "tsx scripts/audit-accessibility.ts",
     "audit:a11y:playwright": "playwright test e2e/accessibility.spec.ts",
-    "audit:a11y:pa11y": "pa11y --config .pa11yrc.json"
+    "audit:a11y:pa11y": "pa11y --config .pa11yrc.json",
+    "lighthouse": "tsx scripts/lighthouse-test.ts",
+    "lighthouse:url": "tsx scripts/lighthouse-test.ts"
   },
   "dependencies": {
     "@nivo/core": "^0.99.0",
@@ -69,7 +71,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcrypt": "^6.0.0",
     "@types/formidable": "^3.4.5",
-    "@types/node": "^20.19.25",
+    "@types/node": "^20.19.27",
     "@types/pa11y": "^5.3.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -79,10 +81,13 @@
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
     "autoprefixer": "^10.4.22",
+    "chrome-launcher": "^1.2.1",
+    "chromium": "^3.0.3",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "jsdom": "^27.2.0",
+    "lighthouse": "^12.8.2",
     "madge": "^8.0.0",
     "pa11y": "^9.0.1",
     "playwright": "^1.57.0",

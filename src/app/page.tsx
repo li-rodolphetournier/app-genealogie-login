@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/utils/logger';
 import { logAuth } from '@/lib/features/auth-debug';
 import { motion } from 'framer-motion';
-import { AnimatedContainer } from '@/components/animations';
 
 export default function Login() {
   const router = useRouter();
@@ -20,8 +19,9 @@ export default function Login() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasLogo, setHasLogo] = useState(false);
+  const [hasLogo, setHasLogo] = useState(true); // Par défaut true pour afficher immédiatement
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -59,10 +59,8 @@ export default function Login() {
       }
     );
     
-    // Vérification initiale avec un délai court
+    // Vérification initiale sans délai
     const checkInitialAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       if (!mounted || hasRedirected) return;
       
       try {
@@ -82,6 +80,7 @@ export default function Login() {
       } finally {
         if (mounted && !hasRedirected) {
           setCheckingAuth(false);
+          setShowContent(true);
         }
       }
     };
@@ -92,19 +91,9 @@ export default function Login() {
     const timeoutId = setTimeout(() => {
       if (mounted && !hasRedirected) {
         setCheckingAuth(false);
+        setShowContent(true);
       }
-    }, 5000); // 5 secondes maximum
-    
-    // Vérifier si l'image existe
-    const checkLogo = async () => {
-      try {
-        const response = await fetch('/uploads/login/armoirie.png', { method: 'HEAD' });
-        setHasLogo(response.ok);
-      } catch {
-        setHasLogo(false);
-      }
-    };
-    void checkLogo();
+    }, 3000); // 3 secondes maximum
     
     return () => {
       mounted = false;
@@ -320,102 +309,81 @@ export default function Login() {
     }
   };
 
-  if (!mounted || checkingAuth) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-700 dark:text-gray-300">Vérification...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <main role="main">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
-      >
-      <AnimatedContainer variant="fadeIn" delay={0.1}>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        {/* Logo affiché immédiatement pour améliorer le LCP */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          {hasLogo && (
-            <motion.div
-              className="flex justify-center mb-8"
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 200 }}
-            >
-              <div className="relative w-32 h-32 flex items-center justify-center">
-                <Image
+          <div className="flex justify-center mb-8">
+            <div className="relative w-32 h-32 flex items-center justify-center">
+              {hasLogo ? (
+                <img
                   src="/uploads/login/armoirie.png"
                   alt="Armoiries"
                   width={128}
                   height={128}
                   className="object-contain"
                   style={{ maxWidth: '100%', width: 'auto', height: 'auto' }}
-                  priority
                   loading="eager"
+                  fetchPriority="high"
                   onError={() => setHasLogo(false)}
                 />
-              </div>
-            </motion.div>
+              ) : (
+                <div className="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                  <span className="text-gray-400 dark:text-gray-500 text-4xl">⚜</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Loader visible pendant la vérification */}
+          {checkingAuth && (
+            <div className="text-center mb-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+              <p className="mt-4 text-gray-700 dark:text-gray-300">Vérification...</p>
+            </div>
           )}
 
-          {/* Titre */}
-          <motion.h1
-            className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-2"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-          >
-            Bienvenue
-          </motion.h1>
-          <motion.p
-            className="text-center text-sm text-gray-700 dark:text-gray-300 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-          >
-            Connectez-vous pour accéder à votre compte
-          </motion.p>
-        </div>
-      </AnimatedContainer>
-
-      <AnimatedContainer variant="scale" delay={0.5}>
-        <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+          {/* Contenu principal avec transition */}
           <motion.div
-            className="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200 dark:border-gray-700"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.4 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: showContent ? 1 : 0.3 }}
+            transition={{ duration: 0.3 }}
+            className={checkingAuth ? 'pointer-events-none' : ''}
           >
-            {/* Message d'erreur */}
-            {error && (
-              <motion.div
-                role="alert"
-                className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-6"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <p className="text-red-700 dark:text-red-300">{error}</p>
-              </motion.div>
-            )}
 
-            {/* Formulaire */}
-            <motion.form
-              onSubmit={handleSubmit}
-              className="space-y-6"
-              noValidate
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.4 }}
+            {/* Titre */}
+            <h1 className="text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
+              Bienvenue
+            </h1>
+            <p className="text-center text-sm text-gray-700 dark:text-gray-300 mb-8">
+              Connectez-vous pour accéder à votre compte
+            </p>
+          </motion.div>
+
+          <div className="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
+            <motion.div
+              className="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200 dark:border-gray-700"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: showContent ? 1 : 0.3, y: 0 }}
+              transition={{ duration: 0.4 }}
             >
+              {/* Message d'erreur */}
+              {error && (
+                <div
+                  role="alert"
+                  className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-6"
+                >
+                  <p className="text-red-700 dark:text-red-300">{error}</p>
+                </div>
+              )}
+
+              {/* Formulaire */}
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-6"
+                noValidate
+              >
               <div>
                 <label
                   htmlFor="login"
@@ -474,65 +442,55 @@ export default function Login() {
                 </div>
               </div>
 
-              <motion.div>
-                <motion.button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
-                  aria-busy={isLoading}
-                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
-                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <motion.svg
-                        className="h-5 w-5 text-white -ml-1 mr-3"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: 'linear',
-                        }}
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </motion.svg>
-                      <span>Connexion en cours...</span>
-                    </div>
-                  ) : (
-                    'Se connecter'
-                  )}
-                </motion.button>
-              </motion.div>
-            </motion.form>
-          </motion.div>
-        </div>
-      </AnimatedContainer>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || checkingAuth}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                    aria-busy={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center">
+                        <svg
+                          className="h-5 w-5 text-white -ml-1 mr-3 animate-spin"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        <span>Connexion en cours...</span>
+                      </div>
+                    ) : (
+                      'Se connecter'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
 
-      {/* Footer */}
-      <AnimatedContainer variant="fadeIn" delay={0.8}>
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            En cas de problème de connexion, contactez l&apos;administrateur
-          </p>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              En cas de problème de connexion, contactez l&apos;administrateur
+            </p>
+          </div>
         </div>
-      </AnimatedContainer>
-      </motion.div>
+      </div>
     </main>
   );
 }

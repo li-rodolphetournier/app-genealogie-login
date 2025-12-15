@@ -1,16 +1,42 @@
 /**
  * Page Server Component pour l'administration des messages
- * Récupère les messages initiaux côté serveur et les passe au composant client
+ * Récupère les messages initiaux côté serveur et les passe au composant client.
+ * Accessible uniquement aux administrateurs.
  */
 
 import { MessageService } from '@/lib/services';
 import { MessagesClient } from './messages-client';
 
 import type { Message } from '@/types/message';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MessagesAdministration() {
+  // Protection serveur : admin requis
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      redirect('/');
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('status')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || profile?.status !== 'administrateur') {
+      redirect('/accueil');
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification d’authentification pour /messages:', error);
+    redirect('/');
+  }
+
   // Récupération des messages initiaux côté serveur (triés par date décroissante)
   let messages: Message[] = [];
   try {

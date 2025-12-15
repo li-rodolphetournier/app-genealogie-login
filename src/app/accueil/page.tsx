@@ -1,14 +1,30 @@
 /**
  * Page Server Component pour l'accueil
  * Récupère tous les messages affichés sur l'accueil côté serveur et les passe au composant client
+ * et vérifie l'authentification côté serveur.
  */
 
 import { MessageService } from '@/lib/services';
 import { AccueilClient } from './accueil-client';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Accueil() {
+  // Protection serveur : utilisateur connecté requis
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      redirect('/'); // page de login
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification d’authentification pour /accueil:', error);
+    redirect('/');
+  }
+
   // Récupération de tous les messages affichés sur l'accueil côté serveur
   let displayedMessages: any[] = [];
   try {

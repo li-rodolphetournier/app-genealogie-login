@@ -1,18 +1,55 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 const LoginPage = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Connexion</h1>
-      <Image
-        src="/uploads/login/armoirie.png" // Chemin de l'image
-        alt="Armoirie"
-        width={500} // Largeur de l'image
-        height={300} // Hauteur de l'image
-        layout="responsive" // Utiliser le layout responsive
-      />
-      <form className="mt-4 w-full max-w-md bg-gray-50 dark:bg-gray-800 shadow-lg rounded-lg px-6 py-6 border border-gray-200 dark:border-gray-700">
+    <motion.div
+      className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.h1
+        className="text-3xl font-bold mb-6 text-gray-900 dark:text-white"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        Connexion
+      </motion.h1>
+
+      <motion.div
+        className="w-full max-w-md mb-4"
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.15 }}
+      >
+        <motion.div
+          className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-red-700 via-red-600 to-red-500 p-3"
+          animate={{ y: [0, -8, 0] }}
+          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+        >
+          <div className="bg-white rounded-lg overflow-hidden">
+            <Image
+              src="/uploads/login/armoirie.png"
+              alt="Armoirie"
+              width={500}
+              height={300}
+              className="w-full h-auto"
+            />
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <motion.form
+        className="mt-2 w-full max-w-md bg-gray-50 dark:bg-gray-800 shadow-lg rounded-lg px-6 py-6 border border-gray-200 dark:border-gray-700"
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-900 dark:text-gray-100">
             Nom d'utilisateur
@@ -39,8 +76,8 @@ const LoginPage = () => {
         >
           Se connecter
         </button>
-      </form>
-    </div>
+      </motion.form>
+    </motion.div>
   );
 };
 

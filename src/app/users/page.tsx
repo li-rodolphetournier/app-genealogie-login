@@ -1,15 +1,41 @@
 /**
  * Page Server Component pour la liste des utilisateurs
- * Récupère les données côté serveur et les passe au composant client
+ * Récupère les données côté serveur et les passe au composant client.
+ * Accessible uniquement aux administrateurs.
  */
 
 import { UserService } from '@/lib/services';
 import { UsersClient } from './users-client';
 import type { User } from '@/types/user';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersList() {
+  // Protection serveur : admin requis
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      redirect('/');
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('status')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || profile?.status !== 'administrateur') {
+      redirect('/accueil');
+    }
+  } catch (error) {
+    console.error('Erreur lors de la vérification d’authentification pour /users:', error);
+    redirect('/');
+  }
+
   // Récupération des données côté serveur
   let users: User[] = [];
   try {
