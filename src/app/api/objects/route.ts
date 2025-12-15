@@ -119,10 +119,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Seuls les administrateurs peuvent créer des objets
-    if (auth.user.status !== 'administrateur') {
+    // Administrateurs et rédacteurs peuvent créer des objets
+    if (auth.user.status !== 'administrateur' && auth.user.status !== 'redacteur') {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Seuls les administrateurs peuvent créer des objets' },
+        { error: 'Seuls les administrateurs ou rédacteurs peuvent créer des objets' },
         { status: 403 }
       );
     }

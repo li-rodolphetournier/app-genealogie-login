@@ -110,8 +110,8 @@ export default function CreateObject() {
     );
   }
 
-  // Vérifier que l'utilisateur est administrateur
-  if (user.status !== 'administrateur') {
+  // Vérifier que l'utilisateur est administrateur ou rédacteur
+  if (user.status !== 'administrateur' && user.status !== 'redacteur') {
     return (
       <PageTransition>
         <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
@@ -121,7 +121,7 @@ export default function CreateObject() {
                 Accès refusé
               </h1>
               <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                Seuls les administrateurs peuvent créer des objets.
+                Seuls les administrateurs ou rédacteurs peuvent créer des objets.
               </p>
               <button
                 onClick={() => router.push('/objects')}

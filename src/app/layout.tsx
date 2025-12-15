@@ -7,6 +7,7 @@ import { AnimatePresence } from "framer-motion";
 import { AuthDebugPanelWrapper } from "@/lib/features/auth-debug";
 import { SessionTimeoutProvider } from "@/components/auth/SessionTimeoutProvider";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { ThemeFloatingMenu } from "@/components/theme/ThemeFloatingMenu";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,8 +25,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Stock des objets",
-  description: "Une application pour les lister tous et dans les tenebre les lier",
+  title: "Site de Généalogie",
+  description: "Application de gestion et de visualisation de généalogie",
+  icons: {
+    icon: "/favicon.png?v=2",
+  },
 };
 
 export default function RootLayout({
@@ -36,11 +40,13 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.png?v=2" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 const theme = localStorage.getItem('theme');
+                const template = localStorage.getItem('themeTemplate') || 'default';
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 const shouldBeDark = theme === 'dark' || (!theme && prefersDark);
                 if (shouldBeDark) {
@@ -53,6 +59,19 @@ export default function RootLayout({
                     localStorage.setItem('theme', 'light');
                   }
                 }
+                // Charger le CSS du template
+                const templateMap = {
+                  'default': '/styles/themes/template-default.css',
+                  'ocean-sunset': '/styles/themes/template-ocean-sunset.css',
+                  'warm-gradient': '/styles/themes/template-warm-gradient.css',
+                  'modern': '/styles/themes/template-modern.css'
+                };
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = templateMap[template] || templateMap['default'];
+                link.setAttribute('data-theme-template', template);
+                document.head.appendChild(link);
+                document.documentElement.setAttribute('data-theme-template', template);
               })();
             `,
           }}
@@ -71,6 +90,8 @@ export default function RootLayout({
         <SessionTimeoutProvider />
         {/* Panneau de debug d'authentification (uniquement en dev ou si activé) */}
         <AuthDebugPanelWrapper />
+        {/* Menu flottant de personnalisation du thème */}
+        <ThemeFloatingMenu />
         {/* Script pour désenregistrer tout service worker fantôme */}
         <script
           dangerouslySetInnerHTML={{

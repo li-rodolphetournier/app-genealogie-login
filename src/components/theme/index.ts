@@ -3,5 +3,6 @@ export { ThemeIcon } from './ThemeIcon';
 export { ThemeTab } from './ThemeTab';
 export { ThemeSwitch } from './ThemeSwitch';
 export { ThemeTransitionOverlay } from './ThemeTransitionOverlay';
+export { ThemeFloatingMenu } from './ThemeFloatingMenu';
 export { THEME_CONFIG, THEME_ANIMATIONS } from './constants';
 

@@ -1,0 +1,34 @@
+/* Template Ocean Sunset - Mode Clair */
+:root:not(.dark) {
+  --background: #f0f8ff;
+  --foreground: #1a1a2e;
+  --primary: #4a90e2;
+  --primary-foreground: #ffffff;
+  --secondary: #f5d76e;
+  --secondary-foreground: #1a1a2e;
+  --accent: #ff8c42;
+  --accent-foreground: #ffffff;
+  --muted: #fff5e6;
+  --muted-foreground: #5a5a7a;
+  --border: #b8d4f0;
+  --input: #ffffff;
+  --ring: #4a90e2;
+}
+
+/* Template Ocean Sunset - Mode Sombre */
+:root.dark {
+  --background: #0d1b2a;
+  --foreground: #e0e7ff;
+  --primary: #4a90e2;
+  --primary-foreground: #ffffff;
+  --secondary: #ff8c42;
+  --secondary-foreground: #ffffff;
+  --accent: #ff6b9d;
+  --accent-foreground: #ffffff;
+  --muted: #1a2332;
+  --muted-foreground: #9ca3af;
+  --border: #2d4a5c;
+  --input: #1a2332;
+  --ring: #4a90e2;
+}
+

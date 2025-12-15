@@ -1,0 +1,34 @@
+/* Template Warm Gradient - Mode Clair */
+:root[data-theme-template="warm-gradient"]:not(.dark) {
+  --background: #F3F6F2;
+  --foreground: #2F3E34;
+  --primary: #4F6F52;
+  --primary-foreground: #ffffff;
+  --secondary: #A9B7A0;
+  --secondary-foreground: #2F3E34;
+  --accent: #8C6A4A;
+  --accent-foreground: #ffffff;
+  --muted: #E8EDE5;
+  --muted-foreground: #5a6b5e;
+  --border: #C4D1BC;
+  --input: #ffffff;
+  --ring: #4F6F52;
+}
+
+/* Template Warm Gradient - Mode Sombre */
+:root[data-theme-template="warm-gradient"].dark {
+  --background: #1a2118;
+  --foreground: #E8EDE5;
+  --primary: #4F6F52;
+  --primary-foreground: #ffffff;
+  --secondary: #2F3E34;
+  --secondary-foreground: #E8EDE5;
+  --accent: #8C6A4A;
+  --accent-foreground: #ffffff;
+  --muted: #252e23;
+  --muted-foreground: #A9B7A0;
+  --border: #3a4a3d;
+  --input: #252e23;
+  --ring: #4F6F52;
+}
+
