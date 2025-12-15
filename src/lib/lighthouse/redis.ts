@@ -150,8 +150,9 @@ export async function getLighthouseReportsList(limit = 50): Promise<string[]> {
   }
 
   try {
-    const timestamps = await redis.lrange<string[]>(REPORTS_LIST_KEY, 0, limit - 1);
-    return timestamps || [];
+    const timestamps = await redis.lrange(REPORTS_LIST_KEY, 0, limit - 1);
+    // lrange retourne un tableau de strings
+    return (Array.isArray(timestamps) ? timestamps : []) as string[];
   } catch (error) {
     console.error('Erreur lors de la récupération de la liste des rapports:', error);
     return [];
