@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 const LoginPage = () => {
+
   return (
     <motion.div
       className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 overflow-hidden"
@@ -29,8 +30,9 @@ const LoginPage = () => {
       >
         <motion.div
           className="rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-red-700 via-red-600 to-red-500 p-3"
-          animate={{ y: [0, -8, 0] }}
-          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+          initial={{ y: 0, scale: 1 }}
+          animate={{ y: [0, -8, 0], scale: [1, 1.03, 1] }}
+          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', repeatType: 'mirror' }}
         >
           <div className="bg-white rounded-lg overflow-hidden">
             <Image
@@ -81,4 +83,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

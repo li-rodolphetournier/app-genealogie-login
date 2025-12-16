@@ -126,8 +126,8 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   const {
     isDragging,
     draggedNodeId,
-    handlePointerDown,
-    handleNodePointerDown
+    handleMouseDown,
+    handleNodeMouseDown
   } = useGenealogyDrag(
     svgRef,
     translate,
@@ -366,12 +366,8 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
             ref={svgRef}
             width={dimensions.width}
             height={dimensions.height}
-            style={{ 
-              display: 'block', 
-              cursor: isDragging ? 'grabbing' : 'grab',
-              touchAction: 'none' // Empêcher le scroll/zoom natif sur mobile
-            }}
-            onPointerDown={handlePointerDown}
+            style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+            onMouseDown={handleMouseDown}
           >
             <rect width="100%" height="100%" fill={svgBackgroundFill} />
             <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>

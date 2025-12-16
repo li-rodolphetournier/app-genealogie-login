@@ -312,10 +312,25 @@ export default function Login() {
   return (
     <main role="main">
       <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        {/* Logo affiché immédiatement pour améliorer le LCP */}
+        {/* Logo affiché immédiatement pour améliorer le LCP, avec animation de rebond type "bouncy ball" */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center mb-8">
-            <div className="relative w-32 h-32 flex items-center justify-center">
+            <motion.div
+              className="relative w-32 h-32 flex items-center justify-center"
+              initial={{ y: -170, scaleX: 1, scaleY: 1 }}
+              animate={{
+                // chute très rapide comme un objet, puis rebonds plus courts
+                y: [-170, 0, -60, 0, -22, 0, -6, 0],
+                scaleY: [1, 0.88, 1, 0.92, 1, 0.97, 1, 1],
+                scaleX: [1, 1.08, 1, 1.05, 1, 1.02, 1, 1]
+              }}
+              transition={{
+                duration: 1.25,
+                ease: 'easeOut',
+                // la majeure partie du temps est sur la première chute, comme la gravité
+                times: [0, 0.22, 0.5, 0.7, 0.84, 0.93, 0.98, 1]
+              }}
+            >
               {hasLogo ? (
                 <img
                   src="/uploads/login/armoirie.png"
@@ -333,7 +348,7 @@ export default function Login() {
                   <span className="text-gray-400 dark:text-gray-500 text-4xl">⚜</span>
                 </div>
               )}
-            </div>
+            </motion.div>
           </div>
           
           {/* Loader visible pendant la vérification */}

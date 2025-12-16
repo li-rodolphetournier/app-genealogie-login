@@ -27,22 +27,18 @@ describe('useGenealogyDrag', () => {
     });
 
     act(() => {
-      result.current.handlePointerDown({
+      result.current.handleMouseDown({
         button: 0,
-        pointerType: 'mouse',
         clientX: 10,
         clientY: 20,
         preventDefault: () => {},
-        currentTarget: {
-          setPointerCapture: () => {},
-        },
         target: { closest: () => null, tagName: 'svg' },
       } as any);
     });
 
     act(() => {
       document.dispatchEvent(
-        new PointerEvent('pointermove', { clientX: 20, clientY: 30 }),
+        new MouseEvent('mousemove', { clientX: 20, clientY: 30 }),
       );
     });
 
@@ -61,15 +57,10 @@ describe('useGenealogyDrag', () => {
     });
 
     act(() => {
-      result.current.handleNodePointerDown(
+      result.current.handleNodeMouseDown(
         {
           button: 0,
-          pointerType: 'mouse',
           stopPropagation: () => {},
-          preventDefault: () => {},
-          currentTarget: {
-            setPointerCapture: () => {},
-          },
           clientX: 10,
           clientY: 10,
         } as any,
@@ -81,7 +72,7 @@ describe('useGenealogyDrag', () => {
 
     act(() => {
       document.dispatchEvent(
-        new PointerEvent('pointermove', { clientX: 20, clientY: 20 }),
+        new MouseEvent('mousemove', { clientX: 20, clientY: 20 }),
       );
     });
 

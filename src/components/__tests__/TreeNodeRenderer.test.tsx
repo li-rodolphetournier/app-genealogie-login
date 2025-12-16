@@ -25,7 +25,7 @@ describe('TreeNodeRenderer', () => {
     isDragging: false,
     canEdit: true,
     draggedNodeId: null as string | null,
-    onNodePointerDown: vi.fn(),
+    onNodeMouseDown: vi.fn(),
     onNodeClick: vi.fn(),
     getImage: () => '/test.png',
   };
@@ -39,26 +39,23 @@ describe('TreeNodeRenderer', () => {
     );
 
     const div = container.querySelector('foreignObject div') as HTMLElement;
-    
-    // Simuler un pointerDown puis pointerUp sans mouvement (clic simple)
-    fireEvent.pointerDown(div, { button: 0, pointerType: 'mouse', clientX: 0, clientY: 0 });
-    fireEvent.pointerUp(div, { button: 0, pointerType: 'mouse', clientX: 0, clientY: 0 });
+    fireEvent.click(div);
 
     expect(onNodeClick).toHaveBeenCalledWith(node);
   });
 
   it('ne doit pas déclencher le drag si canEdit est false', () => {
-    const onNodePointerDown = vi.fn();
+    const onNodeMouseDown = vi.fn();
     const { container } = render(
       <svg>
-        <TreeNodeRenderer {...defaultProps} canEdit={false} onNodePointerDown={onNodePointerDown} />
+        <TreeNodeRenderer {...defaultProps} canEdit={false} onNodeMouseDown={onNodeMouseDown} />
       </svg>,
     );
 
     const div = container.querySelector('foreignObject div') as HTMLElement;
-    fireEvent.pointerDown(div, { button: 0, pointerType: 'mouse' });
+    fireEvent.mouseDown(div, { button: 0 });
 
-    expect(onNodePointerDown).not.toHaveBeenCalled();
+    expect(onNodeMouseDown).not.toHaveBeenCalled();
   });
 });
 
