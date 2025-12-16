@@ -2,6 +2,7 @@
 
 import type { TreeNode } from '@/hooks/use-genealogy-tree';
 import { getDefaultImage } from '@/utils/genealogy-tree-utils';
+import { useRef } from 'react';
 
 type TreeNodeRendererProps = {
   node: TreeNode;
@@ -14,7 +15,7 @@ type TreeNodeRendererProps = {
   isDragging: boolean;
   canEdit: boolean;
   draggedNodeId: string | null;
-  onNodeMouseDown: (e: React.MouseEvent, nodeId: string, nodeX: number, nodeY: number) => void;
+  onNodePointerDown: (e: React.PointerEvent, nodeId: string, nodeX: number, nodeY: number) => void;
   onNodeClick: (node: TreeNode) => void;
   getImage: (node: TreeNode) => string;
   borderColor?: string;
@@ -32,7 +33,7 @@ export function TreeNodeRenderer({
   isDragging,
   canEdit,
   draggedNodeId,
-  onNodeMouseDown,
+  onNodePointerDown,
   onNodeClick,
   getImage,
   borderColor,
@@ -64,6 +65,55 @@ export function TreeNodeRenderer({
     ? (node.genre === 'homme' ? 'shadow-xl ring-2 ring-blue-400' : 'shadow-xl ring-2 ring-pink-400')
     : '';
 
+  const pointerStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const hasMovedRef = useRef(false);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    
+    if (!canEdit) {
+      e.preventDefault();
+      return;
+    }
+
+    pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    hasMovedRef.current = false;
+
+    // Pour le drag de nœud, on démarre immédiatement
+    if (e.pointerType === 'mouse' || e.pointerType === 'touch') {
+      onNodePointerDown(e, node.id, x, y);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (pointerStartRef.current) {
+      const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+      const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+      if (dx > 5 || dy > 5) {
+        hasMovedRef.current = true;
+        // Annuler le clic si on bouge
+        if (clickTimeoutRef.current) {
+          clearTimeout(clickTimeoutRef.current);
+          clickTimeoutRef.current = null;
+        }
+      }
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    // Si on n'a pas bougé et qu'on n'était pas en train de draguer ce nœud, c'est un clic
+    if (!hasMovedRef.current && draggedNodeId !== node.id) {
+      // Petit délai pour s'assurer que le drag n'est pas en cours
+      clickTimeoutRef.current = setTimeout(() => {
+        onNodeClick(node);
+      }, 50);
+    }
+    
+    pointerStartRef.current = null;
+    hasMovedRef.current = false;
+  };
+
   return (
     <g transform={`translate(${x},${y})`}>
       <foreignObject
@@ -74,20 +124,15 @@ export function TreeNodeRenderer({
         className={`${style}-node`}
       >
         <div
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            if (!canEdit) {
-              e.preventDefault();
-              return;
-            }
-            if (e.button === 0) {
-              onNodeMouseDown(e, node.id, x, y);
-            }
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!draggedNodeId || draggedNodeId !== node.id) {
-              onNodeClick(node);
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => {
+            pointerStartRef.current = null;
+            hasMovedRef.current = false;
+            if (clickTimeoutRef.current) {
+              clearTimeout(clickTimeoutRef.current);
+              clickTimeoutRef.current = null;
             }
           }}
           className={`${baseClasses} ${styleClasses[style]} ${selectedClasses} ${draggingClasses}`}
@@ -100,7 +145,9 @@ export function TreeNodeRenderer({
             borderColor: defaultBorderColor,
             cursor: canEdit 
               ? (draggedNodeId === node.id ? 'grabbing' : 'grab')
-              : 'default',
+              : 'pointer',
+            touchAction: 'none', // Empêcher le scroll natif sur mobile
+            userSelect: 'none', // Empêcher la sélection de texte
             boxShadow: style === 'treecharts' && isSelected 
               ? '0 10px 25px rgba(245, 158, 11, 0.3)' 
               : undefined,
@@ -111,6 +158,7 @@ export function TreeNodeRenderer({
             alt={node.name}
             className={`w-12 h-12 rounded-full object-cover flex-shrink-0 ${style === 'treecharts' ? 'border-2' : ''}`}
             style={style === 'treecharts' ? { borderColor: defaultBorderColor } : undefined}
+            draggable={false}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.onerror = null;

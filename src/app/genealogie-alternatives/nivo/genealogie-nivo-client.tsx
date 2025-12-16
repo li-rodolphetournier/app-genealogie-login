@@ -125,8 +125,8 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
   const {
     isDragging,
     draggedNodeId,
-    handleMouseDown,
-    handleNodeMouseDown
+    handlePointerDown,
+    handleNodePointerDown
   } = useGenealogyDrag(
     svgRef,
     translate,
@@ -365,8 +365,12 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
             ref={svgRef}
             width={dimensions.width}
             height={dimensions.height}
-            style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
-            onMouseDown={handleMouseDown}
+            style={{ 
+              display: 'block', 
+              cursor: isDragging ? 'grabbing' : 'grab',
+              touchAction: 'none' // Empêcher le scroll/zoom natif sur mobile
+            }}
+            onPointerDown={handlePointerDown}
           >
             <rect width="100%" height="100%" fill={svgBackgroundFill} />
             <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
@@ -405,7 +409,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
                     isDragging={isDragging}
                     canEdit={canEditUser}
                     draggedNodeId={draggedNodeId}
-                    onNodeMouseDown={handleNodeMouseDown}
+                    onNodePointerDown={handleNodePointerDown}
                     onNodeClick={handleNodeClick}
                     getImage={getImage}
                     style="nivo"

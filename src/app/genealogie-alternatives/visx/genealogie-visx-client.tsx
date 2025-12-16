@@ -121,8 +121,8 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
   const {
     isDragging,
     draggedNodeId,
-    handleMouseDown,
-    handleNodeMouseDown
+    handlePointerDown,
+    handleNodePointerDown
   } = useGenealogyDrag(
     svgRef,
     translate,
@@ -311,8 +311,12 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
             ref={svgRef}
             width={dimensions.width}
             height={dimensions.height}
-            style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
-            onMouseDown={handleMouseDown}
+            style={{ 
+              display: 'block', 
+              cursor: isDragging ? 'grabbing' : 'grab',
+              touchAction: 'none' // Empêcher le scroll/zoom natif sur mobile
+            }}
+            onPointerDown={handlePointerDown}
           >
             <rect width="100%" height="100%" fill={svgBackgroundFill} />
             <g transform={`translate(${translate.x}, ${translate.y}) scale(${zoomLevel})`}>
@@ -422,7 +426,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
                               isDragging={isDragging}
                               canEdit={canEditUser}
                               draggedNodeId={draggedNodeId}
-                              onNodeMouseDown={handleNodeMouseDown}
+                              onNodePointerDown={handleNodePointerDown}
                               onNodeClick={handleNodeClick}
                               getImage={getImage}
                               style="default"
