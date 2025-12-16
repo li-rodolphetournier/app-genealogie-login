@@ -406,7 +406,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
                     isDragging={isDragging}
                     canEdit={canEditUser}
                     draggedNodeId={draggedNodeId}
-                    onNodePointerDown={handleNodePointerDown}
+                    onNodeMouseDown={handleNodeMouseDown}
                     onNodeClick={handleNodeClick}
                     getImage={getImage}
                     style="treecharts"
