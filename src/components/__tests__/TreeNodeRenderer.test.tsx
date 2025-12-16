@@ -30,7 +30,7 @@ describe('TreeNodeRenderer', () => {
     getImage: () => '/test.png',
   };
 
-  it('doit appeler onNodeClick au clic quand non draggué', async () => {
+  it('doit appeler onNodeClick au clic quand non draggué', () => {
     const onNodeClick = vi.fn();
     const { container } = render(
       <svg>
@@ -43,9 +43,6 @@ describe('TreeNodeRenderer', () => {
     // Simuler un pointerDown puis pointerUp sans mouvement (clic simple)
     fireEvent.pointerDown(div, { button: 0, pointerType: 'mouse', clientX: 0, clientY: 0 });
     fireEvent.pointerUp(div, { button: 0, pointerType: 'mouse', clientX: 0, clientY: 0 });
-    
-    // Attendre le délai de 50ms avant l'appel de onNodeClick
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     expect(onNodeClick).toHaveBeenCalledWith(node);
   });

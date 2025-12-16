@@ -61,17 +61,17 @@ export function TreeNodeRenderer({
       : 'border-pink-600 shadow-lg ring-2 ring-pink-300')
     : (node.genre === 'homme' ? 'border-blue-500' : 'border-pink-500');
 
-  const draggingClasses = draggedNodeId === node.id 
+  const draggingClasses = draggedNodeId === node.id
     ? (node.genre === 'homme' ? 'shadow-xl ring-2 ring-blue-400' : 'shadow-xl ring-2 ring-pink-400')
     : '';
 
   const pointerStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const hasMovedRef = useRef(false);
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasStartedDragRef = useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();
-    
+
     if (!canEdit) {
       e.preventDefault();
       return;
@@ -79,39 +79,35 @@ export function TreeNodeRenderer({
 
     pointerStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     hasMovedRef.current = false;
-
-    // Pour le drag de nœud, on démarre immédiatement
-    if (e.pointerType === 'mouse' || e.pointerType === 'touch') {
-      onNodePointerDown(e, node.id, x, y);
-    }
+    hasStartedDragRef.current = false;
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (pointerStartRef.current) {
-      const dx = Math.abs(e.clientX - pointerStartRef.current.x);
-      const dy = Math.abs(e.clientY - pointerStartRef.current.y);
-      if (dx > 5 || dy > 5) {
-        hasMovedRef.current = true;
-        // Annuler le clic si on bouge
-        if (clickTimeoutRef.current) {
-          clearTimeout(clickTimeoutRef.current);
-          clickTimeoutRef.current = null;
-        }
+    if (!pointerStartRef.current) return;
+
+    const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+    const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+
+    if (dx > 5 || dy > 5) {
+      hasMovedRef.current = true;
+
+      // Démarrer le drag seulement quand on dépasse le seuil
+      if (!hasStartedDragRef.current && (e.pointerType === 'mouse' || e.pointerType === 'touch')) {
+        hasStartedDragRef.current = true;
+        onNodePointerDown(e, node.id, x, y);
       }
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
-    // Si on n'a pas bougé et qu'on n'était pas en train de draguer ce nœud, c'est un clic
-    if (!hasMovedRef.current && draggedNodeId !== node.id) {
-      // Petit délai pour s'assurer que le drag n'est pas en cours
-      clickTimeoutRef.current = setTimeout(() => {
-        onNodeClick(node);
-      }, 50);
+  const handlePointerUp = () => {
+    // Si on n'a pas bougé suffisamment pour démarrer un drag, on considère que c'est un clic
+    if (!hasMovedRef.current && !hasStartedDragRef.current) {
+      onNodeClick(node);
     }
-    
+
     pointerStartRef.current = null;
     hasMovedRef.current = false;
+    hasStartedDragRef.current = false;
   };
 
   return (
@@ -130,10 +126,7 @@ export function TreeNodeRenderer({
           onPointerCancel={() => {
             pointerStartRef.current = null;
             hasMovedRef.current = false;
-            if (clickTimeoutRef.current) {
-              clearTimeout(clickTimeoutRef.current);
-              clickTimeoutRef.current = null;
-            }
+            hasStartedDragRef.current = false;
           }}
           className={`${baseClasses} ${styleClasses[style]} ${selectedClasses} ${draggingClasses}`}
           style={{
