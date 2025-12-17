@@ -290,7 +290,7 @@ export default function ChartPage() {
               Nouvelles Personnes Créées
             </h2>
             <div className="flex items-center gap-4">
-              <label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                 Depuis :
               </label>
               <select

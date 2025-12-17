@@ -343,8 +343,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 className="relative"
               >
                 {user?.status === 'administrateur' && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                  <div className="absolute top-2 left-2 z-10">
+                    <label className="flex items-center gap-2 px-2 rounded">
                       <input
                         type="checkbox"
                         checked={cardVisibility['genealogie']}
@@ -388,8 +388,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 className="relative"
               >
                 {user?.status === 'administrateur' && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                  <div className="absolute top-2 left-2 z-10">
+                    <label className="flex items-center gap-2 px-2 rounded">
                       <input
                         type="checkbox"
                         checked={cardVisibility['genealogie-visx']}
@@ -413,9 +413,9 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 justify-between">
                         <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Visx</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
                           Alternative 1
                         </span>
                       </div>
@@ -437,8 +437,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 className="relative"
               >
                 {user?.status === 'administrateur' && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                  <div className="absolute top-2 left-2 z-10">
+                    <label className="flex items-center gap-2 px-2 rounded">
                       <input
                         type="checkbox"
                         checked={cardVisibility['genealogie-nivo']}
@@ -462,13 +462,10 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 justify-between">
                         <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Nivo</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 whitespace-nowrap">
                           Alternative 2
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                          À venir
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec Nivo - Composants prêts à l&apos;emploi</p>
@@ -489,8 +486,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                 className="relative"
               >
                 {user?.status === 'administrateur' && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <label className="flex items-center gap-2 bg-white px-2 py-1 rounded shadow-sm border border-gray-300">
+                  <div className="absolute top-2 left-2 z-10">
+                    <label className="flex items-center gap-2 px-2 rounded">
                       <input
                         type="checkbox"
                         checked={cardVisibility['genealogie-treecharts']}
@@ -514,13 +511,10 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie TreeCharts</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                      <div className="flex items-center gap-2 justify-between">
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white whitespace-nowrap">Généalogie TreeCharts</h2>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 whitespace-nowrap">
                           Alternative 3
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                          À venir
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec TreeCharts - Spécialisé généalogie</p>
@@ -707,7 +701,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               <h2 className="text-xl font-bold">Monitoring de Sécurité</h2>
               <button
                 onClick={() => setShowMonitoring(false)}
-                className="text-white hover:text-gray-200 text-2xl font-bold"
+                className="text-white hover:text-gray-200 text-2xl font-bold bg-transparent"
                 aria-label="Fermer le monitoring"
               >
                 ✕

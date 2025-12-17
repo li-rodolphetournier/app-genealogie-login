@@ -306,7 +306,7 @@ export default function CreateObject() {
                       setShowNewCategoryInput(true);
                       setType('');
                     }}
-                    className="mt-2 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 underline font-medium"
+                    className="mt-2 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 underline font-medium bg-transparent"
                   >
                     + Créer une nouvelle catégorie
                   </button>

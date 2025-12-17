@@ -162,7 +162,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
         </Link>
         <button
           onClick={() => handleDelete(object.id)}
-          className="text-red-600 hover:text-red-800 font-medium text-sm"
+          className="text-red-600 hover:text-red-800 font-medium text-sm bg-transparent"
           aria-label={`Supprimer ${object.nom}`}
         >
           Supprimer

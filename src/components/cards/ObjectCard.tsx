@@ -33,15 +33,18 @@ export const ObjectCard = React.memo<ObjectCardProps>(({ object, onDelete, canEd
 
   return (
     <div className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
-      <Link href={`/objects/${object.id}`} className="block aspect-w-16 aspect-h-9 flex-shrink-0">
+      <Link
+        href={`/objects/${object.id}`}
+        className="block h-48 flex-shrink-0 p-4"
+      ><div className=" h-48 flex-shrink-0 p-4" style={{ backgroundColor: 'white' }}>
         <ImageWithFallback
           src={object.photos?.[0]?.url}
           alt={object.photos?.[0]?.description?.[0] || `Photo de ${object.nom}`}
-          className="w-full h-48"
-          imgClassName="object-cover"
+          className="w-full h-full"
+          imgClassName="object-contain"
           width={400}
           height={300}
-        />
+        /></div>
       </Link>
       <div className="p-4 flex flex-col flex-grow">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">{object.nom}</h2>

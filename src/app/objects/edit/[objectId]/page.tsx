@@ -373,7 +373,7 @@ export default function EditObject() {
                     onClick={() => {
                       setShowNewCategoryInput(true);
                     }}
-                    className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                    className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline bg-transparent"
                   >
                     + Créer une nouvelle catégorie
                   </button>
