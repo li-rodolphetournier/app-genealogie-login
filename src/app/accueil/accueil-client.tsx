@@ -401,9 +401,11 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 justify-between">
                         <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
-                          Alternative 1
-                        </span>
+                        {user?.status === 'administrateur' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
+                            Alternative 1
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Visiualiser l'Arbre Généalogique</p>
                     </div>
@@ -450,9 +452,11 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 justify-between">
                         <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Nivo</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 whitespace-nowrap">
-                          Alternative 2
-                        </span>
+                        {user?.status === 'administrateur' && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 whitespace-nowrap">
+                            Alternative 2
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec Nivo - Composants prêts à l&apos;emploi</p>
                     </div>

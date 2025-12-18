@@ -21,6 +21,10 @@ export default async function Accueil() {
       redirect('/'); // page de login
     }
   } catch (error) {
+    // Ne pas logger les redirections "normales" de Next (NEXT_REDIRECT)
+    if (error instanceof Error && (error as any).digest?.startsWith?.('NEXT_REDIRECT')) {
+      throw error;
+    }
     console.error('Erreur lors de la vérification d’authentification pour /accueil:', error);
     redirect('/');
   }
