@@ -157,73 +157,59 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
   }
 
   return (
-    <main role="main">
+  <main role="main">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="min-h-screen bg-gray-50 dark:bg-gray-900"
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col pt-20"
       >
-      <AnimatedContainer variant="slideDown" delay={0.1}>
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-400 dark:border-gray-700" role="banner">
-          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <motion.h1
-              className="text-2xl font-bold text-gray-900 dark:text-white"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-            >
-              Tableau de bord
-            </motion.h1>
-            <motion.div
-              className="flex items-center space-x-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-            >
-              <span className="text-gray-700 dark:text-gray-300">
-                Bienvenue <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
-              </span>
-              {user?.status === 'administrateur' && isDevelopment() && (
-                <motion.button
-                  onClick={() => setShowMonitoring(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                  aria-label="Ouvrir le monitoring de sécurité"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  🔒 Monitoring Sécurité
-                </motion.button>
-              )}
-              <motion.button
-                onClick={async () => {
-                  try {
-                    await logout();
-                  } catch (error) {
-                    console.error('Erreur lors de la déconnexion:', error);
-                    // Forcer la redirection même en cas d'erreur
-                    if (typeof window !== 'undefined') {
-                      window.location.href = '/';
-                    }
-                  }
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Se déconnecter"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+      {/* Header fixe en haut de la page d'accueil */}
+      <header className="fixed top-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-sm border-b border-gray-400/70 dark:border-gray-700/70" role="banner">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+           Notre arbre généalogique
+          </h1>
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-700 dark:text-gray-300">
+              Bienvenue <span className="font-medium">{user.login ? user.login.charAt(0).toUpperCase() + user.login.slice(1) : user.email || 'Utilisateur'}</span>
+            </span>
+            {user?.status === 'administrateur' && isDevelopment() && (
+              <button
+                onClick={() => setShowMonitoring(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                aria-label="Ouvrir le monitoring de sécurité"
               >
-                Se déconnecter
-              </motion.button>
-            </motion.div>
+                🔒 Monitoring Sécurité
+              </button>
+            )}
+            <button
+              onClick={async () => {
+                try {
+                  await logout();
+                } catch (error) {
+                  console.error('Erreur lors de la déconnexion:', error);
+                  // Forcer la redirection même en cas d'erreur
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                  }
+                }
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Se déconnecter"
+            >
+              Se déconnecter
+            </button>
           </div>
-        </header>
-      </AnimatedContainer>
+        </div>
+      </header>
 
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="navigation" aria-label="Menu principal">
+      {/* Contenu scrollable sous le header sticky */}
+      <nav className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="navigation" aria-label="Menu principal">
         <FadeInStagger staggerDelay={0.1} delay={0.4}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-          {/* Liste des éléments de patrimoine */}
+          {/* GESTION des éléments de patrimoine */}
           <FadeInStaggerItem>
             <motion.div
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -233,7 +219,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               <Link
                 href="/objects"
                 className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
-                aria-label="Accéder à la liste des éléments de patrimoine"
+                aria-label="Accéder à la gestion des éléments de patrimoine"
               >
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -242,7 +228,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Liste des éléments de patrimoine</h2>
+                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Gestion des éléments de patrimoine</h2>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir tous les éléments de patrimoine disponibles</p>
                   </div>
                 </div>
@@ -414,12 +400,12 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 justify-between">
-                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie Visx</h2>
+                        <h2 className="text-xl font-medium text-gray-900 dark:text-white">Généalogie</h2>
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 whitespace-nowrap">
                           Alternative 1
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Arbre avec Visx - Bundle léger</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Visiualiser l'Arbre Généalogique</p>
                     </div>
                   </div>
                 </Link>

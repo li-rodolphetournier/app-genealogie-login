@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { RawNodeDatum } from 'react-d3-tree';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import FamilyTreeNode from '../../components/FamilyTreeNode';
@@ -216,7 +216,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     return null;
   }, [persons]);
 
-  if (isAllowed === null) {
+  if (!isAdmin && isAllowed === null) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <p className="text-gray-500 dark:text-gray-400">Chargement de la vue généalogique...</p>
@@ -224,7 +224,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
     );
   }
 
-  if (isAllowed === false) {
+  if (!isAdmin && isAllowed === false) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-4">
@@ -329,7 +329,7 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
   return (
     <main role="main">
       <motion.div 
-        className="w-screen h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex"
+        className="w-screen h-screen bg-gray-100 dark:bg-gray-900 flex"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -359,82 +359,86 @@ export function GenealogieClient({ initialPersons }: GenealogieClientProps) {
         onToggleHistory={isAdmin ? toggleHistory : undefined}
       />
 
-      {/* Arbre généalogique */}
+      {/* Arbre généalogique avec header sticky */}
       <motion.div 
         className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'}`}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <GenealogyHeader
-          title="Arbre Généalogique Familial"
-          isRefreshing={isRefreshing}
-          isSaving={false}
-          canEdit={canEditUser}
-          hasPositions={false}
-          zoomLevel={zoomLevel}
-          onRefresh={refreshData}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onGoHome={handleSaveAndGoHome}
-          isMenuOpen={isMenuOpen}
-        />
+        <div className="flex flex-col h-full">
+          {/* Header sticky en haut, visible aussi en mode historique */}
+          <div className="sticky top-0 z-10 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
+            <GenealogyHeader
+              title="Arbre Généalogique Familial"
+              isRefreshing={isRefreshing}
+              isSaving={false}
+              canEdit={canEditUser}
+              hasPositions={false}
+              zoomLevel={zoomLevel}
+              onRefresh={refreshData}
+              onZoomIn={zoomIn}
+              onZoomOut={zoomOut}
+              onGoHome={handleSaveAndGoHome}
+              isMenuOpen={isMenuOpen}
+            />
+          </div>
 
-        <motion.div 
-          className="w-full h-full pt-16" 
-          onClick={handleBackgroundClick}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          {treeData ? (
-            <div 
-              className="w-full h-full bg-white dark:bg-gray-900"
-              style={{ width: '100%', height: '100%', position: 'relative', minHeight: '600px' }}
-            >
-              <motion.div
+          {/* Zone scrollable pour l'arbre et l'historique, header reste fixe */}
+          <div
+            className="flex-1 overflow-auto"
+            style={{ paddingTop: '0' }}
+            onClick={handleBackgroundClick}
+          >
+            {treeData ? (
+              <div 
+                className="w-full h-full bg-white dark:bg-gray-900"
+                style={{ width: '100%', height: '100%', position: 'relative', minHeight: '600px' }}
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  <div id="tree-wrapper" style={{ width: '100%', height: '100%', minHeight: '600px' }}>
+                    <Tree
+                      data={treeData as unknown as RawNodeDatum}
+                      renderCustomNodeElement={(rd) => (
+                        <g onClick={(e) => {
+                          e.stopPropagation();
+                          handleNodeClick(rd.nodeDatum as unknown as CustomNodeDatum);
+                          setIsMenuOpen(true);
+                        }}>
+                          <FamilyTreeNode nodeDatum={rd.nodeDatum as unknown as CustomNodeDatum} />
+                        </g>
+                      )}
+                      orientation="vertical"
+                      pathFunc="step"
+                      translate={{ x: 400, y: 100 }}
+                      separation={{ siblings: 2, nonSiblings: 2.5 }}
+                      zoom={zoomLevel}
+                      nodeSize={{ x: 200, y: 120 }}
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            ) : (
+              <motion.div 
+                className="flex items-center justify-center h-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                style={{ width: '100%', height: '100%' }}
               >
-                <div id="tree-wrapper" style={{ width: '100%', height: '100%', minHeight: '600px' }}>
-                  <Tree
-                    data={treeData as unknown as RawNodeDatum}
-                    renderCustomNodeElement={(rd) => (
-                      <g onClick={(e) => {
-                        e.stopPropagation();
-                        handleNodeClick(rd.nodeDatum as unknown as CustomNodeDatum);
-                        setIsMenuOpen(true);
-                      }}>
-                        <FamilyTreeNode nodeDatum={rd.nodeDatum as unknown as CustomNodeDatum} />
-                      </g>
-                    )}
-                    orientation="vertical"
-                    pathFunc="step"
-                    translate={{ x: 400, y: 100 }}
-                    separation={{ siblings: 2, nonSiblings: 2.5 }}
-                    zoom={zoomLevel}
-                    nodeSize={{ x: 200, y: 120 }}
-                  />
+                <div>
+                  <p>Chargement de l&apos;arbre généalogique...</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {persons.length === 0 ? 'Aucune donnée disponible' : `Chargement de ${persons.length} personne(s)...`}
+                  </p>
                 </div>
               </motion.div>
-            </div>
-          ) : (
-            <motion.div 
-              className="flex items-center justify-center h-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div>
-                <p>Chargement de l&apos;arbre généalogique...</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {persons.length === 0 ? 'Aucune donnée disponible' : `Chargement de ${persons.length} personne(s)...`}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
+            )}
+          </div>
+        </div>
       </motion.div>
       </motion.div>
     </main>

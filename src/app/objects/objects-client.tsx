@@ -191,7 +191,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Liste des éléments de patrimoine
+                  Gestion des éléments de patrimoine
                 </h1>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Gérez et consultez tous les éléments de patrimoine disponibles
@@ -216,7 +216,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
         </header>
       </div>
 
-      <main role="main" className="pt-[210px] pb-8 px-4 sm:px-6 lg:px-8">
+      <main role="main" className="pt-[120px] pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-full mx-auto">
           <div className="w-full border-t border-gray-200 dark:border-gray-700 mb-6">
             <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">

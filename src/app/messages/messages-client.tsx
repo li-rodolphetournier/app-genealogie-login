@@ -193,19 +193,21 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header avec bouton retour */}
-      <header role="banner" className="bg-white dark:bg-gray-800 shadow">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col pt-20">
+      {/* Header fixe avec bouton retour */}
+      <header
+        role="banner"
+        className="fixed top-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow border-b border-gray-200 dark:border-gray-700"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Administration des Messages
           </h1>
-          <BackToHomeButton variant='button' className="px-6 py-3 text-base bg-blue-700 hover:bg-blue-800" />
-      
+          <BackToHomeButton variant="button" />
         </div>
       </header>
 
-      <main role="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main role="main" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Formulaire de création/modification */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8">
           <div className="p-6">

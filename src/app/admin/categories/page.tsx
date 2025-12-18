@@ -162,21 +162,35 @@ export default function CategoriesManagement() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion des Catégories</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleOpenModal()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                + Nouvelle catégorie
-              </button>
-              <BackToHomeButton useRouter variant="button"/>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Sticky header */}
+        <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
+          <header role="banner" className="w-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Gestion des Catégories
+                </h1>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Créez, modifiez et supprimez les catégories utilisées pour vos éléments de patrimoine.
+                </p>
+              </div>
+              <BackToHomeButton useRouter variant="button" />
             </div>
-          </div>
+          </header>
+        </div>
+
+        <main role="main" className="pt-[160px] pb-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
+              <div className="flex justify-end items-center mb-6">
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  + Nouvelle catégorie
+                </button>
+              </div>
 
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
@@ -263,69 +277,70 @@ export default function CategoriesManagement() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-
-        {/* Modal pour ajouter/modifier */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-              <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
-                </h3>
-                <form onSubmit={handleSubmit}>
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nom *
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        placeholder="Nom de la catégorie"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                        placeholder="Description de la catégorie (optionnel)"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 mt-6">
-                    <button
-                      type="button"
-                      onClick={handleCloseModal}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? 'Enregistrement...' : editingCategory ? 'Modifier' : 'Créer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+              )}
             </div>
+
+            {/* Modal pour ajouter/modifier */}
+            {isModalOpen && (
+              <div className="fixed inset-0 bg-gray-600 dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-75 overflow-y-auto h-full w-full z-50">
+                <div className="relative top-20 mx-auto p-5 border border-gray-200 dark:border-gray-700 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+                  <div className="mt-3">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                      {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+                    </h3>
+                    <form onSubmit={handleSubmit}>
+                      <div className="space-y-4">
+                        <div>
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nom *
+                          </label>
+                          <input
+                            type="text"
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            placeholder="Nom de la catégorie"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Description
+                          </label>
+                          <textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={3}
+                            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            placeholder="Description de la catégorie (optionnel)"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-6">
+                        <button
+                          type="button"
+                          onClick={handleCloseModal}
+                          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting ? 'Enregistrement...' : editingCategory ? 'Modifier' : 'Créer'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </main>
       </div>
     </PageTransition>
   );

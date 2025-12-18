@@ -40,14 +40,14 @@ type GenealogieVisxClientProps = {
   initialPersons: Person[];
 };
 
-const defaultMargin = { top: 40, left: 40, right: 40, bottom: 40 };
+const defaultMargin = { top: 16, left: 40, right: 40, bottom: 40 };
 
 export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [translate, setTranslate] = useState({ x: 400, y: 100 });
+  const [translate, setTranslate] = useState({ x: 400, y: 40 });
   const [svgBackgroundFill, setSvgBackgroundFill] = useState('#f9fafb');
   const svgRef = useRef<SVGSVGElement>(null);
   
@@ -340,7 +340,7 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
 
       <motion.div 
         className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
-        style={{ paddingTop: '64px' }}
+        style={{ paddingTop: '0' }}
         onClick={handleBackgroundClick}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}

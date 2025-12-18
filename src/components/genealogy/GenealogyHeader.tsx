@@ -32,10 +32,8 @@ export function GenealogyHeader({
   isMenuOpen
 }: GenealogyHeaderProps) {
   return (
-    <div className={`fixed top-0 right-0 bg-white dark:bg-gray-800 shadow-md z-10 p-4 transition-all duration-300 ${
-      isMenuOpen ? 'left-96' : 'left-0'
-    }`}>
-      <div className="flex justify-between items-center">
+    <div className="w-full bg-white dark:bg-gray-800 shadow-md z-10 p-4">
+      <div className="flex justify-between items-center max-w-full">
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
           <button

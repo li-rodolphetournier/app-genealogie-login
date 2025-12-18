@@ -41,7 +41,7 @@ export default function NotFound() {
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
               Désolé, la page que vous cherchez n&apos;existe pas, a été déplacée ou n&apos;est plus
-              disponible. Utilisez le bouton ci-dessous pour revenir au tableau de bord de
+              disponible. Utilisez le bouton ci-dessous pour revenir a notre arbre généalogique de
               l&apos;application.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">

@@ -39,7 +39,7 @@ type GenealogieTreechartsClientProps = {
   initialPersons: Person[];
 };
 
-const defaultMargin = { top: 40, left: 40, right: 40, bottom: 40 };
+const defaultMargin = { top: 16, left: 40, right: 40, bottom: 40 };
 
 // Fonction pour créer un chemin vertical avec angles droits (style TreeCharts)
 const verticalLinkPath = (sourceX: number, sourceY: number, targetX: number, targetY: number) => {
@@ -52,7 +52,7 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
   const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [translate, setTranslate] = useState({ x: 400, y: 100 });
+  const [translate, setTranslate] = useState({ x: 400, y: 40 });
   const [svgBackgroundFill, setSvgBackgroundFill] = useState('#f9fafb');
   const svgRef = useRef<SVGSVGElement>(null);
   
@@ -181,29 +181,6 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
     return hierarchy<TreeNode>(treeData);
   }, [treeData]);
 
-  if (isAllowed === null) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Chargement de la vue généalogique...</p>
-      </div>
-    );
-  }
-
-  if (isAllowed === false) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center px-4">
-          <p className="text-lg font-medium text-gray-900 dark:text-white">
-            Cette vue généalogique n&apos;est pas disponible.
-          </p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Veuillez contacter un administrateur si vous pensez qu&apos;il s&apos;agit d&apos;une erreur.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const yMax = Math.max(1200, dimensions.height - defaultMargin.top - defaultMargin.bottom);
   const xMax = Math.max(800, dimensions.width - defaultMargin.left - defaultMargin.right);
   
@@ -313,6 +290,29 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
     image: selectedPerson.image
   } : null;
 
+  if (!isAdmin && isAllowed === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">Chargement de la vue généalogique...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin && isAllowed === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center px-4">
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            Cette vue généalogique n&apos;est pas disponible.
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Veuillez contacter un administrateur si vous pensez qu&apos;il s&apos;agit d&apos;une erreur.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!treeRoot || !treeData) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -393,84 +393,94 @@ export function GenealogieTreechartsClient({ initialPersons }: GenealogieTreecha
       />
 
       <motion.div 
-        className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
-        style={{ paddingTop: '64px' }}
+        className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'}`}
         onClick={handleBackgroundClick}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <GenealogyHeader
-          title="Arbre Généalogique - TreeCharts"
-          isRefreshing={isRefreshing}
-          isSaving={isSaving}
-          canEdit={canEditUser}
-          hasPositions={customPositions.size > 0}
-          zoomLevel={zoomLevel}
-          onRefresh={refreshData}
-          onSavePositions={() => savePositionsToSupabase(customPositions)}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onGoHome={handleSaveAndGoHome}
-          isMenuOpen={isMenuOpen}
-        />
+        <div className="flex flex-col h-full">
+          {/* Header sticky aligné avec Nivo et Visx */}
+          <div className="sticky top-0 z-10 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
+            <GenealogyHeader
+              title="Arbre Généalogique - TreeCharts"
+              isRefreshing={isRefreshing}
+              isSaving={isSaving}
+              canEdit={canEditUser}
+              hasPositions={customPositions.size > 0}
+              zoomLevel={zoomLevel}
+              onRefresh={refreshData}
+              onSavePositions={() => savePositionsToSupabase(customPositions)}
+              onZoomIn={zoomIn}
+              onZoomOut={zoomOut}
+              onGoHome={handleSaveAndGoHome}
+              isMenuOpen={isMenuOpen}
+            />
+          </div>
 
-        {dimensions.width > 0 && dimensions.height > 0 && treeRoot && (
-          <svg
-            id="treecharts-tree-svg"
-            ref={svgRef}
-            width={dimensions.width}
-            height={dimensions.height}
-            style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
-            onMouseDown={handleMouseDown}
+          {/* Zone scrollable avec léger padding-top comme les autres vues */}
+          <div
+            className="flex-1 overflow-auto"
+            style={{ paddingTop: '0' }}
           >
-            <rect width="100%" height="100%" fill={svgBackgroundFill} />
-            <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
-              <TreeLinksRenderer
-                persons={persons}
-                positionMap={positionMap}
-                nodeWidth={nodeWidth}
-                couplesMap={couplesMap}
-                childrenByCouple={childrenByCouple}
-                singleParentChildren={singleParentChildren}
-                linkPath={verticalLinkPath}
-                style="treecharts"
-              />
-              
-              {treeRoot.descendants().map((node, i) => {
-                const nodeData = node.data;
-                if (nodeData.id === 'root') return null;
-                
-                const adjustedPosition = positionMap.get(nodeData.id);
-                const top = adjustedPosition?.y ?? node.y ?? 0;
-                const left = adjustedPosition?.x ?? node.x ?? 0;
-                
-                const isDead = !!nodeData.dateDeces;
-                const isSelected = selectedNodeId === nodeData.id;
-
-                return (
-                  <TreeNodeRenderer
-                    key={`node-${nodeData.id}-${i}`}
-                    node={nodeData}
-                    x={left}
-                    y={top}
+            {dimensions.width > 0 && dimensions.height > 0 && treeRoot && (
+              <svg
+                id="treecharts-tree-svg"
+                ref={svgRef}
+                width={dimensions.width}
+                height={dimensions.height}
+                style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+                onMouseDown={handleMouseDown}
+              >
+                <rect width="100%" height="100%" fill={svgBackgroundFill} />
+                <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
+                  <TreeLinksRenderer
+                    persons={persons}
+                    positionMap={positionMap}
                     nodeWidth={nodeWidth}
-                    nodeHeight={nodeHeight}
-                    isDead={isDead}
-                    isSelected={isSelected}
-                    isDragging={isDragging}
-                    canEdit={canEditUser}
-                    draggedNodeId={draggedNodeId}
-                    onNodeMouseDown={handleNodeMouseDown}
-                    onNodeClick={handleNodeClick}
-                    getImage={getImage}
+                    couplesMap={couplesMap}
+                    childrenByCouple={childrenByCouple}
+                    singleParentChildren={singleParentChildren}
+                    linkPath={verticalLinkPath}
                     style="treecharts"
                   />
-                );
-              })}
-            </g>
-          </svg>
-        )}
+                  
+                  {treeRoot.descendants().map((node, i) => {
+                    const nodeData = node.data;
+                    if (nodeData.id === 'root') return null;
+                    
+                    const adjustedPosition = positionMap.get(nodeData.id);
+                    const top = adjustedPosition?.y ?? node.y ?? 0;
+                    const left = adjustedPosition?.x ?? node.x ?? 0;
+                    
+                    const isDead = !!nodeData.dateDeces;
+                    const isSelected = selectedNodeId === nodeData.id;
+
+                    return (
+                      <TreeNodeRenderer
+                        key={`node-${nodeData.id}-${i}`}
+                        node={nodeData}
+                        x={left}
+                        y={top}
+                        nodeWidth={nodeWidth}
+                        nodeHeight={nodeHeight}
+                        isDead={isDead}
+                        isSelected={isSelected}
+                        isDragging={isDragging}
+                        canEdit={canEditUser}
+                        draggedNodeId={draggedNodeId}
+                        onNodeMouseDown={handleNodeMouseDown}
+                        onNodeClick={handleNodeClick}
+                        getImage={getImage}
+                        style="treecharts"
+                      />
+                    );
+                  })}
+                </g>
+              </svg>
+            )}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

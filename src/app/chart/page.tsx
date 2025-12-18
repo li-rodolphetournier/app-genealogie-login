@@ -253,60 +253,71 @@ export default function ChartPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Statistiques
-          </h1>
-          <BackToHomeButton variant="button" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Sticky header */}
+        <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
+          <header role="banner" className="w-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Statistiques
+                </h1>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Visualisez la répartition des éléments de patrimoine et l&apos;activité de création de personnes.
+                </p>
+              </div>
+              <BackToHomeButton variant="button" />
+            </div>
+          </header>
         </div>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-6" role="alert">
-            <p className="text-red-700">Erreur de chargement: {error}</p>
-          </div>
-        )}
+        <main role="main" className="pt-[160px] pb-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-6" role="alert">
+                <p className="text-red-700">Erreur de chargement: {error}</p>
+              </div>
+            )}
 
-        {!error && chartData && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4" id="chart-title">
-              Répartition des Éléments de Patrimoine par Type
-            </h2>
-            <div className="h-[400px] relative" aria-labelledby="chart-title">
-              <Doughnut
-                data={chartData}
-                options={chartOptions}
-                aria-label="Graphique Donut des types d'éléments de patrimoine"
-              />
-            </div>
-          </div>
-        )}
+            {!error && chartData && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8 mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4" id="chart-title">
+                  Répartition des Éléments de Patrimoine par Type
+                </h2>
+                <div className="h-[400px] relative" aria-labelledby="chart-title">
+                  <Doughnut
+                    data={chartData}
+                    options={chartOptions}
+                    aria-label="Graphique Donut des types d'éléments de patrimoine"
+                  />
+                </div>
+              </div>
+            )}
 
-        {/* Graphique des personnes créées */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white" id="person-chart-title">
-              Nouvelles Personnes Créées
-            </h2>
-            <div className="flex items-center gap-4">
-              <label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                Depuis :
-              </label>
-              <select
-                id="time-filter"
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm"
-              >
-                <option value="1day">1 jour</option>
-                <option value="15days">15 jours</option>
-                <option value="1month">1 mois</option>
-                <option value="1year">1 an</option>
-                <option value="all">Le début</option>
-              </select>
-            </div>
-          </div>
+            {/* Graphique des personnes créées */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8 mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white" id="person-chart-title">
+                  Nouvelles Personnes Créées
+                </h2>
+                <div className="flex items-center gap-4">
+                  <label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    Depuis :
+                  </label>
+                  <select
+                    id="time-filter"
+                    value={timeFilter}
+                    onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm"
+                  >
+                    <option value="1day">1 jour</option>
+                    <option value="15days">15 jours</option>
+                    <option value="1month">1 mois</option>
+                    <option value="1year">1 an</option>
+                    <option value="all">Le début</option>
+                  </select>
+                </div>
+              </div>
 
           {personError && (
             <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4" role="alert">
@@ -406,7 +417,8 @@ export default function ChartPage() {
             Aucune donnée statistique à afficher.
           </div>
         )}
-      </div>
+          </div>
+        </main>
       </div>
     </PageTransition>
   );

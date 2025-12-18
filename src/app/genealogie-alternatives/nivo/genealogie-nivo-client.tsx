@@ -39,7 +39,7 @@ type GenealogieNivoClientProps = {
   initialPersons: Person[];
 };
 
-const defaultMargin = { top: 40, left: 40, right: 40, bottom: 40 };
+const defaultMargin = { top: 16, left: 40, right: 40, bottom: 40 };
 
 // Fonction pour créer un chemin vertical simple
 const verticalLinkPath = (sourceX: number, sourceY: number, targetX: number, targetY: number) => {
@@ -51,7 +51,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
   const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(true);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [translate, setTranslate] = useState({ x: 400, y: 100 });
+  const [translate, setTranslate] = useState({ x: 400, y: 40 });
   const [svgBackgroundFill, setSvgBackgroundFill] = useState('#f9fafb');
   const svgRef = useRef<SVGSVGElement>(null);
   
@@ -200,7 +200,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
     return treeLayout(root);
   }, [treeLayout, root]);
 
-  if (isAllowed === null) {
+  if (!isAdmin && isAllowed === null) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <p className="text-gray-500 dark:text-gray-400">Chargement de la vue généalogique...</p>
@@ -208,7 +208,7 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
     );
   }
 
-  if (isAllowed === false) {
+  if (!isAdmin && isAllowed === false) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center px-4">
@@ -392,84 +392,95 @@ export function GenealogieNivoClient({ initialPersons }: GenealogieNivoClientPro
       />
 
       <motion.div 
-        className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'} overflow-hidden`} 
-        style={{ paddingTop: '64px' }}
-        onClick={handleBackgroundClick}
+        className={`flex-1 transition-all duration-300 ${isMenuOpen ? 'ml-96' : 'ml-0'}`}
+        style={{ paddingTop: '0' }}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <GenealogyHeader
-          title="Arbre Généalogique - Nivo"
-          isRefreshing={isRefreshing}
-          isSaving={isSaving}
-          canEdit={canEditUser}
-          hasPositions={customPositions.size > 0}
-          zoomLevel={zoomLevel}
-          onRefresh={refreshData}
-          onSavePositions={() => savePositionsToSupabase(customPositions)}
-          onZoomIn={zoomIn}
-          onZoomOut={zoomOut}
-          onGoHome={handleSaveAndGoHome}
-          isMenuOpen={isMenuOpen}
-        />
+        <div className="flex flex-col h-full">
+          {/* Header sticky en haut, toujours visible au scroll */}
+          <div className="sticky top-0 z-10 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/60 dark:border-gray-700/60">
+            <GenealogyHeader
+              title="Arbre Généalogique - Nivo"
+              isRefreshing={isRefreshing}
+              isSaving={isSaving}
+              canEdit={canEditUser}
+              hasPositions={customPositions.size > 0}
+              zoomLevel={zoomLevel}
+              onRefresh={refreshData}
+              onSavePositions={() => savePositionsToSupabase(customPositions)}
+              onZoomIn={zoomIn}
+              onZoomOut={zoomOut}
+              onGoHome={handleSaveAndGoHome}
+              isMenuOpen={isMenuOpen}
+            />
+          </div>
 
-        {dimensions.width > 0 && dimensions.height > 0 && treeRoot && (
-          <svg
-            id="nivo-tree-svg"
-            ref={svgRef}
-            width={dimensions.width}
-            height={dimensions.height}
-            style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
-            onMouseDown={handleMouseDown}
+          {/* Zone scrollable contenant uniquement l'arbre, le header reste fixe */}
+          <div
+            className="flex-1 overflow-auto"
+            style={{ paddingTop: '0' }}
+            onClick={handleBackgroundClick}
           >
-            <rect width="100%" height="100%" fill={svgBackgroundFill} />
-            <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
-              <TreeLinksRenderer
-                persons={persons}
-                positionMap={positionMap}
-                nodeWidth={nodeWidth}
-                couplesMap={couplesMap}
-                childrenByCouple={childrenByCouple}
-                singleParentChildren={singleParentChildren}
-                linkPath={verticalLinkPath}
-                style="nivo"
-              />
-              
-              {treeRoot.descendants().map((node, i) => {
-                const nodeData = node.data;
-                if (nodeData.id === 'root') return null;
-                
-                const adjustedPosition = positionMap.get(nodeData.id);
-                const top = adjustedPosition?.y ?? node.y ?? 0;
-                const left = adjustedPosition?.x ?? node.x ?? 0;
-                
-                const isDead = !!nodeData.dateDeces;
-                const isSelected = selectedNodeId === nodeData.id;
-
-                return (
-                  <TreeNodeRenderer
-                    key={`node-${nodeData.id}-${i}`}
-                    node={nodeData}
-                    x={left}
-                    y={top}
+            {dimensions.width > 0 && dimensions.height > 0 && treeRoot && (
+              <svg
+                id="nivo-tree-svg"
+                ref={svgRef}
+                width={dimensions.width}
+                height={dimensions.height}
+                style={{ display: 'block', cursor: isDragging ? 'grabbing' : 'grab' }}
+                onMouseDown={handleMouseDown}
+              >
+                <rect width="100%" height="100%" fill={svgBackgroundFill} />
+                <g transform={`translate(${defaultMargin.left + translate.x},${defaultMargin.top + translate.y}) scale(${zoomLevel})`}>
+                  <TreeLinksRenderer
+                    persons={persons}
+                    positionMap={positionMap}
                     nodeWidth={nodeWidth}
-                    nodeHeight={nodeHeight}
-                    isDead={isDead}
-                    isSelected={isSelected}
-                    isDragging={isDragging}
-                    canEdit={canEditUser}
-                    draggedNodeId={draggedNodeId}
-                    onNodeMouseDown={handleNodeMouseDown}
-                    onNodeClick={handleNodeClick}
-                    getImage={getImage}
+                    couplesMap={couplesMap}
+                    childrenByCouple={childrenByCouple}
+                    singleParentChildren={singleParentChildren}
+                    linkPath={verticalLinkPath}
                     style="nivo"
                   />
-                );
-              })}
-            </g>
-          </svg>
-        )}
+                  
+                  {treeRoot.descendants().map((node, i) => {
+                    const nodeData = node.data;
+                    if (nodeData.id === 'root') return null;
+                    
+                    const adjustedPosition = positionMap.get(nodeData.id);
+                    const top = adjustedPosition?.y ?? node.y ?? 0;
+                    const left = adjustedPosition?.x ?? node.x ?? 0;
+                    
+                    const isDead = !!nodeData.dateDeces;
+                    const isSelected = selectedNodeId === nodeData.id;
+
+                    return (
+                      <TreeNodeRenderer
+                        key={`node-${nodeData.id}-${i}`}
+                        node={nodeData}
+                        x={left}
+                        y={top}
+                        nodeWidth={nodeWidth}
+                        nodeHeight={nodeHeight}
+                        isDead={isDead}
+                        isSelected={isSelected}
+                        isDragging={isDragging}
+                        canEdit={canEditUser}
+                        draggedNodeId={draggedNodeId}
+                        onNodeMouseDown={handleNodeMouseDown}
+                        onNodeClick={handleNodeClick}
+                        getImage={getImage}
+                        style="nivo"
+                      />
+                    );
+                  })}
+                </g>
+              </svg>
+            )}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

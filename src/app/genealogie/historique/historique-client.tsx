@@ -178,16 +178,24 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
   return (
     <PageTransition>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Historique de l'application</h1>
+      {/* Sticky header */}
+      <div className="fixed top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
+        <header role="banner" className="w-full">
+          <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Historique de l&apos;application
+              </h1>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Consultez les modifications des positions dans l&apos;arbre et des éléments de patrimoine.
+              </p>
+            </div>
             <BackToHomeButton variant="button" />
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-[160px]">
         {/* Onglets */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200 dark:border-gray-700">
