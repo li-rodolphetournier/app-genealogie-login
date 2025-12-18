@@ -78,6 +78,38 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
   const userStatus = user?.status || '';
   const isAdmin = userStatus === 'administrateur';
   const canEditUser = canEdit(userStatus);
+
+  // Visibilité de la vue Visx en fonction des cartes cochées sur l'accueil
+  const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkVisibility = async () => {
+      // Les administrateurs ont toujours accès à la vue
+      if (isAdmin) {
+        setIsAllowed(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/genealogie/card-visibility');
+        if (!response.ok) {
+          setIsAllowed(true);
+          return;
+        }
+
+        const visibility = await response.json() as Record<string, boolean>;
+        // Clé utilisée pour la carte Visx sur la page d'accueil
+        const allowed = visibility['genealogie-visx'] !== false;
+        setIsAllowed(allowed);
+      } catch (error) {
+        console.error('Erreur lors du chargement de la visibilité de la vue Visx:', error);
+        // En cas d'erreur réseau, on ne bloque pas l'accès
+        setIsAllowed(true);
+      }
+    };
+
+    checkVisibility();
+  }, [isAdmin]);
   
   // Hooks personnalisés
   const {
@@ -143,6 +175,29 @@ export function GenealogieVisxClient({ initialPersons }: GenealogieVisxClientPro
     if (!treeData) return null;
     return hierarchy<TreeNode>(treeData);
   }, [treeData]);
+
+  if (isAllowed === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">Chargement de la vue généalogique...</p>
+      </div>
+    );
+  }
+
+  if (isAllowed === false) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center px-4">
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            Cette vue généalogique n&apos;est pas disponible.
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Veuillez contacter un administrateur si vous pensez qu&apos;il s&apos;agit d&apos;une erreur.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const yMax = Math.max(1200, dimensions.height - defaultMargin.top - defaultMargin.bottom);
   const xMax = Math.max(800, dimensions.width - defaultMargin.left - defaultMargin.right);
