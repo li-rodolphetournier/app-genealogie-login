@@ -76,7 +76,7 @@ export default function EditObject() {
           
           // S'assurer que utilisateur est défini (login, pas UUID)
         } else {
-          setError('Impossible de charger l\'objet');
+          setError('Impossible de charger l\'élément de patrimoine');
         }
         
         // Mettre à jour les catégories après avoir vérifié l'objet
@@ -201,7 +201,7 @@ export default function EditObject() {
         // Fallback sur l'utilisateur actuel si l'objet n'a pas de utilisateur défini
         utilisateurLogin = user.login;
       } else {
-        throw new Error('Impossible de déterminer l\'utilisateur pour cet objet');
+        throw new Error('Impossible de déterminer l\'utilisateur pour cet élément de patrimoine');
       }
 
       const updateData = {
@@ -224,7 +224,7 @@ export default function EditObject() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Erreur lors de la mise à jour de l\'objet');
+        throw new Error(errorData.error || errorData.message || 'Erreur lors de la mise à jour de l\'élément de patrimoine');
       }
 
       router.push(`/objects/${object.id}`);
@@ -236,10 +236,10 @@ export default function EditObject() {
   };
 
   if (isLoading) {
-    return <LoadingIndicator text="Chargement de l'objet à modifier..." />;
+    return <LoadingIndicator text="Chargement de l'élément de patrimoine à modifier..." />;
   }
   if (error) return <div className="text-red-500 dark:text-red-400">{error}</div>;
-  if (!object) return <div className="text-gray-900 dark:text-white">Objet non trouvé</div>;
+  if (!object) return <div className="text-gray-900 dark:text-white">Élément de patrimoine non trouvé</div>;
 
   // Fonction pour créer une nouvelle catégorie
   const handleCreateCategory = async () => {
@@ -306,7 +306,7 @@ export default function EditObject() {
       <main role="main" className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Modifier l'objet : {object.nom}</h1>
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Modifier l'élément de patrimoine : {object.nom}</h1>
 
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-4 mb-4">
@@ -464,7 +464,7 @@ export default function EditObject() {
                   onChange={handleChange}
                   rows={6}
                   className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="Description détaillée de l'objet..."
+                  placeholder="Description détaillée de l'élément de patrimoine..."
                 />
               </div>
 

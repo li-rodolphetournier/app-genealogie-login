@@ -102,7 +102,7 @@ export default function ChartPage() {
         const objectsRes = await fetch('/api/objects');
 
         if (!objectsRes.ok) {
-          throw new Error('Erreur lors de la récupération des objets');
+          throw new Error('Erreur lors de la récupération des éléments de patrimoine');
         }
 
         const objectsData: ObjectData[] = await objectsRes.json();
@@ -213,7 +213,7 @@ export default function ChartPage() {
               label += ': ';
             }
             if (context.parsed !== null) {
-              label += context.parsed + ' objet(s)';
+              label += context.parsed + ' élément(s) de patrimoine';
             }
             return label;
           }
@@ -271,13 +271,13 @@ export default function ChartPage() {
         {!error && chartData && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-6 py-8 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4" id="chart-title">
-              Répartition des Objets par Type
+              Répartition des Éléments de Patrimoine par Type
             </h2>
             <div className="h-[400px] relative" aria-labelledby="chart-title">
               <Doughnut
                 data={chartData}
                 options={chartOptions}
-                aria-label="Graphique Donut des types d'objets"
+                aria-label="Graphique Donut des types d'éléments de patrimoine"
               />
             </div>
           </div>

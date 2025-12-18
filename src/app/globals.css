@@ -76,10 +76,13 @@
   .text-gray-600 { color: var(--muted-foreground) !important; }
   .text-gray-500 { color: var(--muted-foreground) !important; }
   .text-gray-400 { color: var(--muted-foreground) !important; }
+  .text-gray-300 { color: var(--muted-foreground) !important; }
+  .text-white { color: var(--primary-foreground) !important; }
 
   .border-gray-100 { border-color: var(--border) !important; }
   .border-gray-200 { border-color: var(--border) !important; }
   .border-gray-300 { border-color: var(--border) !important; }
+  .border-gray-400 { border-color: var(--border) !important; }
   .border-gray-600 { border-color: var(--border) !important; }
   .border-gray-700 { border-color: var(--border) !important; }
 
@@ -93,6 +96,14 @@
 
   .hover\\:bg-blue-600:hover,
   .hover\\:bg-blue-700:hover { background-color: var(--primary) !important; }
+
+  /* Support pour les variantes dark mode */
+  .dark .bg-gray-800 { background-color: var(--secondary) !important; }
+  .dark .bg-gray-900 { background-color: var(--background) !important; }
+  .dark .text-white { color: var(--foreground) !important; }
+  .dark .text-gray-300 { color: var(--muted-foreground) !important; }
+  .dark .text-gray-400 { color: var(--muted-foreground) !important; }
+  .dark .border-gray-700 { border-color: var(--border) !important; }
 }
 
 html {

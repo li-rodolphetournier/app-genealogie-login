@@ -26,10 +26,22 @@ const TEMPLATES: Array<{ id: ThemeTemplate; name: string; description: string; c
     colors: ['#F3F6F2', '#4F6F52', '#A9B7A0', '#8C6A4A'],
   },
   {
-    id: 'modern',
-    name: 'Modern',
-    description: 'Palette moderne (indigo, violet, rose)',
-    colors: ['#6366f1', '#8b5cf6', '#ec4899'],
+    id: 'fragonard',
+    name: 'Fragonard',
+    description: 'Ambiance XVIIIème siècle (terres cuites, crème, or pâle)',
+    colors: ['#faf8f5', '#c97d60', '#d4a574', '#a67c52'],
+  },
+  {
+    id: 'test',
+    name: 'Test',
+    description: 'Ambiance Fragonard (beiges chauds, pêches douces, élégance XVIIIème)',
+    colors: ['#fef9f5', '#c99d7a', '#d4b89a', '#b88a6a'],
+  },
+  {
+    id: 'fragonard-refined',
+    name: 'Fragonard Refined',
+    description: 'Élégance aristocratique (vert sauge, rose poudré, or patiné)',
+    colors: ['#F7F4EF', '#7A8F7A', '#D8A7A0', '#C2A14D'],
   },
 ];
 

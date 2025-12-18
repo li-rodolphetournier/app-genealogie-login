@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     const auth = await getAuthenticatedUser();
     if (!auth.user) {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Vous devez être connecté pour créer un objet' },
+        { error: 'Vous devez être connecté pour créer un élément de patrimoine' },
         { status: 401 }
       );
     }
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     // Administrateurs et rédacteurs peuvent créer des objets
     if (auth.user.status !== 'administrateur' && auth.user.status !== 'redacteur') {
       return NextResponse.json<ErrorResponse>(
-        { error: 'Seuls les administrateurs ou rédacteurs peuvent créer des objets' },
+        { error: 'Seuls les administrateurs ou rédacteurs peuvent créer des éléments de patrimoine' },
         { status: 403 }
       );
     }
@@ -185,7 +185,7 @@ export async function POST(request: Request) {
 
     if (objectError || !newObject) {
       return createErrorResponse(
-        objectError || new Error('Erreur lors de la création de l\'objet'),
+        objectError || new Error('Erreur lors de la création de l\'élément de patrimoine'),
         500,
         { route: '/api/objects', operation: 'POST' }
       );
@@ -258,7 +258,7 @@ export async function POST(request: Request) {
     revalidatePath(`/objects/${objectId}`, 'page');
 
     return NextResponse.json<SuccessResponse<ObjectData>>(
-      { message: 'Objet créé avec succès', data: objectData },
+      { message: 'Élément de patrimoine créé avec succès', data: objectData },
       { status: 201 }
     );
   } catch (error: unknown) {

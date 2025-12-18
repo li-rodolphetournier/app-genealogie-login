@@ -223,7 +223,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="navigation" aria-label="Menu principal">
         <FadeInStagger staggerDelay={0.1} delay={0.4}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-          {/* Liste des objets */}
+          {/* Liste des éléments de patrimoine */}
           <FadeInStaggerItem>
             <motion.div
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -233,7 +233,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
               <Link
                 href="/objects"
                 className="group relative bg-white dark:bg-gray-800 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg shadow-sm hover:shadow-md transition-shadow block h-full border border-gray-400 dark:border-gray-700"
-                aria-label="Accéder à la liste des objets"
+                aria-label="Accéder à la liste des éléments de patrimoine"
               >
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -242,8 +242,8 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Liste des objets</h2>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir tous les objets disponibles</p>
+                    <h2 className="text-xl font-medium text-gray-900 dark:text-white">Liste des éléments de patrimoine</h2>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir tous les éléments de patrimoine disponibles</p>
                   </div>
                 </div>
               </Link>
@@ -324,7 +324,7 @@ export function AccueilClient({ initialDisplayedMessages }: AccueilClientProps) 
                       </div>
                       <div>
                         <h2 className="text-xl font-medium text-gray-900 dark:text-white">Statistiques</h2>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir les statistiques des objets</p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">Voir les statistiques des éléments de patrimoine</p>
                       </div>
                     </div>
                   </Link>

@@ -191,10 +191,10 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Liste des objets
+                  Liste des éléments de patrimoine
                 </h1>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Gérez et consultez tous les objets disponibles
+                  Gérez et consultez tous les éléments de patrimoine disponibles
                 </p>
               </div>
               <div className="flex space-x-4">
@@ -206,7 +206,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                     <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    Créer un objet
+                    Créer un élément de patrimoine
                   </Link>
                 )}
                 <BackToHomeButton />
@@ -328,7 +328,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
                 )}
 
                 <div className="text-sm text-gray-500 dark:text-gray-400 pt-2">
-                  {filteredObjects.length} objet{filteredObjects.length !== 1 ? 's' : ''} trouvé{filteredObjects.length !== 1 ? 's' : ''}
+                  {filteredObjects.length} élément{filteredObjects.length !== 1 ? 's' : ''} de patrimoine trouvé{filteredObjects.length !== 1 ? 's' : ''}
                 </div>
               </div>
             </div>
@@ -337,7 +337,7 @@ export function ObjectsClient({ initialObjects }: ObjectsClientProps) {
         <div className="max-w-full mx-auto">
           {filteredObjects.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-gray-500 dark:text-gray-400">Aucun objet ne correspond aux filtres sélectionnés.</p>
+              <p className="text-gray-500 dark:text-gray-400">Aucun élément de patrimoine ne correspond aux filtres sélectionnés.</p>
             </div>
           ) : viewMode === 'grid' ? (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">

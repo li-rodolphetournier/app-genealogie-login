@@ -95,7 +95,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
         if (objectsResponse.ok) {
           setObjectHistory(objectsData);
         } else {
-          const errorMessage = objectsData.error || 'Erreur lors du chargement de l\'historique des objets';
+          const errorMessage = objectsData.error || 'Erreur lors du chargement de l\'historique des éléments de patrimoine';
           console.error('Erreur API objets:', errorMessage);
           if (errorMessage.includes('relation') || errorMessage.includes('does not exist')) {
             // Ne pas afficher d'erreur si la table n'existe pas encore
@@ -210,7 +210,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                     : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                 }`}
               >
-                Historique des objets
+                Historique des éléments de patrimoine
               </button>
             </nav>
           </div>
@@ -332,9 +332,9 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
           ) : (
             filteredObjectHistory.length === 0 && objectHistory.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun historique d'objets disponible</p>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun historique d'éléments de patrimoine disponible</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">
-                  L'historique des objets sera enregistré automatiquement lors des créations, modifications et suppressions.
+                  L'historique des éléments de patrimoine sera enregistré automatiquement lors des créations, modifications et suppressions.
                 </p>
               </div>
             ) : filteredObjectHistory.length === 0 ? (
@@ -355,7 +355,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className={`text-lg font-semibold ${!item.objectId ? 'text-red-700 dark:text-red-400 italic' : 'text-gray-900 dark:text-white'}`}>
-                            {item.objectId ? `Objet ${item.objectId}` : 'Objet supprimé'}
+                            {item.objectId ? `Élément de patrimoine ${item.objectId}` : 'Élément de patrimoine supprimé'}
                             {item.newValues?.nom != null && `: ${String(item.newValues.nom)}`}
                             {item.oldValues?.nom != null && item.newValues?.nom == null && `: ${String(item.oldValues.nom)}`}
                           </h3>
@@ -365,7 +365,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                           {item.action === 'deleted' ? (
-                            <p className="text-red-600 font-medium">Objet supprimé</p>
+                            <p className="text-red-600 font-medium">Élément de patrimoine supprimé</p>
                           ) : item.action === 'updated' && item.changedFields.length > 0 ? (
                             <div>
                               <p className="font-medium mb-1">Champs modifiés:</p>
@@ -402,7 +402,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
                             </div>
                           ) : item.action === 'created' ? (
                             <div>
-                              <p className="font-medium mb-1">Détails de l'objet créé:</p>
+                              <p className="font-medium mb-1">Détails de l'élément de patrimoine créé:</p>
                               <ul className="list-disc list-inside space-y-1">
                                 {item.newValues?.nom != null && <li><span className="font-medium">Nom:</span> {String(item.newValues.nom)}</li>}
                                 {item.newValues?.type != null && <li><span className="font-medium">Type:</span> {String(item.newValues.type)}</li>}
@@ -439,7 +439,7 @@ export function HistoriqueClient({ initialPersons }: HistoriqueClientProps) {
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total des modifications {activeTab === 'positions' ? '(positions)' : '(objets)'}
+                Total des modifications {activeTab === 'positions' ? '(positions)' : '(éléments de patrimoine)'}
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {activeTab === 'positions' ? positionHistory.length : objectHistory.length}

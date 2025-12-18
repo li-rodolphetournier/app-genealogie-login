@@ -71,7 +71,9 @@ export default function RootLayout({
                   'default': '/styles/themes/template-default.css',
                   'ocean-sunset': '/styles/themes/template-ocean-sunset.css',
                   'warm-gradient': '/styles/themes/template-warm-gradient.css',
-                  'modern': '/styles/themes/template-modern.css'
+                  'fragonard': '/styles/themes/template-fragonard.css',
+                  'test': '/styles/themes/template-test.css',
+                  'fragonard-refined': '/styles/themes/template-fragonard-refined.css'
                 };
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';

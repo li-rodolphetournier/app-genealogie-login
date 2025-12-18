@@ -1,0 +1,34 @@
+/* Template Fragonard Refined - Mode Clair */
+:root:not(.dark) {
+  --background: #F7F4EF;
+  --foreground: #2E2E2B;
+  --primary: #7A8F7A;
+  --primary-foreground: #ffffff;
+  --secondary: #FFFFFF;
+  --secondary-foreground: #2E2E2B;
+  --accent: #D8A7A0;
+  --accent-foreground: #2E2E2B;
+  --muted: #F7F4EF;
+  --muted-foreground: #6B6B68;
+  --border: #E8E5DF;
+  --input: #ffffff;
+  --ring: #C2A14D;
+}
+
+/* Template Fragonard Refined - Mode Sombre */
+:root.dark {
+  --background: #141716;
+  --foreground: #EAE6DE;
+  --primary: #8FAE9E;
+  --primary-foreground: #141716;
+  --secondary: #C48F8A;
+  --secondary-foreground: #EAE6DE;
+  --accent: #1E2522;
+  --accent-foreground: #EAE6DE;
+  --muted: #1E2522;
+  --muted-foreground: #B8B4AC;
+  --border: rgba(184, 155, 74, 0.25);
+  --input: #1E2522;
+  --ring: #B89B4A;
+}
+

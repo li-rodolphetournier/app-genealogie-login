@@ -1,0 +1,34 @@
+/* Template Test - Mode Clair */
+:root:not(.dark) {
+  --background: #fef9f5;
+  --foreground: #2d2416;
+  --primary: #c99d7a;
+  --primary-foreground: #ffffff;
+  --secondary: #d4b89a;
+  --secondary-foreground: #2d2416;
+  --accent: #b88a6a;
+  --accent-foreground: #ffffff;
+  --muted: #f8f3ed;
+  --muted-foreground: #6b5d4a;
+  --border: #ead9c8;
+  --input: #ffffff;
+  --ring: #c99d7a;
+}
+
+/* Template Test - Mode Sombre */
+:root.dark {
+  --background: #1a1612;
+  --foreground: #f5f1eb;
+  --primary: #d4b89a;
+  --primary-foreground: #2d2416;
+  --secondary: #c99d7a;
+  --secondary-foreground: #f5f1eb;
+  --accent: #b88a6a;
+  --accent-foreground: #f5f1eb;
+  --muted: #2d2416;
+  --muted-foreground: #a67c52;
+  --border: #3d3428;
+  --input: #2d2416;
+  --ring: #d4b89a;
+}
+

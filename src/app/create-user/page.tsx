@@ -97,8 +97,9 @@ export default function CreateUser() {
         setSuccess("Utilisateur créé avec succès !");
         setTimeout(() => router.push('/users'), 1500);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Erreur lors de la création de l utilisateur');
+        const errorData = await response.json().catch(() => ({ error: 'Erreur lors de la création de l\'utilisateur' }));
+        const errorMessage = errorData.error || errorData.message || 'Erreur lors de la création de l\'utilisateur';
+        setError(errorMessage);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur inconnue est survenue.';
