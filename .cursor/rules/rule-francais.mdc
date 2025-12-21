@@ -1,52 +1,34 @@
 ---
-description: 
+description: Règle de communication et style d'écriture (Français & Concision).
 globs: 
 alwaysApply: true
 ---
 
-# Your rule content
-<context>
-You are an AI embed in a project that uses:
-- TypeScript
-- Node.js with Next.js
-- React
-- TailwindCSS and Shadcn UI
-- npm
-- camelcase
-</context>
+# 🇫🇷 Style de Communication & Code
 
-<style-and-structure>
-- Write concise, technical TypeScript code using functional and declarative programming patterns.
-- Avoid classes; prefer iteration and modularization over code duplication.
-- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
-- Structure files into: exported components, subcomponents, helpers, static content, and types.
-</style-and-structure>
+## 🗣️ Langue & Réponse
+- **Réponds toujours en français**, de manière concise, technique et pédagogique.
+- Si une erreur est détectée dans la demande, corrige-la poliment en expliquant pourquoi.
 
-<naming-conventions>
-- Use lowercase with dashes for directories (e.g., `components/auth-wizard`).
-- Favor named exports for components.
-</naming-conventions>
+## 💻 Style de Programmation (TypeScript)
+- **Patterns** : Programmation fonctionnelle et déclarative. Éviter les classes.
+- **Variables** : Utiliser le `camelCase`. Utiliser des verbes auxiliaires pour les booléens (ex: `isLoading`, `hasError`, `canSubmit`).
+- **Concision** : Éviter les accolades inutiles dans les conditionnelles simples. Préférer les ternaires ou les short-circuits (`&&`).
 
-<typescript-usage>
-- Use TypeScript for all code; prefer types over interfaces.
-- Avoid enums; use maps instead.
-- Use functional components with TypeScript types.
-</typescript-usage>
+## 🏗️ Structure des Fichiers
+- Organiser les fichiers TSX de cette manière :
+  1. Imports
+  2. Types/Interfaces
+  3. Composant principal (exporté via `function`)
+  4. Sous-composants privés
+  5. Helpers et contenu statique
 
-<syntax-and-formatting>
-- Avoid unnecessary curly braces in conditionals: use concise syntax.
-</syntax-and-formatting>
-- ecrit toutes tes reponse en francais.
-- <database-querying-and-data-model-creation>
-- Use Prisma SDK to query the database.
-- For data models, read the `.prisma` files.
-</database-querying-and-data-model-creation>
+## 🔑 Rappels Stratégiques (Alignement)
+- **State** : Utiliser `nuqs` pour la gestion d'état via l'URL.
+- **Performance** : Focus sur les Web Vitals (LCP, CLS, FID).
+- **Architecture** : "Server Components First". Minimiser l'usage de `'use client'` aux stricts besoins d'APIs Web ou d'interactions complexes.
+- **Base de données** : Utilisation exclusive du SDK Prisma. Toujours lire les fichiers `.prisma` pour valider le modèle de données.
 
-<key-conventions>
-- Use 'nugs' for URL search parameter state management.
-- Optimize Web Vitals (LCP, CLS, FID).
-- Limit 'use client': Favor server components and Next.js SSR for data fetching or state management.
-- Use 'use client' only for Web API access in small components.
-</key-conventions>
-
+---
+**Note** : Cette règle agit comme une surcouche de personnalité. Pour les détails techniques profonds sur Next.js 16 ou Supabase, réfère-toi aux règles `global.mdc` et `actions-expert.mdc`.
 

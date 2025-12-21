@@ -190,14 +190,20 @@ export async function POST(request: Request) {
     }
 
     // Créer l'utilisateur dans Supabase Auth d'abord
+    // Passer les métadonnées pour que le trigger crée le profil avec les bonnes valeurs
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
+      user_metadata: {
+        login: login,
+        status: status,
+      },
     });
 
     if (authError || !authUser.user) {
       console.error('Erreur création utilisateur Auth:', authError);
+      console.error('Détails de l\'erreur:', JSON.stringify(authError, null, 2));
       
       // Si l'erreur est liée à un email déjà utilisé
       if (authError?.message?.includes('already registered') || authError?.message?.includes('already exists')) {
@@ -212,6 +218,8 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    console.log('✅ Utilisateur Auth créé avec succès:', authUser.user.id);
 
     // Vérifier une dernière fois que l'ID n'existe pas déjà dans users (race condition)
     const { data: checkExisting } = await supabase
@@ -241,44 +249,92 @@ export async function POST(request: Request) {
       );
     }
 
-    // Créer le profil dans la table users
-    const { data: newUser, error: profileError } = await supabase
+    // Vérifier si le profil existe déjà (créé par le trigger)
+    const { data: existingProfile } = await supabase
       .from('users')
-      .insert({
-        id: authUser.user.id,
-        login,
-        email,
-        status,
-        profile_image: profileImage || null,
-        description: description || null,
-        detail: null,
-      })
-      .select()
-      .single();
+      .select('*')
+      .eq('id', authUser.user.id)
+      .maybeSingle();
 
-    if (profileError || !newUser) {
-      // Si l'insertion du profil échoue, supprimer l'utilisateur Auth
-      try {
-        await supabase.auth.admin.deleteUser(authUser.user.id);
-      } catch (deleteError) {
-        console.error('Erreur lors de la suppression de l\'utilisateur Auth:', deleteError);
-      }
-      
-      console.error('Erreur création profil utilisateur:', profileError);
-      
-      // Message d'erreur plus explicite
-      if (profileError?.code === '23505') {
+    let newUser;
+    
+    if (existingProfile) {
+      // Le profil existe déjà (créé par le trigger), le mettre à jour avec les bonnes valeurs
+      console.log('⚠️  Profil déjà créé par le trigger, mise à jour...');
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('users')
+        .update({
+          login,
+          email,
+          status,
+          profile_image: profileImage || null,
+          description: description || null,
+          detail: null,
+        })
+        .eq('id', authUser.user.id)
+        .select()
+        .single();
+
+      if (updateError || !updatedUser) {
+        console.error('Erreur mise à jour profil utilisateur:', updateError);
+        // Supprimer l'utilisateur Auth si la mise à jour échoue
+        try {
+          await supabase.auth.admin.deleteUser(authUser.user.id);
+        } catch (deleteError) {
+          console.error('Erreur lors de la suppression de l\'utilisateur Auth:', deleteError);
+        }
+        
         return NextResponse.json<ErrorResponse>(
-          { error: 'Cet utilisateur existe déjà dans la base de données. L\'ID est déjà utilisé.' },
-          { status: 409 }
+          { error: `Erreur lors de la mise à jour du profil: ${updateError?.message || 'Erreur inconnue'}` },
+          { status: 500 }
         );
       }
+      
+      newUser = updatedUser;
+    } else {
+      // Créer le profil dans la table users
+      const { data: insertedUser, error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authUser.user.id,
+          login,
+          email,
+          status,
+          profile_image: profileImage || null,
+          description: description || null,
+          detail: null,
+        })
+        .select()
+        .single();
 
-      return NextResponse.json<ErrorResponse>(
-        { error: `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` },
-        { status: 500 }
-      );
+      if (profileError || !insertedUser) {
+        // Si l'insertion du profil échoue, supprimer l'utilisateur Auth
+        try {
+          await supabase.auth.admin.deleteUser(authUser.user.id);
+        } catch (deleteError) {
+          console.error('Erreur lors de la suppression de l\'utilisateur Auth:', deleteError);
+        }
+        
+        console.error('Erreur création profil utilisateur:', profileError);
+        
+        // Message d'erreur plus explicite
+        if (profileError?.code === '23505') {
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Cet utilisateur existe déjà dans la base de données. L\'ID est déjà utilisé.' },
+            { status: 409 }
+          );
+        }
+
+        return NextResponse.json<ErrorResponse>(
+          { error: `Erreur lors de la création du profil: ${profileError?.message || 'Erreur inconnue'}` },
+          { status: 500 }
+        );
+      }
+      
+      newUser = insertedUser;
     }
+    
+    console.log('✅ Profil utilisateur créé/mis à jour avec succès:', newUser.id);
 
     // Mapper les champs Supabase vers le format UserResponse (pour le nouveau utilisateur créé)
     const userResponse: UserResponse = {

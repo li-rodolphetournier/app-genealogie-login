@@ -17,12 +17,14 @@
     "analyze": "ANALYZE=true npm run build",
     "migrate:supabase": "tsx scripts/migrate-to-supabase.ts",
     "migrate:auth": "tsx scripts/migrate-users-to-supabase-auth.ts",
+    "create:auth-for-orphans": "tsx scripts/create-auth-for-orphans.ts",
     "migrate:storage": "tsx scripts/migrate-files-to-supabase-storage.ts",
     "migrate:images": "tsx scripts/migrate-images-to-supabase.ts",
     "migrate:categories": "tsx scripts/migrate-categories-to-table.ts",
     "update:file-refs": "tsx scripts/update-file-references.ts",
     "test:routes": "tsx scripts/test-routes.ts",
     "test:password-reset": "tsx scripts/test-password-reset-flow.ts",
+    "test:email-recovery": "tsx scripts/test-email-recovery.ts",
     "scan-build": "tsx scripts/scan-build.ts",
     "scan-build:quick": "tsx scripts/scan-build.ts --skip-build",
     "scan-build:lint-only": "tsx scripts/scan-build.ts --skip-build --skip-typecheck",
@@ -31,7 +33,8 @@
     "audit:a11y:playwright": "playwright test e2e/accessibility.spec.ts",
     "audit:a11y:pa11y": "pa11y --config .pa11yrc.json",
     "lighthouse": "tsx scripts/lighthouse-test.ts",
-    "lighthouse:url": "tsx scripts/lighthouse-test.ts"
+    "lighthouse:url": "tsx scripts/lighthouse-test.ts",
+    "analyze:queries": "tsx scripts/analyze-query-performance.ts scripts/query-performance-data.json"
   },
   "dependencies": {
     "@nivo/core": "^0.99.0",
